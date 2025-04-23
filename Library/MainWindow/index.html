@@ -2,18 +2,14 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>DeskFlex</title>
+  <title>Manage DeskFlex</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="widget-text">🌟 Floating Text</div>
+  <div class="tabs">
+    <button class="tab-button">Skins</button>
+    <button class="tab-button">Settings</button>
+  </div>
 </body>
-<script>
-  // Access exposed darkMode variable
-  if (window.deskflex.darkMode) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
-</script>
+<script src="script.js"></script>
 </html>
