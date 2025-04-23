@@ -34,6 +34,5 @@ function getIniValue(keyName) {
 }
 
 const value = getIniValue('Logging');
-console.log(`The value for 'Settings.theme' is: ${value}`); 
 console.log('Logging is',Logging); 
 
