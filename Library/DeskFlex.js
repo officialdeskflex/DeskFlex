@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const { getLogging, getDarkMode,getFlexesPath } = require('./ConfigFile');
+const { getLogging, getDarkMode, getFlexesPath } = require('./ConfigFile');
 
 let Logging = getLogging();
 let DarkMode = getDarkMode();
@@ -18,11 +18,13 @@ if (DarkMode === 1) {
 }
 
 console.log(`Flexes Path is: ${getFlexesPath()}`)
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
     resizable: false,
+    icon: path.join(__dirname, '..', 'assets', 'DeskFlex.png'),
     webPreferences: {
       nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js')
