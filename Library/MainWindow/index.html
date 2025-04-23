@@ -3,10 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <title>DeskFlex</title>
-<link rel="stylesheet" href="style.css">
-</style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="widget-text">🌟 Floating Text</div>
 </body>
+<script>
+  // Access exposed darkMode variable
+  if (window.deskflex.darkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+</script>
 </html>
