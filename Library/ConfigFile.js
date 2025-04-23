@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-var Logging=0;
+let Logging = 0;
+let DarkMode = 0;
 
 function getIniValue(keyName) {
-    sectionName="DeskFlex"
-    filePath=process.env.APPDATA+"\\DeskFlex\\DeskFlex.ini";
+    const sectionName = "DeskFlex";
+    const filePath = process.env.APPDATA + "\\DeskFlex\\DeskFlex.ini";
     const data = fs.readFileSync(filePath, 'utf-8');
     const result = {};
     let currentSection = null;
@@ -25,14 +26,17 @@ function getIniValue(keyName) {
             }
         }
     });
+
     if (result[sectionName] && result[sectionName][keyName]) {
-        Logging=result[sectionName][keyName];
         return result[sectionName][keyName];
     } else {
-        return null; 
+        return null;
     }
 }
 
-const value = getIniValue('Logging');
-console.log('Logging is',Logging); 
+// Assign values
+Logging = getIniValue('Logging') || 0;
+DarkMode = getIniValue('DarkMode') || 0;
 
+console.log('Logging is', Logging); 
+console.log('DarkMode is', DarkMode);
