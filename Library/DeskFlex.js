@@ -1,23 +1,19 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const { getLogging, getDarkMode, getFlexesPath } = require('./ConfigFile');
+const { getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging,getFolderStructure } = require('./ConfigFile');
 
-let Logging = getLogging();
-let DarkMode = getDarkMode();
+const config = { logging: getLogging(), debugging: getDebugging(), darkMode: getDarkMode(), activeFlex: getActiveFlex(), flexesPath: getFlexesPath(),folderStructure:getFolderStructure() };
 
-if (Logging === 1) {
-  console.log('Logging is Enabled.');
-} else {
-  console.log('Logging is Disabled.');
+if (config.debugging) {
+  console.log(`Debug Mode is Enabled.`);
+  console.log(`Logging is ${config.logging ? 'Enabled' : 'Disabled'}.`);
+  console.log(`DarkMode is ${config.darkMode ? 'Enabled' : 'Disabled'}.`);
+  console.log('Active Flexes Found:', config.activeFlex);
+ //console.log(JSON.stringify(config.folderStructure, null, 2));
+
 }
 
-if (DarkMode === 1) {
-  console.log('DarkMode is Enabled.');
-} else {
-  console.log('DarkMode is Disabled.');
-}
-
-console.log(`Flexes Path is: ${getFlexesPath()}`)
+console.log(`Flexes Path is: ${config.flexesPath}`);
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -30,7 +26,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-  win.setMenu(null);
+ // win.setMenu(null);
   win.loadFile(path.join(__dirname, 'MainWindow', 'index.html'));
 }
 

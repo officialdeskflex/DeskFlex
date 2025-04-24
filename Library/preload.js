@@ -1,6 +1,7 @@
 const { contextBridge } = require('electron');
-const { getDarkMode } = require('./ConfigFile');
+const { getDarkMode, getFolderStructure } = require('./ConfigFile');
 
 contextBridge.exposeInMainWorld('deskflex', {
-    darkMode: getDarkMode()
+    darkMode: getDarkMode(),
+    folderStructure: getFolderStructure()
 });
