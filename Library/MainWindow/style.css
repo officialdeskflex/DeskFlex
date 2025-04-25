@@ -93,9 +93,12 @@ body {
   display: none;
   background-color: #f1f1f1;
   border: 1px solid #ccc;
-  width: 220px;
+  min-width: 205px;
+  width: fit-content;
   margin-top: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 8px; 
+  white-space: nowrap; 
 }
 
 .dropdown.show {
@@ -113,6 +116,7 @@ body {
   padding: 10px;
   text-decoration: none;
   color: black;
+  font-size: 12px;
   transition: background-color 0.2s;
 }
 
@@ -133,21 +137,26 @@ body {
 */
 .addFlexIcon {
   font-family: 'FluentSystemIcons'; 
-  content: "\F2A3";             
-  font-size: 25px;                 
+  font-size: 25px;
   margin-left: 258px;                
   color: rgb(10, 10, 10);
   position: fixed;
   top: 17%; 
   transform: translateY(-50%);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.addFlexIcon.animate {
+  animation: shrinkBounce 0.2s ease;
+}
+
+@keyframes shrinkBounce {
+  0% { transform: scale(1) translateY(-50%); }
+  50% { transform: scale(0.8) translateY(-50%); }
+  100% { transform: scale(1) translateY(-50%); }
 }
 
 .dark-mode .addFlexIcon {
   color: rgb(255, 255, 255);
 }
-
-
-.dark-mode .addFlexIcon {
-  color: rgb(255,255,255);
-}
-

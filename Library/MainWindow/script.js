@@ -31,6 +31,14 @@ function toggleDropdown() {
 }
 window.toggleDropdown = toggleDropdown;
 window.addEventListener('DOMContentLoaded', populateDropdown);
+/*
+*  Animate AddFlex Button
+*/
+const icon = document.querySelector('.addFlexIcon');
+icon.addEventListener('click', () => {
+  icon.classList.add('animate');
+  setTimeout(() => icon.classList.remove('animate'), 200);
+});
 
 /*
 *  Logging
