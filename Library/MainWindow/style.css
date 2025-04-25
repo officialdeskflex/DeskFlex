@@ -1,6 +1,15 @@
+@font-face {
+  font-family: 'FluentSystemIcons';
+  src: url('../../Fonts/FluentSystemIcons-Regular.woff2') format('woff2'),
+       url('../../Fonts/FluentSystemIcons-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   background-color: rgb(255, 255, 255);
   color: rgb(13, 17, 23);
+  font-family: system-ui, sans-serif;
   transition: background-color 0.3s, color 0.3s;
 }
 
@@ -9,14 +18,15 @@ body {
   color: rgb(255, 255, 255);
 }
 
-/* Tabs container */
+/*
+* Tabs Content.
+*/
 .tabs {
   display: flex;
   gap: 10px;
   margin: 20px;
 }
 
-/* Tab button - light theme */
 .tab-button {
   padding: 10px 30px;
   background-color: rgb(230, 230, 230);
@@ -28,15 +38,116 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
-/* Tab button - dark mode override */
 .dark-mode .tab-button {
   background-color: rgb(13, 17, 23);
   color: rgb(255, 255, 255);
   border: 1px solid rgb(100, 100, 100);
 }
 
-/* Optional: active tab */
 .tab-button.active {
   font-weight: bold;
   text-decoration: underline;
 }
+
+/* 
+* Rectangle Active List.
+*/
+.rectangleActiveList {
+  width: 200px;
+  height: 30px;
+  margin-left: 20px;
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  border: 1px solid rgb(200, 200, 200);
+  padding: 0 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rectangleActiveList::after {
+  content: "\F2A3"; 
+  font-family: 'FluentSystemIcons';
+  font-size: 16px;
+  margin-left: 8px;
+  transition: transform 0.3s;
+}
+
+.rectangleActiveList.open::after {
+  transform: rotate(180deg);
+}
+
+.dark-mode .rectangleActiveList {
+  background-color: rgb(13, 17, 23);
+  color: rgb(255, 255, 255);
+  border: 1px solid rgb(100, 100, 100);
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.05);
+}
+
+.dropdown {
+  margin-left: 20px;
+  display: none;
+  background-color: #f1f1f1;
+  border: 1px solid #ccc;
+  width: 220px;
+  margin-top: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown.show {
+  display: block;
+}
+
+.dark-mode .dropdown {
+  background-color: rgb(6, 9, 15);
+  border: 1px solid rgb(100, 100, 100);
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.05);
+}
+
+.dropdown a {
+  display: block;
+  padding: 10px;
+  text-decoration: none;
+  color: black;
+  transition: background-color 0.2s;
+}
+
+.dark-mode .dropdown a {
+  color: rgb(255, 255, 255);
+}
+
+.dropdown a:hover {
+  background-color: #e0e0e0;
+}
+
+.dark-mode .dropdown a:hover {
+  background-color: rgb(20, 25, 33);
+}
+
+/* 
+* Add Flex Icon.
+*/
+.addFlexIcon {
+  font-family: 'FluentSystemIcons'; 
+  content: "\F2A3";             
+  font-size: 25px;                 
+  margin-left: 258px;                
+  color: rgb(10, 10, 10);
+  position: fixed;
+  top: 17%; 
+  transform: translateY(-50%);
+}
+
+.dark-mode .addFlexIcon {
+  color: rgb(255, 255, 255);
+}
+
+
+.dark-mode .addFlexIcon {
+  color: rgb(255,255,255);
+}
+

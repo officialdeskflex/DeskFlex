@@ -85,7 +85,6 @@ function getFolderStructure(folderPath = getFlexesPath()) {
             result[item] = null;
         }
     });
-
     return result;
 }
 

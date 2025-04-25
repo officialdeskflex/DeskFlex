@@ -1,16 +1,16 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const { getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging,getFolderStructure } = require('./ConfigFile');
+const { getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging, getFolderStructure } = require('./ConfigFile');
 
-const config = { logging: getLogging(), debugging: getDebugging(), darkMode: getDarkMode(), activeFlex: getActiveFlex(), flexesPath: getFlexesPath(),folderStructure:getFolderStructure() };
+const config = { logging: getLogging(), debugging: getDebugging(), darkMode: getDarkMode(), activeFlex: getActiveFlex(), flexesPath: getFlexesPath(), folderStructure: getFolderStructure() };
 
 if (config.debugging) {
   console.log(`Debug Mode is Enabled.`);
   console.log(`Logging is ${config.logging ? 'Enabled' : 'Disabled'}.`);
   console.log(`DarkMode is ${config.darkMode ? 'Enabled' : 'Disabled'}.`);
+  console.log('Settings FilePath:' + path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini"))
   console.log('Active Flexes Found:', config.activeFlex);
- //console.log(JSON.stringify(config.folderStructure, null, 2));
-
+  console.log(JSON.stringify(config.folderStructure, null, 2));
 }
 
 console.log(`Flexes Path is: ${config.flexesPath}`);
@@ -26,7 +26,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   });
- // win.setMenu(null);
+  win.setMenu(null);
   win.loadFile(path.join(__dirname, 'MainWindow', 'index.html'));
 }
 
