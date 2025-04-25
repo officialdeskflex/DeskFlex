@@ -10,6 +10,8 @@ lerna-debug.log*
 # Developement
 index.html
 index.js
+Trash.txt
+Trash2.txt
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

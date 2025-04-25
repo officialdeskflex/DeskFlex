@@ -89,6 +89,8 @@ body {
 }
 
 .dropdown {
+  position: absolute;
+  z-index: 9999; 
   margin-left: 20px;
   display: none;
   background-color: #f1f1f1;
