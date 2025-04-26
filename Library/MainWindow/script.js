@@ -1,15 +1,15 @@
-/* 
-*Set DarkMode/ColorTheme.
-*/
+/**
+ * Set DarkMode/ColorTheme.
+ */
 if (window.deskflex.darkMode) {
   document.body.classList.add('dark-mode');
 } else {
   document.body.classList.remove('dark-mode');
 }
 
-/* 
-*Dynamically populate dropdown from activeFlex.
-*/
+/**
+ * Dynamically populate dropdown from activeFlex.
+ */
 function populateDropdown() {
   const dropdown = document.getElementById("myDropdown");
   dropdown.innerHTML = "";
@@ -23,6 +23,13 @@ function populateDropdown() {
   }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn = document.getElementById("toggle-Dropdown");
+  if (openBtn) {
+    openBtn.addEventListener("click", toggleDropdown);
+  }
+});
+
 function toggleDropdown() {
   const dropdown = document.getElementById("myDropdown");
   const rectangle = document.querySelector('.rectangleActiveList');
@@ -31,17 +38,31 @@ function toggleDropdown() {
 }
 window.toggleDropdown = toggleDropdown;
 window.addEventListener('DOMContentLoaded', populateDropdown);
-/*
-*  Animate AddFlex Button
-*/
+/**
+ * Animate AddFlex Button
+ */
 const icon = document.querySelector('.addFlexIcon');
 icon.addEventListener('click', () => {
   icon.classList.add('animate');
   setTimeout(() => icon.classList.remove('animate'), 200);
 });
 
-/*
-*  Logging
-*/
-console.log(JSON.stringify(window.deskflex.folderStructure, null, 2));
+/**
+ * Open the DeskFlex Config Settings
+ */
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn = document.getElementById("open-settings");
+  if (openBtn) {
+    openBtn.addEventListener("click", openSettings);
+  }
+});
+
+function openSettings() {
+  window.deskflex.openConfigSettings(window.deskflex.settingsFile);
+}
+/**
+ * Animate AddFlex Button
+ */
+//console.log(JSON.stringify(window.deskflex.folderStructure, null, 2));
 console.log(window.deskflex.activeFlex);
+console.log("Settings File Found:" + window.deskflex.settingsFile)

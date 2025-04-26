@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Manage DeskFlex</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="structureFolder.css">
@@ -13,7 +14,7 @@
     <button class="tab-button">Flexes</button>
     <button class="tab-button">Settings</button>
   </div>
-  <div class="rectangleActiveList" onclick="toggleDropdown()">Active Flex</div>
+  <div class="rectangleActiveList" id="toggle-Dropdown">Active Flex</div>
   <div class="dropdown" id="myDropdown">
   </div>
   <div> <span class="addFlexIcon">&#xE063;</span></div>
@@ -22,7 +23,7 @@
   <div class="div-line"></div>
   <div class="button-Left-row">
     <button>Refresh All</button>
-    <button>Edit Settings</button>
+    <button id="open-settings">Edit Settings</button>
     <button>Open Log</button>
   </div>
   <div class="button-Right-container">

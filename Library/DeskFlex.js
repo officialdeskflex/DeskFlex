@@ -1,7 +1,7 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow ,ipcMain} = require('electron');
 const path = require('path');
-const { getConfigEditorPath,getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging, getFolderStructure } = require('./ConfigFile');
-
+const {getConfigEditorPath,getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging, getFolderStructure } = require('./ConfigFile');
+const {openFileWithEditor} =require('./openConfigFiles');
 const config = { configEditor:getConfigEditorPath(),logging: getLogging(), debugging: getDebugging(), darkMode: getDarkMode(), activeFlex: getActiveFlex(), flexesPath: getFlexesPath(), folderStructure: getFolderStructure() };
 
 if (config.debugging) {
@@ -30,5 +30,12 @@ function createWindow() {
   //win.setMenu(null);
   win.loadFile(path.join(__dirname, 'MainWindow', 'index.html'));
 }
+
+/*
+ * IPC Commands
+ */
+ipcMain.on('open-config-settings', (_event, filePath) => {
+  openFileWithEditor(filePath);
+});
 
 app.whenReady().then(createWindow);

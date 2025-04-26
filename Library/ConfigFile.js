@@ -88,6 +88,7 @@ function getFolderStructure(folderPath = getFlexesPath()) {
     return result;
 }
 
+
 function getLogging() {
     return parseInt(getIniValue('DeskFlex', 'Logging')) || 0;
 }

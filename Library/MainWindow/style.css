@@ -1,7 +1,7 @@
 @font-face {
   font-family: 'FluentSystemIcons';
   src: url('../../Fonts/FluentSystemIcons-Regular.woff2') format('woff2'),
-       url('../../Fonts/FluentSystemIcons-Regular.woff') format('woff');
+    url('../../Fonts/FluentSystemIcons-Regular.woff') format('woff');
   font-weight: normal;
   font-style: normal;
 }
@@ -60,7 +60,7 @@ body {
   color: rgb(10, 10, 10);
   display: flex;
   align-items: center;
-  justify-content: space-between; 
+  justify-content: space-between;
   cursor: pointer;
   user-select: none;
   border-radius: 4px;
@@ -70,7 +70,7 @@ body {
 }
 
 .rectangleActiveList::after {
-  content: "\F2A3"; 
+  content: "\F2A3";
   font-family: 'FluentSystemIcons';
   font-size: 16px;
   margin-left: 8px;
@@ -90,7 +90,7 @@ body {
 
 .dropdown {
   position: absolute;
-  z-index: 9999; 
+  z-index: 9999;
   margin-left: 20px;
   display: none;
   background-color: #f1f1f1;
@@ -99,8 +99,8 @@ body {
   width: fit-content;
   margin-top: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 8px; 
-  white-space: nowrap; 
+  padding: 8px;
+  white-space: nowrap;
 }
 
 .dropdown.show {
@@ -138,12 +138,12 @@ body {
 * Add Flex Icon.
 */
 .addFlexIcon {
-  font-family: 'FluentSystemIcons'; 
+  font-family: 'FluentSystemIcons';
   font-size: 25px;
-  margin-left: 258px;                
+  margin-left: 258px;
   color: rgb(10, 10, 10);
   position: fixed;
-  top: 17%; 
+  top: 17%;
   transform: translateY(-50%);
   transition: transform 0.2s ease;
   cursor: pointer;
@@ -154,9 +154,17 @@ body {
 }
 
 @keyframes shrinkBounce {
-  0% { transform: scale(1) translateY(-50%); }
-  50% { transform: scale(0.8) translateY(-50%); }
-  100% { transform: scale(1) translateY(-50%); }
+  0% {
+    transform: scale(1) translateY(-50%);
+  }
+
+  50% {
+    transform: scale(0.8) translateY(-50%);
+  }
+
+  100% {
+    transform: scale(1) translateY(-50%);
+  }
 }
 
 .dark-mode .addFlexIcon {
@@ -169,17 +177,17 @@ body {
 
 .div-line {
   position: fixed;
-  bottom:60px;
+  bottom: 60px;
   width: 800px;
   height: 1px;
-  background-color: rgb(200,200,200,0.5);
-  left:1px;
+  background-color: rgb(200, 200, 200, 0.5);
+  left: 1px;
 }
 
 .button-Left-row {
-  position: fixed; 
-  bottom: 15px;    
-  left: 25px;     
+  position: fixed;
+  bottom: 15px;
+  left: 25px;
   display: flex;
   gap: 10px;
 }
@@ -190,7 +198,7 @@ body {
   cursor: pointer;
   background-color: rgb(230, 230, 230);
   border: 1px solid rgb(200, 200, 200);
-  color: rgb(10,10,10);
+  color: rgb(10, 10, 10);
   border-radius: 4px;
   transition: background-color 0.3s;
 }
