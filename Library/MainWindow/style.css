@@ -56,8 +56,8 @@ body {
   width: 200px;
   height: 30px;
   margin-left: 20px;
-  background-color: #3498db;
-  color: white;
+  background-color: rgb(230, 230, 230);
+  color: rgb(10, 10, 10);
   display: flex;
   align-items: center;
   justify-content: space-between; 
@@ -161,4 +161,84 @@ body {
 
 .dark-mode .addFlexIcon {
   color: rgb(255, 255, 255);
+}
+
+/* 
+* Bottom Button Content
+*/
+
+.div-line {
+  position: fixed;
+  bottom:60px;
+  width: 800px;
+  height: 1px;
+  background-color: rgb(200,200,200,0.5);
+  left:1px;
+}
+
+.button-Left-row {
+  position: fixed; 
+  bottom: 15px;    
+  left: 25px;     
+  display: flex;
+  gap: 10px;
+}
+
+.button-Left-row button {
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: rgb(230, 230, 230);
+  border: 1px solid rgb(200, 200, 200);
+  color: rgb(10,10,10);
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.button-Left-row button:hover {
+  background-color: rgb(210, 210, 210);
+}
+
+.dark-mode .button-Left-row button {
+  background-color: rgb(13, 17, 23);
+  color: rgb(255, 255, 255);
+  border: 1px solid rgb(60, 60, 60);
+}
+
+.dark-mode .button-Left-row button:hover {
+  background-color: rgb(30, 35, 42);
+}
+
+.button-Right-container {
+  position: fixed;
+  bottom: 15px;
+  right: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.button-Right-container button {
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: #e0e0e0;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  color: #111;
+  transition: background-color 0.3s;
+}
+
+.button-Right-container button:hover {
+  background-color: #cccccc;
+}
+
+.dark-mode .button-Right-container button {
+  background-color: rgb(13, 17, 23);
+  color: rgb(255, 255, 255);
+  border: 1px solid rgb(60, 60, 60);
+}
+
+.dark-mode .button-Right-container button:hover {
+  background-color: rgb(30, 35, 42);
 }
