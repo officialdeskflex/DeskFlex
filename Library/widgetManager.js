@@ -1,17 +1,13 @@
 // widgetManager.js
 // ──────────────────
-const { BrowserWindow, app } = require('electron');
-const fs   = require('fs');
-const path = require('path');
-const ini  = require('ini');
+const { BrowserWindow, app }   = require('electron');
+const fs                      = require('fs');
+const path                    = require('path');
 
-const {
-  substituteVariables,
-  parseActionList
-} = require('./Utils');
-
-const { renderTextWidget }  = require('./TextType');
-const { renderImageWidget } = require('./ImageType');
+const { parseIniWithImports } = require('./IniLoader');
+const { substituteVariables, parseActionList } = require('./Utils');
+const { renderTextWidget }    = require('./TextType');
+const { renderImageWidget }   = require('./ImageType');
 
 module.exports = { loadWidgetsFromIniFolder };
 
@@ -23,9 +19,15 @@ function loadWidgetsFromIniFolder(folder) {
   console.log('▶️ Found INI files:', files);
 
   files.forEach(file => {
-    const fullPath  = path.join(folder, file);
-    const contents  = fs.readFileSync(fullPath, 'utf-8');
-    const sections  = ini.parse(contents);
+    const fullPath = path.join(folder, file);
+    let sections;
+    try {
+      sections = parseIniWithImports(fullPath);
+    } catch (err) {
+      console.error(`Failed to parse ${file}:`, err);
+      return;
+    }
+
     const variables = sections.Variables || {};
     delete sections.Variables;
 
@@ -40,19 +42,19 @@ function loadWidgetsFromIniFolder(folder) {
 
 function createWidgetsWindow(windowName, sections, variables, baseDir) {
   const win = new BrowserWindow({
-    width:  800,
-    height: 600,
-    frame:  false,
+    width:       800,
+    height:      600,
+    frame:       false,
     transparent: true,
     alwaysOnTop: true,
-    resizable: false,
-    hasShadow: false,
-    show: false,
+    resizable:   false,
+    hasShadow:   false,
+    show:        false,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration:  true,
       contextIsolation: false,
-      webSecurity: true,
-      preload: path.join(__dirname, 'widgetActions.js')
+      webSecurity:      true,
+      preload:          path.join(__dirname, 'widgetActions.js')
     }
   });
 
@@ -68,7 +70,6 @@ function createWidgetsWindow(windowName, sections, variables, baseDir) {
     <body>
   `;
 
-  // build each widget & parse *Action lists
   Object.values(sections).forEach(rawCfg => {
     const cfg = {};
     for (const [key, val] of Object.entries(rawCfg)) {
