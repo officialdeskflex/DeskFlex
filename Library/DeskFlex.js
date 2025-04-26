@@ -54,8 +54,8 @@ app.whenReady().then(() => {
       mainWindow = createMainWindow(config);
     }
   });
- // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
- // loadWidgetsFromIniFolder(iniFolder);
+  const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
+  loadWidgetsFromIniFolder(iniFolder);
 });
 
 app.on('window-all-closed', () => {
