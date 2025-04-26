@@ -4,6 +4,7 @@ const { createMainWindow } = require('./createMainWindow');
 const { showStart, getConfigEditorPath, getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging, getFolderStructure } = require('./configFile');
 const { openFileWithEditor } = require('./openConfigFiles');
 const { createTray } = require('./tray');
+const { loadWidgetsFromIniFolder } = require('./widgetManager');
 
 let mainWindow;
 app.isQuiting = false;
@@ -53,6 +54,8 @@ app.whenReady().then(() => {
       mainWindow = createMainWindow(config);
     }
   });
+ // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
+ // loadWidgetsFromIniFolder(iniFolder);
 });
 
 app.on('window-all-closed', () => {
