@@ -4,7 +4,7 @@ const path = require('path');
 function createMainWindow(config) {
   const win = new BrowserWindow({
     width: 800,
-    height: 600,
+    height: 650,
     resizable: false,
     show: false,
     icon: path.join(__dirname, '..', 'assets', 'DeskFlex.png'),
