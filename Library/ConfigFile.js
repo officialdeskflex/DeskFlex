@@ -105,9 +105,13 @@ function getFlexesPath() {
     return getIniValue('DeskFlex', 'FlexesPath');
 }
 
+function showStart() {
+    return parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
+}
+
 function getConfigEditorPath() {
     return getIniValue('DeskFlex', 'ConfigEditor');
 }
 
-module.exports = {getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure };
+module.exports = {showStart,getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure };
 

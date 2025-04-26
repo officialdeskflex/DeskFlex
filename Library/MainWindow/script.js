@@ -60,6 +60,15 @@ document.addEventListener("DOMContentLoaded", () => {
 function openSettings() {
   window.deskflex.openConfigSettings(window.deskflex.settingsFile);
 }
+
+/**
+ * Close the Window
+ */
+const btn = document.getElementById('close-window');
+btn.addEventListener('click', () => {
+  window.deskflex.hideWindow();
+});
+
 /**
  * Animate AddFlex Button
  */
