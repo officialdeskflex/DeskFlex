@@ -349,12 +349,21 @@ body {
   font-size: 18px;
   font-weight: bold;
   color: #fff;
+  width: 200px;               
+  white-space: nowrap;        
+  overflow: hidden;          
+  text-overflow: ellipsis;    
 }
+
 
 .widget {
   font-size: 14px;
   font-weight: normal;
   color: #fff;
+  width: 200px;               
+  white-space: nowrap;        
+  overflow: hidden;          
+  text-overflow: ellipsis;  
 }
 
 .info-item {
