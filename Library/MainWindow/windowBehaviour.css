@@ -4,7 +4,7 @@
 
 .container-positions {
     position: fixed;
-    top: 57%;
+    top: 60%;
     left: 320px;
     max-width: 320px;
     background: rgba(0, 0, 0, 0);
@@ -181,7 +181,7 @@
   */
 .checkbox-container {
     position: fixed;
-    top: 55%;
+    top: 57%;
     left: 630px;
     margin-top: 12px;
 }

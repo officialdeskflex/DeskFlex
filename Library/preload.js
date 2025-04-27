@@ -1,7 +1,7 @@
 const { contextBridge,ipcRenderer } = require('electron');
 const path = require('path');
 const { getDarkMode, getFolderStructure,getActiveFlex,getFlexesPath} = require('./configFile');
-const { getFlexInfo } = require('./ReadInfoSection');
+const { getFlexInfo,hasFlexInfoSection } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
     darkMode: getDarkMode(),
@@ -12,5 +12,5 @@ contextBridge.exposeInMainWorld('deskflex', {
     openConfigSettings: (filePath) => {ipcRenderer.send('open-config-settings', filePath)} ,
     hideWindow: ()=> ipcRenderer.send('hide-window'),
     getFlexInfo: (filePath) => getFlexInfo(filePath),
-
+    hasFlexInfoSection: (filePath) => hasFlexInfoSection(filePath),
 });

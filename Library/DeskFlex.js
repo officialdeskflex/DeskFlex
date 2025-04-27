@@ -20,7 +20,7 @@ const config = {
   folderStructure: getFolderStructure(),
 };
 
-if (config.debugging) {
+/*if (config.debugging) {
   console.log(`Debug Mode is Enabled.`);
   console.log(`Logging is ${config.logging ? 'Enabled' : 'Disabled'}.`);
   console.log(`Dark Mode is ${config.darkMode ? 'Enabled' : 'Disabled'}.`);
@@ -28,9 +28,9 @@ if (config.debugging) {
   console.log('Active Flexes Found:', config.activeFlex);
   console.log('Config Editor Found:', config.configEditor);
   // console.log("Flexes Structure:", JSON.stringify(config.folderStructure, null, 2));
-}
+}*/
 
-console.log(`Flexes Path is: ${config.flexesPath}`);
+//console.log(`Flexes Path is: ${config.flexesPath}`);
 
 /*
  * IPC Commands
@@ -54,7 +54,7 @@ app.whenReady().then(() => {
       mainWindow = createMainWindow(config);
     }
   });
- // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
+  //const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
  // loadWidgetsFromIniFolder(iniFolder);
 });
 

@@ -44,4 +44,30 @@ function getFlexInfo(filePath) {
     return flexInfo;
 }
 
-module.exports = { getFlexInfo };
+/**
+ * Checks if the [FlexInfo] section exists in a .ini file.
+ * @param {string} filePath - Path to the .ini file.
+ * @returns {boolean} - True if [FlexInfo] exists, otherwise false.
+ */
+function hasFlexInfoSection(filePath) {
+    if (!fs.existsSync(filePath)) {
+        return false;
+    }
+    const data = fs.readFileSync(filePath, 'utf-8');
+    const lines = data.split(/\r?\n/);
+
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith(';') || line.startsWith('#')) continue;
+
+        if (line.startsWith('[') && line.endsWith(']')) {
+            const section = line.slice(1, -1).trim().toLowerCase();
+            if (section === 'flexinfo') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+module.exports = { getFlexInfo, hasFlexInfoSection };

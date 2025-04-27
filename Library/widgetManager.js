@@ -12,11 +12,11 @@ const { renderImageWidget }   = require('./ImageType');
 module.exports = { loadWidgetsFromIniFolder };
 
 function loadWidgetsFromIniFolder(folder) {
-  console.log('▶️ Loading widget configs from:', folder);
+  console.log('Loading widget configs from:', folder);
   const files = fs
     .readdirSync(folder)
     .filter(f => f.toLowerCase().endsWith('.ini'));
-  console.log('▶️ Found INI files:', files);
+  console.log(' Found INI files:', files);
 
   files.forEach(file => {
     const fullPath = path.join(folder, file);

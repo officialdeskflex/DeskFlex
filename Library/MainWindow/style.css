@@ -17,12 +17,15 @@ body {
   display: none !important;
 }
 
-/* Disabled state for actions */
 .disabled {
   opacity: 0.5;
-  pointer-events: none; /* Disable clicking */
+  pointer-events: none;
 }
 
+.container-positions.disabled, .checkbox-container.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
 
 .dark-mode {
   background-color: rgb(13, 17, 23);
