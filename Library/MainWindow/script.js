@@ -13,15 +13,24 @@ if (window.deskflex.darkMode) {
 function populateDropdown() {
   const dropdown = document.getElementById("myDropdown");
   dropdown.innerHTML = "";
-  if (Array.isArray(window.deskflex.activeFlex)) {
+
+  if (Array.isArray(window.deskflex.activeFlex) && window.deskflex.activeFlex.length > 0) {
     window.deskflex.activeFlex.forEach(item => {
       const option = document.createElement("a");
       option.href = "#";
       option.textContent = item;
       dropdown.appendChild(option);
     });
+  } else {
+    const noItem = document.createElement("a");
+    noItem.href = "#";
+    noItem.textContent = "No Active Flex";
+    noItem.style.pointerEvents = "none"; 
+    noItem.style.opacity = "0.6";         
+    dropdown.appendChild(noItem);
   }
 }
+
 
 function toggleDropdown() {
   const dropdown = document.getElementById("myDropdown");
@@ -79,15 +88,6 @@ const btn = document.getElementById('close-window');
 btn.addEventListener('click', () => {
   window.deskflex.hideWindow();
 });
-
-/**
- * Animate AddFlex Button
- */
-//console.log(JSON.stringify(window.deskflex.folderStructure, null, 2));
-console.log(window.deskflex.activeFlex);
-console.log("Settings File Found:" + window.deskflex.settingsFile)
-
-
 
 document.querySelectorAll('[data-target]').forEach(box => {
   const menu = document.getElementById(box.dataset.target);
