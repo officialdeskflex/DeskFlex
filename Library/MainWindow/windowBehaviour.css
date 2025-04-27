@@ -205,9 +205,17 @@
     color: rgb(100, 100, 100);
 }
 
-.checkbox-container .check-box::before {
+.checkbox-container .option .check-box::before {
+    /* unchecked box */
     content: "\F292";
-}
+  }
+  
+  /* when you add `.checked` to the .option, switch to the checked glyph */
+  .checkbox-container .option.checked .check-box::before {
+    content: "\F28E";
+    color: rgb(80,230,255);
+  }
+  
 
 .checkbox-container label {
     font-size: 12px;

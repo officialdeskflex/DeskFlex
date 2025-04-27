@@ -1,43 +1,90 @@
 let selectedItem = null;
-let detailsPanel, actionButtons, loadButton, refreshButton, editButton, windowSettings, checkboxContainer, addFlexLink;
+let detailsPanel, actionButtons, loadButton, refreshButton, editButton;
+let windowSettings, checkboxContainer, addFlexLink;
+window.currentFlexSection = '';  // e.g. "Test\Test.ini"
 
 window.addEventListener('DOMContentLoaded', () => {
-  // grab everything
+  // grab elements
   detailsPanel     = document.getElementById('details-panel');
   actionButtons    = document.querySelector('.action-button-container');
-  loadButton       = actionButtons.querySelector('button:nth-child(1)');
+  loadButton       = actionButtons.querySelector('button:first-child');
   refreshButton    = actionButtons.querySelector('button:nth-child(2)');
   editButton       = actionButtons.querySelector('button:nth-child(3)');
   windowSettings   = document.querySelector('.container-positions');
   checkboxContainer= document.querySelector('.checkbox-container');
   addFlexLink      = document.querySelector('.add-flex-info');
 
-  // hide the “Add FlexInfo” link initially
+  // hide the add‐flex link initially
   addFlexLink.classList.add('hidden');
 
-  // build the tree
-  const treeContainer = document.getElementById('folderTree');
-  renderTree(treeContainer, window.deskflex.folderStructure);
-
-  // wire up clicks
+  // build tree + wire clicks
+  renderTree(document.getElementById('folderTree'), window.deskflex.folderStructure);
   initIniClickListener();
 
-  // start with everything off
+  // start fully disabled
   hideDetails();
   disableAll();
+
+  // Wire up Load button
+  loadButton.addEventListener('click', () => {
+    const sec = window.currentFlexSection;
+    if (!sec) return;
+  
+    // 1) reset all options to disabled+unchecked
+    checkboxContainer.querySelectorAll('.option').forEach(opt => {
+      opt.classList.add('disabled');
+      opt.classList.remove('checked');
+    });
+  
+    // 2) your five checkbox getters
+    const checks = [
+      ['Click Through',  window.deskflex.getFlexClickthrough],
+      ['Draggable',      window.deskflex.getFlexDraggable],
+      ['Snap Edges',     window.deskflex.getFlexSnapEdges],
+      ['Keep On Screen', window.deskflex.getFlexKeepOnScreen],
+      ['Save Position',  window.deskflex.getFlexSavePosition],
+      ['Favorite',  window.deskflex.getFlexFavorite],
+    ];
+  
+    checks.forEach(([label, getter]) => {
+      const val = getter(sec);
+      const option = Array.from(checkboxContainer.querySelectorAll('.option'))
+        .find(o => o.querySelector('label').textContent.trim() === label);
+      if (!option) return;
+  
+      // if val is 1 or "1" → enable + checked
+      if (val === 1 || val === '1') {
+        option.classList.remove('disabled');
+        option.classList.add('checked');
+      }
+      // if val is 0 or "0" → enable + unchecked
+      else if (val === 0 || val === '0') {
+        option.classList.remove('disabled');
+        option.classList.remove('checked');
+      }
+      else {
+        option.classList.add('disabled');
+        option.classList.remove('checked');
+      }
+    });    
+  });
 });
 
-/** DISABLE everything (buttons + settings + checkboxes) */
+/** DISABLE all buttons + settings + options */
 function disableAll() {
   [loadButton, refreshButton, editButton].forEach(btn => {
     btn.disabled = true;
     btn.classList.add('disabled');
   });
   windowSettings.classList.add('disabled');
-  checkboxContainer.classList.add('disabled');
+  // disable every option individually
+  checkboxContainer.querySelectorAll('.option').forEach(opt => {
+    opt.classList.add('disabled');
+    opt.querySelector('.check-box').textContent = '';
+  });
 }
 
-/** ENABLE only Load + Edit (keep Refresh + settings + checkboxes disabled) */
+/** ENABLE only Load + Edit (keep everything else off) */
 function enableLoadEdit() {
   [loadButton, editButton].forEach(btn => {
     btn.disabled = false;
@@ -47,12 +94,15 @@ function enableLoadEdit() {
   refreshButton.disabled = true;
   refreshButton.classList.add('disabled');
 
-  // settings & checkboxes remain off
   windowSettings.classList.add('disabled');
-  checkboxContainer.classList.add('disabled');
+  // keep each option off until Load is clicked
+  checkboxContainer.querySelectorAll('.option').forEach(opt => {
+    opt.classList.add('disabled');
+    opt.querySelector('.check-box').textContent = '';
+  });
 }
 
-/** highlight selection & decide enable/disable + Add-FlexInfo logic */
+/** Selection logic */
 function selectItem(item) {
   if (selectedItem) selectedItem.classList.remove('selected');
   item.classList.add('selected');
@@ -60,13 +110,13 @@ function selectItem(item) {
 
   const name = item.querySelector('span:last-child').textContent;
   if (name.toLowerCase().endsWith('.ini')) {
-    const path = getFullPath(item);
-    displayFlexInfo(path);
+    const fullPath = getFullPath(item);
+    displayFlexInfo(fullPath);
     showDetails();
     enableLoadEdit();
 
-    // Show “Add FlexInfo” only if there's NO [FlexInfo] section
-    if (!window.deskflex.hasFlexInfoSection(path)) {
+    // show-add-flex only if no FlexInfo section
+    if (!window.deskflex.hasFlexInfoSection(window.currentFlexSection)) {
       addFlexLink.classList.remove('hidden');
     } else {
       addFlexLink.classList.add('hidden');
@@ -78,16 +128,16 @@ function selectItem(item) {
   }
 }
 
-/** render tree recursively */
+/** Render folder/file tree */
 function renderTree(container, obj, path = '') {
   Object.entries(obj).forEach(([name, subtree]) => {
-    const item = document.createElement('div');
+    const item   = document.createElement('div');
     item.className = 'tree-item';
     const header = document.createElement('div');
     header.className = 'tree-node';
-    const icon = document.createElement('span');
+    const icon   = document.createElement('span');
     icon.className = 'icon';
-    const label = document.createElement('span');
+    const label  = document.createElement('span');
     label.textContent = name;
     header.append(icon, label);
     item.append(header);
@@ -98,8 +148,8 @@ function renderTree(container, obj, path = '') {
       icon.classList.add('folder-icon');
       header.addEventListener('click', e => {
         e.stopPropagation();
-        const open = item.classList.toggle('open');
-        icon.textContent = open ? '\uf42e' : '\ue643';
+        item.classList.toggle('open');
+        icon.textContent = item.classList.contains('open') ? '\uf42e' : '\ue643';
         selectItem(item);
       });
       const children = document.createElement('div');
@@ -118,48 +168,51 @@ function renderTree(container, obj, path = '') {
   });
 }
 
+/** Intercept clicks on .ini leaves */
 function initIniClickListener() {
   document.getElementById('folderTree').addEventListener('click', e => {
     const header = e.target.closest('.tree-node');
     if (!header) return;
     const name = header.querySelector('span:last-child').textContent;
     if (!name.toLowerCase().endsWith('.ini')) return;
-    // selection logic in selectItem() will handle everything else
+    // selectItem handles everything else
   }, true);
 }
 
-function hideDetails()   { detailsPanel.classList.add('hidden'); }
-function showDetails()   { detailsPanel.classList.remove('hidden'); }
+function hideDetails() { detailsPanel.classList.add('hidden'); }
+function showDetails() { detailsPanel.classList.remove('hidden'); }
 
-/** fills in flex info, main-ini & widget fields */
+/** Populates the details panel and sets currentFlexSection */
 function displayFlexInfo(filePath) {
   const flexInfo = window.deskflex.getFlexInfo(filePath) || {};
-  document.getElementById('name').textContent        = flexInfo.Name        || '-';
-  document.getElementById('author').textContent      = flexInfo.Author      || '-';
-  document.getElementById('version').textContent     = flexInfo.Version     || '-';
-  document.getElementById('license').textContent     = flexInfo.License     || '-';
-  document.getElementById('information').textContent = flexInfo.Information || 'No additional information.';
+  document.getElementById('name').textContent        = flexInfo.Name        || 'N/A';
+  document.getElementById('author').textContent      = flexInfo.Author      || 'N/A';
+  document.getElementById('version').textContent     = flexInfo.Version     || 'N/A';
+  document.getElementById('license').textContent     = flexInfo.License     || 'N/A';
+  document.getElementById('information').textContent = flexInfo.Information || 'No additional info.';
 
-  // split path
+  // build the relative flexSection = "Test\Test.ini"
   const parts    = filePath.split('\\');
   const fileName = parts.pop();
-  const flexesIx = parts.indexOf('Flexes');
-  const widgetArr = flexesIx >= 0
-    ? parts.slice(flexesIx + 1)
-    : parts;
-    
+  const idxFlex  = parts.indexOf('Flexes');
+  const widgetArr= idxFlex >= 0 ? parts.slice(idxFlex + 1) : parts;
+  window.currentFlexSection = widgetArr.concat(fileName).join('\\');
+
+  // update UI
   document.getElementById('main-ini').textContent = fileName;
   document.getElementById('widget').textContent   = widgetArr.join('\\') || '-';
 }
 
+/** reconstruct full absolute path */
 function getFullPath(item) {
   const segs = [];
   let node = item;
   while (node) {
     segs.unshift(node.querySelector('span:last-child').textContent);
-    const parent = node.closest('.children')?.parentElement;
-    node = parent?.querySelector(':scope > .tree-node');
+    node = node.closest('.children')?.parentElement
+           .querySelector(':scope > .tree-node');
   }
-  const base = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
+  const base = (window.deskflex.flexpath || window.deskflex.flexPath || '')
+               .replace(/[\/\\]+$/, '');
   return `${base}\\${segs.join('\\')}`;
 }

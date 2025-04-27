@@ -9,7 +9,7 @@ const path = require('path');
  */
 function getIniValue(sectionName, keyName) {
     const filePath = path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini");
-    
+
     if (!fs.existsSync(filePath)) return null;
 
     const data = fs.readFileSync(filePath, 'utf-8');
@@ -26,7 +26,7 @@ function getIniValue(sectionName, keyName) {
             if (!result[currentSection]) result[currentSection] = {};
         } else if (currentSection) {
             const [key, ...rest] = line.split('=');
-            const value = rest.join('=').trim(); 
+            const value = rest.join('=').trim();
             if (key && value !== undefined) {
                 result[currentSection][key.trim()] = value;
             }
@@ -88,30 +88,31 @@ function getFolderStructure(folderPath = getFlexesPath()) {
     return result;
 }
 
+/**
+ * DeskFlex Section Information.
+ */
+const getLogging = () => parseInt(getIniValue('DeskFlex', 'Logging')) || 0;
+const getDebugging = () => parseInt(getIniValue('DeskFlex', 'Debugging')) || 0;
+const getDarkMode = () => parseInt(getIniValue('DeskFlex', 'DarkMode')) || 0;
+const getFlexesPath = () => getIniValue('DeskFlex', 'FlexesPath');
+const showStart = () => parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
+const getConfigEditorPath = () => getIniValue('DeskFlex', 'ConfigEditor');
+/**
+ *  Flex Section Information Form Settings File.
+ */
 
-function getLogging() {
-    return parseInt(getIniValue('DeskFlex', 'Logging')) || 0;
-}
+function getFlexStatus(flexSection) { return getIniValue(flexSection, 'Active'); }
+function getFlexWindowX(flexSection) { return getIniValue(flexSection, 'WindowX'); }
+function getFlexWindowY(flexSection) { return getIniValue(flexSection, 'WindowY'); }
+function getFlexPosition(flexSection) { return getIniValue(flexSection, 'Position'); }
+function getFlexClickthrough(flexSection) { return getIniValue(flexSection, 'Clickthrough'); }
+function getFlexDraggable(flexSection) { return getIniValue(flexSection, 'Draggable'); }
+function getFlexSnapEdges(flexSection) { return getIniValue(flexSection, 'SnapEdges'); }
+function getFlexKeepOnScreen(flexSection) { return getIniValue(flexSection, 'KeepOnScreen'); }
+function getFlexOnHover(flexSection) { return getIniValue(flexSection, 'OnHover'); }
+function getFlexTransparency(flexSection) { return getIniValue(flexSection, 'Transparency'); }
+function getFlexFavorite(flexSection) { return getIniValue(flexSection, 'Favorite'); }
+function getFlexSavePosition(flexSection) { return getIniValue(flexSection, 'SavePosition'); }
+function getFlexLoadOrder(flexSection) { return getIniValue(flexSection, 'LoadOrder'); }
 
-function getDebugging() {
-    return parseInt(getIniValue('DeskFlex', 'Debugging')) || 0;
-}
-
-function getDarkMode() {
-    return parseInt(getIniValue('DeskFlex', 'DarkMode')) || 0;
-}
-
-function getFlexesPath() {
-    return getIniValue('DeskFlex', 'FlexesPath');
-}
-
-function showStart() {
-    return parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
-}
-
-function getConfigEditorPath() {
-    return getIniValue('DeskFlex', 'ConfigEditor');
-}
-
-module.exports = {showStart,getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure };
-
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency,getFlexFavorite,getFlexSavePosition,getFlexLoadOrder};
