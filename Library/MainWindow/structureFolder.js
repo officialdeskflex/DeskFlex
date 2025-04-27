@@ -1,10 +1,38 @@
 let selectedItem = null;
 const detailsPanel = document.getElementById('details-panel');
+const actionButtons = document.querySelector('.action-button-container');
+const windowSettings = document.querySelector('.container-positions');
+const checkboxContainer = document.querySelector('.checkbox-container');
 
 function selectItem(item) {
   if (selectedItem) selectedItem.classList.remove('selected');
   item.classList.add('selected');
   selectedItem = item;
+
+  // Check if the selected item is a .ini file
+  const isIniFile = item.querySelector('span:last-child').textContent.toLowerCase().endsWith('.ini');
+  
+  // Enable/disable buttons and settings based on selection
+  if (isIniFile) {
+    enableActions();
+    displayFlexInfo(item.querySelector('span:last-child').textContent);
+  } else {
+    disableActions();
+  }
+}
+
+function enableActions() {
+  actionButtons.classList.remove('disabled');
+  windowSettings.classList.remove('disabled');
+  checkboxContainer.classList.remove('disabled');
+  showDetails(); // Make sure to show the details panel when a .ini file is selected
+}
+
+function disableActions() {
+  actionButtons.classList.add('disabled');
+  windowSettings.classList.add('disabled');
+  checkboxContainer.classList.add('disabled');
+  hideDetails(); // Hide details when no .ini file is selected
 }
 
 function renderTree(container, obj, path = '') {
@@ -90,7 +118,6 @@ function initIniClickListener() {
     document.getElementById('widget').textContent = segments.slice(0, -1).join('\\');
     displayFlexInfo(fullPath);
     showDetails();
-
   }, true);
 }
 
@@ -100,5 +127,5 @@ window.addEventListener('DOMContentLoaded', () => {
   renderTree(treeContainer, window.deskflex.folderStructure);
   initIniClickListener();
   hideDetails();
+  disableActions(); // Initially, disable all actions
 });
-
