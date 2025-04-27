@@ -23,21 +23,31 @@ function populateDropdown() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const openBtn = document.getElementById("toggle-Dropdown");
-  if (openBtn) {
-    openBtn.addEventListener("click", toggleDropdown);
-  }
-});
-
 function toggleDropdown() {
   const dropdown = document.getElementById("myDropdown");
   const rectangle = document.querySelector('.rectangleActiveList');
   dropdown.classList.toggle("show");
   rectangle.classList.toggle("open");
 }
-window.toggleDropdown = toggleDropdown;
-window.addEventListener('DOMContentLoaded', populateDropdown);
+
+function closeDropdownOnClickOutside(event) {
+  const dropdown = document.getElementById("myDropdown");
+  const rectangle = document.querySelector('.rectangleActiveList');
+  if (!rectangle.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.classList.remove("show");
+    rectangle.classList.remove("open");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn = document.getElementById("toggle-Dropdown");
+  if (openBtn) {
+    openBtn.addEventListener("click", toggleDropdown);
+  }
+  window.addEventListener('click', closeDropdownOnClickOutside);
+  window.addEventListener('DOMContentLoaded', populateDropdown);
+});
+
 /**
  * Animate AddFlex Button
  */
@@ -64,6 +74,7 @@ function openSettings() {
 /**
  * Close the Window
  */
+
 const btn = document.getElementById('close-window');
 btn.addEventListener('click', () => {
   window.deskflex.hideWindow();
@@ -77,15 +88,16 @@ console.log(window.deskflex.activeFlex);
 console.log("Settings File Found:" + window.deskflex.settingsFile)
 
 
-document.getElementById('main-ini').textContent = 'Main.ini';
-document.getElementById('widget').textContent = 'Widget';
-/*
-document.getElementById('name').textContent = 'My App';
-document.getElementById('version').textContent = '1.0.0';
-document.getElementById('license').textContent = 'MIT';
-document.getElementById('information').textContent = 'This is a sample application.';*/
 
-
-  const filePath = "C:\\Users\\nstec\\AppData\\Roaming\\DeskFlex\\DeskFlex.ini"
-  const flexInfo = window.deskflex.getFlexInfo(filePath);
-console.log(flexInfo)
+document.querySelectorAll('[data-target]').forEach(box => {
+  const menu = document.getElementById(box.dataset.target);
+  box.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = menu.classList.toggle('show');
+    box.classList.toggle('open', open);
+  });
+  document.addEventListener('click', () => {
+    menu.classList.remove('show');
+    box.classList.remove('open');
+  });
+});
