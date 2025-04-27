@@ -1,4 +1,3 @@
-// tray.js
 const { Tray, Menu, app } = require('electron');
 const path = require('path');
 
@@ -8,7 +7,6 @@ function createTray(win) {
   tray = new Tray(path.join(__dirname, '..', 'assets', 'DeskFlex.png'));
   tray.setToolTip('DeskFlex');
 
-  // Context menu (right-click)
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Manage',
@@ -27,7 +25,6 @@ function createTray(win) {
   ]);
   tray.setContextMenu(contextMenu);
 
-  // Left-click toggles show/hide
   tray.on('click', () => {
     if (win.isVisible()) {
       win.hide();

@@ -75,3 +75,17 @@ btn.addEventListener('click', () => {
 //console.log(JSON.stringify(window.deskflex.folderStructure, null, 2));
 console.log(window.deskflex.activeFlex);
 console.log("Settings File Found:" + window.deskflex.settingsFile)
+
+
+document.getElementById('main-ini').textContent = 'Main.ini';
+document.getElementById('widget').textContent = 'Widget';
+/*
+document.getElementById('name').textContent = 'My App';
+document.getElementById('version').textContent = '1.0.0';
+document.getElementById('license').textContent = 'MIT';
+document.getElementById('information').textContent = 'This is a sample application.';*/
+
+
+  const filePath = "C:\\Users\\nstec\\AppData\\Roaming\\DeskFlex\\DeskFlex.ini"
+  const flexInfo = window.deskflex.getFlexInfo(filePath);
+console.log(flexInfo)

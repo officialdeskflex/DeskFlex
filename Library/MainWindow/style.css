@@ -13,6 +13,10 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .dark-mode {
   background-color: rgb(13, 17, 23);
   color: rgb(255, 255, 255);
@@ -180,13 +184,14 @@ body {
   bottom: 60px;
   width: 800px;
   height: 1px;
-  background-color: rgb(200,200,200);
+  background-color: rgb(200, 200, 200);
   left: 1px;
 }
 
 .dark-mode .div-line {
   background-color: rgb(60, 60, 60);
 }
+
 .button-Left-row {
   position: fixed;
   bottom: 15px;
@@ -253,6 +258,7 @@ body {
 .dark-mode .button-Right-container button:hover {
   background-color: rgb(30, 35, 42);
 }
+
 /* 
 * Create Package Button
 */
@@ -261,7 +267,7 @@ body {
   position: fixed;
   bottom: 68px;
   left: 25px;
-  width:265px;
+  width: 265px;
   height: 30px;
   font-size: 16px;
   background-color: rgb(230, 230, 230);
@@ -277,6 +283,7 @@ body {
   color: rgb(255, 255, 255);
   border: 1px solid rgb(60, 60, 60);
 }
+
 .create-package-btn:hover {
   background-color: #cccccc;
 }
@@ -296,7 +303,9 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  z-index: 99999;
 }
+
 .action-button-container button {
   width: 70px;
   height: 25px;
@@ -309,15 +318,92 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.dark-mode .action-button-container button{
+.dark-mode .action-button-container button {
   background-color: rgb(13, 17, 23);
   color: rgb(255, 255, 255);
   border: 1px solid rgb(60, 60, 60);
 }
+
 .action-button-container button:hover {
   background-color: #cccccc;
 }
 
 .dark-mode .action-button-container button:hover {
   background-color: rgb(30, 35, 42);
+}
+
+/*
+* Meta Information
+*/
+.container {
+  position: fixed;
+  left: 320px;
+  top: 15%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: Arial, sans-serif;
+}
+
+.main-ini {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.widget {
+  font-size: 14px;
+  font-weight: normal;
+  color: #fff;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.info-item label {
+  font-weight: normal;
+  width: 90px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.info-item span.value {
+  display: block;
+  max-width: 350px;
+  font-weight: normal;
+  font-size: 12px;
+  color: #fff;
+  overflow: hidden;
+  line-height: 1.2em;
+  word-break: break-word;
+}
+
+.info-item span.value:not(#information) {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#information {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  max-height: calc(1.2em * 5);
+  overflow: hidden;
+}
+
+.div-line-Info {
+  position: fixed;
+  top: 52%;
+  width: 450px;
+  height: 1px;
+  background-color: rgb(200, 200, 200);
+  left: 320px;
+}
+
+.dark-mode .div-line-Info {
+  background-color: rgb(60, 60, 60);
 }

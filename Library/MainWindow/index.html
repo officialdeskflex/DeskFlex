@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Manage DeskFlex</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="structureFolder.css">
@@ -32,12 +33,39 @@
     <button>Help</button>
     <button id="close-window">Close</button>
   </div>
-  
+  <!-- Action Button Content -->
   <div class="action-button-container">
     <button>Load</button>
     <button>Refresh</button>
     <button>Edit</button>
   </div>
+  <!-- Meta Content Content -->
+  <div id="details-panel" class="container">
+    <div id="main-ini" class="main-ini">-</div>
+    <div id="widget" class="widget">-</div>
+
+    <div class="info-item">
+      <label>Name:</label>
+      <span id="name" class="value">-</span>
+    </div>
+    <div class="info-item">
+      <label>Author:</label>
+      <span id="author" class="value">-</span>
+    </div>
+    <div class="info-item">
+      <label>Version:</label>
+      <span id="version" class="value">-</span>
+    </div>
+    <div class="info-item">
+      <label>License:</label>
+      <span id="license" class="value">-</span>
+    </div>
+    <div class="info-item">
+      <label>Information:</label>
+      <span id="information" class="value">-</span>
+    </div>
+  </div>
+  <div class="div-line-Info"></div>
   <!-- Scripts -->
   <script src="script.js"></script>
   <script src="structureFolder.js"></script>
