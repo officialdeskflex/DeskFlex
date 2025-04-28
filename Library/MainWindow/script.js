@@ -89,15 +89,26 @@ btn.addEventListener('click', () => {
   window.deskflex.hideWindow();
 });
 
+/**
+ * Open the DropDown Options
+ */
 document.querySelectorAll('[data-target]').forEach(box => {
   const menu = document.getElementById(box.dataset.target);
   box.addEventListener('click', e => {
     e.stopPropagation();
-    const open = menu.classList.toggle('show');
-    box.classList.toggle('open', open);
-  });
-  document.addEventListener('click', () => {
-    menu.classList.remove('show');
-    box.classList.remove('open');
+    const isOpen = menu.classList.toggle('show');
+    box.classList.toggle('open', isOpen);
+    if (isOpen) {
+      requestAnimationFrame(() => {
+        const rect = menu.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight) {
+          menu.classList.add('dropup');
+        } else {
+          menu.classList.remove('dropup');
+        }
+      });
+    } else {
+      menu.classList.remove('dropup');
+    }
   });
 });

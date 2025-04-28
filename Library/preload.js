@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const { getDarkMode, getFolderStructure, getActiveFlex, getFlexesPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition } = require('./configFile');
+const { getDarkMode, getFolderStructure, getActiveFlex, getFlexesPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition ,getFlexLoadOrder} = require('./configFile');
 const { getFlexInfo, hasFlexInfoSection } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
