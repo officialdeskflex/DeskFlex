@@ -72,13 +72,11 @@ icon.addEventListener('click', () => {
 document.addEventListener("DOMContentLoaded", () => {
   const openBtn = document.getElementById("open-settings");
   if (openBtn) {
-    openBtn.addEventListener("click", openSettings);
+    openBtn.addEventListener("click", () => {
+      window.deskflex.openConfigSettings(window.deskflex.settingsFile);
+    });
   }
 });
-
-function openSettings() {
-  window.deskflex.openConfigSettings(window.deskflex.settingsFile);
-}
 
 /**
  * Close the Window

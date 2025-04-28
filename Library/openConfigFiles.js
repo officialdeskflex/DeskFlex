@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { execFile } = require('child_process');
-const {getConfigEditorPath} = require('./configFile');
+const {getConfigEditorPath} = require('./ConfigFile');
 
 /**
  * Opens a specified file using the given editor application.

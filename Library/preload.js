@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const { getDarkMode, getFolderStructure, getActiveFlex, getFlexesPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition ,getFlexLoadOrder} = require('./configFile');
-const { getFlexInfo, hasFlexInfoSection } = require('./ReadInfoSection');
+const { getDarkMode, getFolderStructure, getActiveFlex, getFlexesPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition ,getFlexLoadOrder,setActiveValue} = require('./ConfigFile');
+const { getFlexInfo, hasFlexInfoSection, } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
     darkMode: getDarkMode(),
@@ -13,7 +13,8 @@ contextBridge.exposeInMainWorld('deskflex', {
     hideWindow: () => ipcRenderer.send('hide-window'),
     getFlexInfo: (filePath) => getFlexInfo(filePath),
     hasFlexInfoSection: (filePath) => hasFlexInfoSection(filePath),
-
+    setActiveValue: (sectionName, value) => setActiveValue(sectionName, value),
+    
     /**
      *  Flex Section Information Form Settings File
      */
@@ -31,13 +32,6 @@ contextBridge.exposeInMainWorld('deskflex', {
     getFlexSavePosition: (flexSection) => getFlexSavePosition(flexSection),
     getFlexLoadOrder: (flexSection) => getFlexLoadOrder(flexSection),
 
-    loadWidget: (section) => {
-        // section is e.g. "Test\Test.ini"
-        // re-construct full path if needed, or pass section directly:
-        return ipcRenderer.invoke('load-widget', section);
-      },
-    
-      unloadWidget: (section) => {
-        return ipcRenderer.invoke('unload-widget', section);
-      }
+    loadWidget: (section) => {return ipcRenderer.invoke('load-widget', section);},
+    unloadWidget: (section) => {return ipcRenderer.invoke('unload-widget', section);}
 });

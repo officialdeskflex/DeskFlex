@@ -89,14 +89,74 @@ function getFolderStructure(folderPath = getFlexesPath()) {
 }
 
 /**
+ * Updates a value in a specific section of the INI file.
+ * If the section or key does not exist, they will be created.
+ * @param {string} sectionName - The section to update.
+ * @param {string} keyName - The key to update.
+ * @param {string} value - The new value to set.
+ */
+function setIniValue(sectionName, keyName, value) {
+    const filePath = path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini");
+
+    if (!fs.existsSync(filePath)) return false;
+
+    const data = fs.readFileSync(filePath, 'utf-8');
+    const lines = data.split('\n');
+    let output = [];
+    let currentSection = null;
+    let sectionFound = false;
+    let keyUpdated = false;
+
+    for (let line of lines) {
+        let trimmed = line.trim();
+
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            if (currentSection === sectionName && !keyUpdated) {
+                output.push(`${keyName}=${value}`);
+                keyUpdated = true;
+            }
+            currentSection = trimmed.slice(1, -1).trim();
+            output.push(line);
+            sectionFound = sectionFound || (currentSection === sectionName);
+        } else if (currentSection === sectionName && trimmed.startsWith(keyName + '=')) {
+            output.push(`${keyName}=${value}`);
+            keyUpdated = true;
+        } else {
+            output.push(line);
+        }
+    }
+
+    if (!sectionFound) {
+        output.push('');
+        output.push(`[${sectionName}]`);
+        output.push(`${keyName}=${value}`);
+    }
+    else if (!keyUpdated) {
+        let indexToInsert = output.findIndex(line => line.trim() === `[${sectionName}]`);
+        while (indexToInsert + 1 < output.length && !output[indexToInsert + 1].startsWith('[')) {
+            indexToInsert++;
+        }
+        output.splice(indexToInsert + 1, 0, `${keyName}=${value}`);
+    }
+
+    fs.writeFileSync(filePath, output.join('\n'), 'utf-8');
+    return true;
+}
+
+const setActiveValue = (sectionName, value) => setIniValue(sectionName, 'Active', value);
+
+
+/**
  * DeskFlex Section Information.
  */
+
 const getLogging = () => parseInt(getIniValue('DeskFlex', 'Logging')) || 0;
 const getDebugging = () => parseInt(getIniValue('DeskFlex', 'Debugging')) || 0;
 const getDarkMode = () => parseInt(getIniValue('DeskFlex', 'DarkMode')) || 0;
 const getFlexesPath = () => getIniValue('DeskFlex', 'FlexesPath');
 const showStart = () => parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
 const getConfigEditorPath = () => getIniValue('DeskFlex', 'ConfigEditor');
+
 /**
  *  Flex Section Information Form Settings File.
  */
@@ -115,4 +175,4 @@ function getFlexFavorite(flexSection) { return getIniValue(flexSection, 'Favorit
 function getFlexSavePosition(flexSection) { return getIniValue(flexSection, 'SavePosition'); }
 function getFlexLoadOrder(flexSection) { return getIniValue(flexSection, 'LoadOrder'); }
 
-module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency,getFlexFavorite,getFlexSavePosition,getFlexLoadOrder};
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition, getFlexLoadOrder, setActiveValue };
