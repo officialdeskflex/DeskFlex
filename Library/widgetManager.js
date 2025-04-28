@@ -1,43 +1,48 @@
-// widgetManager.js
-// ──────────────────
-const { BrowserWindow, app }   = require('electron');
-const fs                      = require('fs');
-const path                    = require('path');
-
+const { BrowserWindow, app } = require('electron');
+const path = require('path');
 const { parseIniWithImports } = require('./IniLoader');
 const { substituteVariables, parseActionList } = require('./Utils');
-const { renderTextWidget }    = require('./TextType');
-const { renderImageWidget }   = require('./ImageType');
+const { renderTextWidget } = require('./TextType');
+const { renderImageWidget } = require('./ImageType');
 
-module.exports = { loadWidgetsFromIniFolder };
+const widgetWindows = new Map();
 
-function loadWidgetsFromIniFolder(folder) {
-  console.log('Loading widget configs from:', folder);
-  const files = fs
-    .readdirSync(folder)
-    .filter(f => f.toLowerCase().endsWith('.ini'));
-  console.log(' Found INI files:', files);
+module.exports = { loadWidgetsFromIniFile, unloadWidgetsBySection };
 
-  files.forEach(file => {
-    const fullPath = path.join(folder, file);
-    let sections;
-    try {
-      sections = parseIniWithImports(fullPath);
-    } catch (err) {
-      console.error(`Failed to parse ${file}:`, err);
-      return;
-    }
+function loadWidgetsFromIniFile(filePath) {
+  console.log('Loading widget config from:', filePath);
 
-    const variables = sections.Variables || {};
-    delete sections.Variables;
+  let sections;
+  try {
+    sections = parseIniWithImports(filePath);
+  } catch (err) {
+    console.error(`Failed to parse ${path.basename(filePath)}:`, err);
+    return;
+  }
 
-    createWidgetsWindow(
-      path.basename(file, '.ini'),
-      sections,
-      variables,
-      folder
-    );
-  });
+  const variables = sections.Variables || {};
+  delete sections.Variables;
+
+  // Use the file base name (without .ini) as the window key
+  const windowName = path.basename(filePath, '.ini');
+  const baseDir    = path.dirname(filePath);
+
+  // Create the BrowserWindow for this widget
+  const win = createWidgetsWindow(windowName, sections, variables, baseDir);
+
+  // Store it in the registry
+  widgetWindows.set(windowName, win);
+
+  return win;
+}
+
+function unloadWidgetsBySection(sectionName) {
+  const win = widgetWindows.get(sectionName);
+  if (win) {
+    app.isQuiting = true;
+    win.close();
+    widgetWindows.delete(sectionName);
+  }
 }
 
 function createWidgetsWindow(windowName, sections, variables, baseDir) {

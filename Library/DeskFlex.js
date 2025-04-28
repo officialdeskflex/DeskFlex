@@ -4,7 +4,7 @@ const { createMainWindow } = require('./CreateMainWindow');
 const { showStart, getConfigEditorPath, getLogging, getDarkMode, getFlexesPath, getActiveFlex, getDebugging, getFolderStructure } = require('./configFile');
 const { openFileWithEditor } = require('./OpenConfigFiles');
 const { createTray } = require('./TrayIcon');
-const { loadWidgetsFromIniFolder } = require('./WidgetManager');
+const { loadWidgetsFromIniFile , unloadWidgetsBySection} = require('./WidgetManager');
 
 let mainWindow;
 app.isQuiting = false;
@@ -45,6 +45,8 @@ ipcMain.on('hide-window', () => {
   }
 });
 
+
+
 app.whenReady().then(() => {
   mainWindow = createMainWindow(config);
   createTray(mainWindow);
@@ -54,12 +56,36 @@ app.whenReady().then(() => {
       mainWindow = createMainWindow(config);
     }
   });
-  //const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
+ // const iniFilePath = 'C:\\Users\\nstec\\OneDrive\\Documents\\DeskFlex\\Flexes\\Test\\Test.ini';
+ // loadWidgetsFromIniFile(iniFilePath);
+ // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
  // loadWidgetsFromIniFolder(iniFolder);
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+ipcMain.handle('load-widget', async (_event, section) => {
+  try {
+    const fullPath = path.join(config.flexesPath, section);
+    loadWidgetsFromIniFile(fullPath);
+    return { success: true };
+  } catch (err) {
+    console.error('Error loading widget:', err);
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle('unload-widget', async (_event, section) => {
+  try {
+    const sectionName = path.basename(section, '.ini');
+    unloadWidgetsBySection(sectionName);
+    return { success: true };
+  } catch (err) {
+    console.error('Error unloading widget:', err);
+    return { success: false, message: err.message };
   }
 });

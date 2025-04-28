@@ -94,10 +94,12 @@ btn.addEventListener('click', () => {
  */
 document.querySelectorAll('[data-target]').forEach(box => {
   const menu = document.getElementById(box.dataset.target);
+
   box.addEventListener('click', e => {
-    e.stopPropagation();
+    e.stopPropagation(); 
     const isOpen = menu.classList.toggle('show');
     box.classList.toggle('open', isOpen);
+
     if (isOpen) {
       requestAnimationFrame(() => {
         const rect = menu.getBoundingClientRect();
@@ -108,6 +110,14 @@ document.querySelectorAll('[data-target]').forEach(box => {
         }
       });
     } else {
+      menu.classList.remove('dropup');
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (!box.contains(e.target) && menu.classList.contains('show')) {
+      menu.classList.remove('show');
+      box.classList.remove('open');
       menu.classList.remove('dropup');
     }
   });

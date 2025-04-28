@@ -30,4 +30,14 @@ contextBridge.exposeInMainWorld('deskflex', {
     getFlexFavorite: (flexSection) => getFlexFavorite(flexSection),
     getFlexSavePosition: (flexSection) => getFlexSavePosition(flexSection),
     getFlexLoadOrder: (flexSection) => getFlexLoadOrder(flexSection),
+
+    loadWidget: (section) => {
+        // section is e.g. "Test\Test.ini"
+        // re-construct full path if needed, or pass section directly:
+        return ipcRenderer.invoke('load-widget', section);
+      },
+    
+      unloadWidget: (section) => {
+        return ipcRenderer.invoke('unload-widget', section);
+      }
 });

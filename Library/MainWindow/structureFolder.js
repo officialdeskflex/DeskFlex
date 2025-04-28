@@ -1,10 +1,9 @@
 let selectedItem = null;
 let detailsPanel, actionButtons, loadButton, refreshButton, editButton;
 let windowSettings, checkboxContainer, addFlexLink;
-window.currentFlexSection = '';  // e.g. "Test\Test.ini"
+window.currentFlexSection = '';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // grab elements
   detailsPanel     = document.getElementById('details-panel');
   actionButtons    = document.querySelector('.action-button-container');
   loadButton       = actionButtons.querySelector('button:first-child');
@@ -14,28 +13,40 @@ window.addEventListener('DOMContentLoaded', () => {
   checkboxContainer= document.querySelector('.checkbox-container');
   addFlexLink      = document.querySelector('.add-flex-info');
 
-  // hide the add‐flex link initially
   addFlexLink.classList.add('hidden');
 
-  // build tree + wire clicks
   renderTree(document.getElementById('folderTree'), window.deskflex.folderStructure);
   initIniClickListener();
 
-  // start fully disabled
   hideDetails();
   disableAll();
 
-  loadButton.addEventListener('click', () => {
+  loadButton.addEventListener('click', async () => {
     const sec = window.currentFlexSection;
     if (!sec) return;
-  
-    // 1) reset all options to disabled+unchecked
+    const isLoadMode = loadButton.textContent.trim().toLowerCase() === 'load';
+
+  try {
+    if (isLoadMode) {
+      await window.deskflex.loadWidget(sec);
+      loadButton.textContent = 'Unload';
+      refreshButton.disabled = false;
+      refreshButton.classList.remove('disabled');
+    } else {
+      await window.deskflex.unloadWidget(sec);
+      loadButton.textContent = 'Load';
+      refreshButton.disabled = true;
+      refreshButton.classList.add('disabled');
+    }
+  } catch (err) {
+    console.error(`Failed to ${isLoadMode ? 'load' : 'unload'} widget:`, err);
+    return;
+  }
     checkboxContainer.querySelectorAll('.option').forEach(opt => {
       opt.classList.add('disabled');
       opt.classList.remove('checked');
     });
   
-    // 2) checkbox getters (your existing code)
     const checks = [
       ['Click Through',  window.deskflex.getFlexClickthrough],
       ['Draggable',      window.deskflex.getFlexDraggable],
@@ -64,22 +75,18 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   
-    // 3) Enable the positions & inputs panel
     windowSettings.classList.remove('disabled');
     document.querySelectorAll('.coords-input, .load-order-input')
             .forEach(i => i.disabled = false);
   
-    // 4) Populate Coordinates
     const x = window.deskflex.getFlexWindowX(sec);
     const y = window.deskflex.getFlexWindowY(sec);
     document.querySelector('.coords-input-x').value = x != null ? x : '';
     document.querySelector('.coords-input-y').value = y != null ? y : '';
   
-    // 5) Populate Load Order
     const loadOrder = window.deskflex.getFlexLoadOrder(sec);
     document.querySelector('.load-order-input').value = loadOrder != null ? loadOrder : '';
   
-    // 6) Populate Position
     const posVal = String(window.deskflex.getFlexPosition(sec));
     const posMap = {
       '2': 'Stay topmost',
@@ -90,13 +97,10 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     setDropdown('position', posMap[posVal]);
   
-    // 7) Populate Transparency
     const transVal = window.deskflex.getFlexTransparency(sec);
-    // normalize to integer 0–100
     const pct = parseInt(transVal, 10);
     setDropdown('transparency', pct >= 0 && pct <= 100 ? `${pct}%` : 'Select…');
   
-    // 8) Populate On-hover
     const hoverVal = String(window.deskflex.getFlexOnHover(sec));
     const hoverMap = {
       '0': 'Do Nothing',
@@ -106,7 +110,6 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     setDropdown('hover', hoverMap[hoverVal]);
   
-    // helper to set box text + mark the matching <a> in the menu
     function setDropdown(type, label) {
       const box  = document.querySelector(`.${type}-box`);
       const menu = document.getElementById(
@@ -115,7 +118,6 @@ window.addEventListener('DOMContentLoaded', () => {
       :                            'hoverMenu'
       );
     
-      // find the very first child text node and replace its text
       for (let node of box.childNodes) {
         if (node.nodeType === Node.TEXT_NODE) {
           node.textContent = label || 'Select…';
@@ -123,7 +125,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
     
-      // re-select the matching <a>
       Array.from(menu.querySelectorAll('a')).forEach(a => {
         a.classList.toggle('selected', a.textContent.trim() === label);
       });
@@ -133,39 +134,33 @@ window.addEventListener('DOMContentLoaded', () => {
   
 });
 
-/** DISABLE all buttons + settings + options */
 function disableAll() {
   [loadButton, refreshButton, editButton].forEach(btn => {
     btn.disabled = true;
     btn.classList.add('disabled');
   });
   windowSettings.classList.add('disabled');
-  // disable every option individually
   checkboxContainer.querySelectorAll('.option').forEach(opt => {
     opt.classList.add('disabled');
     opt.querySelector('.check-box').textContent = '';
   });
 }
 
-/** ENABLE only Load + Edit (keep everything else off) */
 function enableLoadEdit() {
   [loadButton, editButton].forEach(btn => {
     btn.disabled = false;
     btn.classList.remove('disabled');
   });
-  // Refresh stays off
   refreshButton.disabled = true;
   refreshButton.classList.add('disabled');
 
   windowSettings.classList.add('disabled');
-  // keep each option off until Load is clicked
   checkboxContainer.querySelectorAll('.option').forEach(opt => {
     opt.classList.add('disabled');
     opt.querySelector('.check-box').textContent = '';
   });
 }
 
-/** Selection logic */
 function selectItem(item) {
   if (selectedItem) selectedItem.classList.remove('selected');
   item.classList.add('selected');
@@ -178,7 +173,6 @@ function selectItem(item) {
     showDetails();
     enableLoadEdit();
 
-    // show-add-flex only if no FlexInfo section
     if (!window.deskflex.hasFlexInfoSection(window.currentFlexSection)) {
       addFlexLink.classList.remove('hidden');
     } else {
@@ -191,7 +185,6 @@ function selectItem(item) {
   }
 }
 
-/** Render folder/file tree */
 function renderTree(container, obj, path = '') {
   Object.entries(obj).forEach(([name, subtree]) => {
     const item   = document.createElement('div');
@@ -231,42 +224,34 @@ function renderTree(container, obj, path = '') {
   });
 }
 
-/** Intercept clicks on .ini leaves */
 function initIniClickListener() {
   document.getElementById('folderTree').addEventListener('click', e => {
     const header = e.target.closest('.tree-node');
     if (!header) return;
     const name = header.querySelector('span:last-child').textContent;
     if (!name.toLowerCase().endsWith('.ini')) return;
-    // selectItem handles everything else
   }, true);
 }
 
 function hideDetails() { detailsPanel.classList.add('hidden'); }
 function showDetails() { detailsPanel.classList.remove('hidden'); }
 
-/** Populates the details panel and sets currentFlexSection */
 function displayFlexInfo(filePath) {
   const flexInfo = window.deskflex.getFlexInfo(filePath) || {};
-  document.getElementById('name').textContent        = flexInfo.Name        || 'N/A';
-  document.getElementById('author').textContent      = flexInfo.Author      || 'N/A';
-  document.getElementById('version').textContent     = flexInfo.Version     || 'N/A';
-  document.getElementById('license').textContent     = flexInfo.License     || 'N/A';
+  document.getElementById('name').textContent        = flexInfo.Name        || '-';
+  document.getElementById('author').textContent      = flexInfo.Author      || '-';
+  document.getElementById('version').textContent     = flexInfo.Version     || '-';
+  document.getElementById('license').textContent     = flexInfo.License     || '-';
   document.getElementById('information').textContent = flexInfo.Information || 'No additional info.';
-
-  // build the relative flexSection = "Test\Test.ini"
   const parts    = filePath.split('\\');
   const fileName = parts.pop();
   const idxFlex  = parts.indexOf('Flexes');
   const widgetArr= idxFlex >= 0 ? parts.slice(idxFlex + 1) : parts;
   window.currentFlexSection = widgetArr.concat(fileName).join('\\');
-
-  // update UI
   document.getElementById('main-ini').textContent = fileName;
   document.getElementById('widget').textContent   = widgetArr.join('\\') || '-';
 }
 
-/** reconstruct full absolute path */
 function getFullPath(item) {
   const segs = [];
   let node = item;
