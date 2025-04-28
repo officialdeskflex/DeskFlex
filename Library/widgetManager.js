@@ -1,9 +1,11 @@
 const { BrowserWindow, app } = require('electron');
 const path = require('path');
 const { parseIniWithImports } = require('./IniLoader');
-const { substituteVariables, parseActionList } = require('./Utils');
+const { substituteVariables, parseActionList, safeInt } = require('./Utils');
 const { renderTextWidget } = require('./TextType');
 const { renderImageWidget } = require('./ImageType');
+// Import the default export or function directly, not via destructuring
+const getImageSize = require('./Helper/ImageSize');
 
 const widgetWindows = new Map();
 
@@ -22,15 +24,36 @@ function loadWidgetsFromIniFile(filePath) {
 
   const variables = sections.Variables || {};
   delete sections.Variables;
-
-  // Use the file base name (without .ini) as the window key
   const windowName = path.basename(filePath, '.ini');
-  const baseDir    = path.dirname(filePath);
+  const baseDir = path.dirname(filePath);
 
-  // Create the BrowserWindow for this widget
-  const win = createWidgetsWindow(windowName, sections, variables, baseDir);
+  // Preprocess image widgets to fill missing sizes
+  for (const rawCfg of Object.values(sections)) {
+    if ((rawCfg.Type || '').trim() === 'Image') {
+      const imgRaw = rawCfg.ImageName || '';
+      let imgPath = imgRaw.replace(/"/g, '');
+      if (!path.isAbsolute(imgPath)) {
+        imgPath = path.join(baseDir, imgPath);
+      }
+      // Only fetch size if width/height unset
+      const hasWidth = rawCfg.Width || rawCfg.W;
+      const hasHeight = rawCfg.Height || rawCfg.H;
+      if (!hasWidth || !hasHeight) {
+        try {
+          const size = getImageSize(imgPath);
+          rawCfg.W = rawCfg.W || size.width;
+          rawCfg.H = rawCfg.H || size.height;
+        } catch (err) {
+          console.warn(`Unable to get image size for ${imgPath}:`, err);
+        }
+      }
+    }
+  }
 
-  // Store it in the registry
+  // Compute window size based on widgets
+  const { width: winWidth, height: winHeight } = calculateWindowSize(sections);
+
+  const win = createWidgetsWindow(windowName, sections, variables, baseDir, winWidth, winHeight);
   widgetWindows.set(windowName, win);
 
   return win;
@@ -39,27 +62,42 @@ function loadWidgetsFromIniFile(filePath) {
 function unloadWidgetsBySection(sectionName) {
   const win = widgetWindows.get(sectionName);
   if (win) {
-    app.isQuiting = true;
+    app.isWidgetQuiting = true;
     win.close();
     widgetWindows.delete(sectionName);
   }
 }
 
-function createWidgetsWindow(windowName, sections, variables, baseDir) {
+function calculateWindowSize(sections) {
+  let maxRight = 0;
+  let maxBottom = 0;
+  for (const rawCfg of Object.values(sections)) {
+    const x = safeInt(rawCfg.X, 0);
+    const y = safeInt(rawCfg.Y, 0);
+    const w = safeInt(rawCfg.Width ?? rawCfg.W, 0);
+    const h = safeInt(rawCfg.Height ?? rawCfg.H, 0);
+    maxRight = Math.max(maxRight, x + w);
+    maxBottom = Math.max(maxBottom, y + h);
+  }
+  // Add small padding
+  return { width: maxRight + 10, height: maxBottom + 10 };
+}
+
+function createWidgetsWindow(windowName, sections, variables, baseDir, width, height) {
   const win = new BrowserWindow({
-    width:       800,
-    height:      600,
-    frame:       false,
+    width,
+    height,
+    frame: false,
     transparent: true,
     alwaysOnTop: true,
-    resizable:   false,
-    hasShadow:   false,
-    show:        false,
+    resizable: false,
+    hasShadow: false,
+    show: false,
     webPreferences: {
-      nodeIntegration:  true,
+      nodeIntegration: true,
       contextIsolation: false,
-      webSecurity:      true,
-      preload:          path.join(__dirname, 'widgetActions.js')
+      webSecurity: true,
+      preload: path.join(__dirname, 'widgetActions.js')
     }
   });
 
@@ -68,8 +106,8 @@ function createWidgetsWindow(windowName, sections, variables, baseDir) {
     <html>
     <head>
       <style>
-        body { margin:0; padding:0; background:transparent; position:relative; app-region:drag }
-        .widget { app-region:no-drag }
+        body { margin:0; padding:0; background:transparent; position:relative; width:${width}px; height:${height}px; overflow:hidden; app-region:drag}
+        .widget { position:absolute; app-region:drag}
       </style>
     </head>
     <body>
@@ -106,12 +144,12 @@ function createWidgetsWindow(windowName, sections, variables, baseDir) {
   `;
 
   const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-  const base    = 'file://' + baseDir.replace(/\\/g, '/') + '/';
+  const base = 'file://' + baseDir.replace(/\\/g, '/') + '/';
   win.loadURL(dataUrl, { baseURLForDataURL: base });
 
   win.once('ready-to-show', () => win.show());
   win.on('close', e => {
-    if (!app.isQuiting) {
+    if (!app.isWidgetQuiting) {
       e.preventDefault();
       win.hide();
     }
