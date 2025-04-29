@@ -5,64 +5,142 @@ window.currentFlexSection = '';
 window.currentFlexFilePath = '';
 
 window.addEventListener('DOMContentLoaded', () => {
-  detailsPanel = document.getElementById('details-panel');
-  actionButtons = document.querySelector('.action-button-container');
-  loadButton = actionButtons.querySelector('button:first-child');
-  refreshButton = actionButtons.querySelector('button:nth-child(2)');
-  editButton = actionButtons.querySelector('button:nth-child(3)');
-  windowSettings = document.querySelector('.container-positions');
+  // Grab UI elements
+  detailsPanel      = document.getElementById('details-panel');
+  actionButtons     = document.querySelector('.action-button-container');
+  loadButton        = actionButtons.querySelector('button:first-child');
+  refreshButton     = actionButtons.querySelector('button:nth-child(2)');
+  editButton        = actionButtons.querySelector('button:nth-child(3)');
+  windowSettings    = document.querySelector('.container-positions');
   checkboxContainer = document.querySelector('.checkbox-container');
-  addFlexLink = document.querySelector('.add-flex-info');
+  addFlexLink       = document.querySelector('.add-flex-info');
 
+  // Initial UI state
   addFlexLink.classList.add('hidden');
-
-  // initialize dimmed state
-  windowSettings.style.opacity = '0.5';
+  windowSettings.style.opacity    = '0.5';
   checkboxContainer.style.opacity = '0.5';
-
-  renderTree(document.getElementById('folderTree'), window.deskflex.folderStructure);
-  initIniClickListener();
-
   hideDetails();
   disableAll();
 
-  loadButton.addEventListener('click', async () => {
-    const sec = window.currentFlexSection;
-    if (!sec) return;
-    const isLoadMode = loadButton.textContent.trim().toLowerCase() === 'load';
+  // Build folder tree and wire INI clicks
+  renderTree(document.getElementById('folderTree'), window.deskflex.folderStructure);
+  initIniClickListener();
 
-    try {
+  // Load / Unload button
+  loadButton.addEventListener('click', onLoadUnload);
+
+  // Edit button opens the .ini in config settings
+  editButton.addEventListener('click', () => {
+    if (window.currentFlexFilePath) {
+      window.deskflex.openConfigSettings(window.currentFlexFilePath);
+    }
+  });
+
+  // Active-Flex dropdown toggle
+  const openBtn = document.getElementById('toggle-Dropdown');
+  if (openBtn) {
+    openBtn.addEventListener('click', e => {
+      e.stopPropagation(); 
+      toggleDropdown();
+    });
+  }
+
+  // Close dropdown on outside click
+  window.addEventListener('click', closeDropdownOnClickOutside);
+
+  // Populate Active-Flex list
+  populateDropdown();
+
+  // Wire any custom dropdowns (data-target)
+  document.querySelectorAll('[data-target]').forEach(box => {
+    const menu = document.getElementById(box.dataset.target);
+    box.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = menu.classList.toggle('show');
+      box.classList.toggle('open', isOpen);
+      if (isOpen) {
+        requestAnimationFrame(() => {
+          const rect = menu.getBoundingClientRect();
+          menu.classList.toggle('dropup', rect.bottom > window.innerHeight);
+        });
+      } else {
+        menu.classList.remove('dropup');
+      }
+    });
+    document.addEventListener('click', e => {
+      if (!box.contains(e.target) && menu.classList.contains('show')) {
+        menu.classList.remove('show');
+        box.classList.remove('open');
+        menu.classList.remove('dropup');
+      }
+    });
+  });
+});
+
+// Load / Unload widget handler
+function onLoadUnload() {
+  const sec = window.currentFlexSection;
+  if (!sec) return;
+  const isLoadMode = loadButton.textContent.trim().toLowerCase() === 'load';
+
+  window.deskflex[isLoadMode ? 'loadWidget' : 'unloadWidget'](sec)
+    .then(() => window.deskflex.setActiveValue(sec, isLoadMode ? 1 : 0))
+    .then(() => {
       if (isLoadMode) {
-        await window.deskflex.loadWidget(sec);
-        await window.deskflex.setActiveValue(sec, 1);
         loadButton.textContent = 'Unload';
         refreshButton.disabled = false;
         refreshButton.classList.remove('disabled');
-        windowSettings.style.opacity = '1';
+        windowSettings.style.opacity    = '1';
         checkboxContainer.style.opacity = '1';
         resetOptions();
         updateSettingsPanel(sec);
       } else {
-        await window.deskflex.unloadWidget(sec);
-        await window.deskflex.setActiveValue(sec, 0);
         enableLoadEdit();
-        windowSettings.style.opacity = '0.5';
+        windowSettings.style.opacity    = '0.5';
         checkboxContainer.style.opacity = '0.5';
       }
-    } catch (err) {
-      console.error(`Failed to ${isLoadMode ? 'load' : 'unload'} widget:`, err);
-      return;
-    }
-  });
+    })
+    .catch(err => console.error(`Failed to ${isLoadMode ? 'load' : 'unload'} widget:`, err));
+}
 
-  // Edit button now opens the .ini in config settings
-  editButton.addEventListener('click', () => {
-    const filePath = window.currentFlexFilePath;
-    if (!filePath) return;
-    window.deskflex.openConfigSettings(filePath);
-  });
-});
+// Handle selection from Active-Flex dropdown
+function handleActiveFlexSelection(sec) {
+  const base = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
+  const fullPath = `${base}\\${sec}`;
+  window.currentFlexSection  = sec;
+  window.currentFlexFilePath = fullPath;
 
+  // Mirror .ini select logic:
+  displayFlexInfo(fullPath);
+  showDetails();
+  enableLoadEdit();
+
+  const statusVal = window.deskflex.getFlexStatus(sec);
+  const isActive  = statusVal === 1 || statusVal === '1';
+  if (isActive) {
+    loadButton.textContent = 'Unload';
+    refreshButton.disabled = false;
+    refreshButton.classList.remove('disabled');
+    windowSettings.style.opacity    = '1';
+    checkboxContainer.style.opacity = '1';
+    resetOptions();
+    updateSettingsPanel(sec);
+  } else {
+    loadButton.textContent = 'Load';
+    refreshButton.disabled = true;
+    refreshButton.classList.add('disabled');
+    windowSettings.style.opacity    = '0.5';
+    checkboxContainer.style.opacity = '0.5';
+  }
+
+  if (!window.deskflex.hasFlexInfoSection(sec)) {
+    addFlexLink.classList.remove('hidden');
+  } else {
+    addFlexLink.classList.add('hidden');
+  }
+}
+
+// Reset all checkbox options to unchecked & disabled
 function resetOptions() {
   checkboxContainer.querySelectorAll('.option').forEach(opt => {
     opt.classList.add('disabled');
@@ -70,6 +148,7 @@ function resetOptions() {
   });
 }
 
+// Disable all controls
 function disableAll() {
   [loadButton, refreshButton, editButton].forEach(btn => {
     btn.disabled = true;
@@ -82,6 +161,7 @@ function disableAll() {
   });
 }
 
+// Enable load & edit only
 function enableLoadEdit() {
   loadButton.textContent = 'Load';
   [loadButton, editButton].forEach(btn => {
@@ -97,6 +177,7 @@ function enableLoadEdit() {
   });
 }
 
+// Tree item click handler
 function selectItem(item) {
   if (selectedItem) selectedItem.classList.remove('selected');
   item.classList.add('selected');
@@ -110,14 +191,14 @@ function selectItem(item) {
     showDetails();
     enableLoadEdit();
 
-    const sec = window.currentFlexSection;
+    const sec       = window.currentFlexSection;
     const statusVal = window.deskflex.getFlexStatus(sec);
-    const isActive = statusVal === 1 || statusVal === '1';
+    const isActive  = statusVal === 1 || statusVal === '1';
     if (isActive) {
       loadButton.textContent = 'Unload';
       refreshButton.disabled = false;
       refreshButton.classList.remove('disabled');
-      windowSettings.style.opacity = '1';
+      windowSettings.style.opacity    = '1';
       checkboxContainer.style.opacity = '1';
       resetOptions();
       updateSettingsPanel(sec);
@@ -125,7 +206,7 @@ function selectItem(item) {
       loadButton.textContent = 'Load';
       refreshButton.disabled = true;
       refreshButton.classList.add('disabled');
-      windowSettings.style.opacity = '0.5';
+      windowSettings.style.opacity    = '0.5';
       checkboxContainer.style.opacity = '0.5';
     }
 
@@ -141,22 +222,22 @@ function selectItem(item) {
   }
 }
 
+// Recursively render folder/INI tree
 function renderTree(container, obj, path = '') {
   Object.entries(obj).forEach(([name, subtree]) => {
-    const item = document.createElement('div');
+    const item   = document.createElement('div');
     item.className = 'tree-item';
     const header = document.createElement('div');
     header.className = 'tree-node';
-    const icon = document.createElement('span');
+    const icon   = document.createElement('span');
     icon.className = 'icon';
-    const label = document.createElement('span');
+    const label  = document.createElement('span');
     label.textContent = name;
     header.append(icon, label);
     item.append(header);
 
-    const currentPath = path ? `${path}\\${name}` : name;
     if (subtree && typeof subtree === 'object') {
-      icon.textContent = '\ue643';
+      icon.textContent = '\ue643'; // closed folder
       icon.classList.add('folder-icon');
       header.addEventListener('click', e => {
         e.stopPropagation();
@@ -167,9 +248,9 @@ function renderTree(container, obj, path = '') {
       const children = document.createElement('div');
       children.className = 'children';
       item.append(children);
-      renderTree(children, subtree, currentPath);
+      renderTree(children, subtree, path ? `${path}\\${name}` : name);
     } else {
-      icon.textContent = '\ue269';
+      icon.textContent = '\ue269'; // file icon
       icon.classList.add('file-icon');
       header.addEventListener('click', e => {
         e.stopPropagation();
@@ -180,6 +261,7 @@ function renderTree(container, obj, path = '') {
   });
 }
 
+// Listen for clicks deeper in the tree
 function initIniClickListener() {
   document.getElementById('folderTree').addEventListener('click', e => {
     const header = e.target.closest('.tree-node');
@@ -192,27 +274,30 @@ function initIniClickListener() {
 function hideDetails() {
   detailsPanel.classList.add('hidden');
 }
-
 function showDetails() {
   detailsPanel.classList.remove('hidden');
 }
 
+// Display metadata from the INI
 function displayFlexInfo(filePath) {
   const flexInfo = window.deskflex.getFlexInfo(filePath) || {};
-  document.getElementById('name').textContent = flexInfo.Name || '-';
-  document.getElementById('author').textContent = flexInfo.Author || '-';
-  document.getElementById('version').textContent = flexInfo.Version || '-';
-  document.getElementById('license').textContent = flexInfo.License || '-';
+  document.getElementById('name').textContent        = flexInfo.Name        || '-';
+  document.getElementById('author').textContent      = flexInfo.Author      || '-';
+  document.getElementById('version').textContent     = flexInfo.Version     || '-';
+  document.getElementById('license').textContent     = flexInfo.License     || '-';
   document.getElementById('information').textContent = flexInfo.Information || 'No additional info.';
-  const parts = filePath.split('\\');
+
+  const parts    = filePath.split('\\');
   const fileName = parts.pop();
-  const idxFlex = parts.indexOf('Flexes');
+  const idxFlex  = parts.indexOf('Flexes');
   const widgetArr = idxFlex >= 0 ? parts.slice(idxFlex + 1) : parts;
+
   window.currentFlexSection = widgetArr.concat(fileName).join('\\');
   document.getElementById('main-ini').textContent = fileName;
-  document.getElementById('widget').textContent = widgetArr.join('\\') || '-';
+  document.getElementById('widget').textContent   = widgetArr.join('\\') || '-';
 }
 
+// Compute full path from tree item
 function getFullPath(item) {
   const segs = [];
   let node = item;
@@ -224,83 +309,98 @@ function getFullPath(item) {
   return `${base}\\${segs.join('\\')}`;
 }
 
+// Populate & wire Active-Flex dropdown
+function populateDropdown() {
+  const dropdown = document.getElementById("myDropdown");
+  dropdown.innerHTML = "";
+  if (Array.isArray(window.deskflex.activeFlex) && window.deskflex.activeFlex.length) {
+    window.deskflex.activeFlex.forEach(sec => {
+      const option = document.createElement("a");
+      option.href = "#";
+      option.textContent = sec;
+      option.addEventListener('click', e => {
+        e.preventDefault();
+        handleActiveFlexSelection(sec);
+      });
+      dropdown.appendChild(option);
+    });
+  } else {
+    const noItem = document.createElement("a");
+    noItem.href = "#";
+    noItem.textContent = "No Active Flex";
+    noItem.style.pointerEvents = "none";
+    noItem.style.opacity = "0.6";
+    dropdown.appendChild(noItem);
+  }
+}
+
+// Toggle the Active-Flex dropdown
+function toggleDropdown() {
+  const dropdown  = document.getElementById("myDropdown");
+  const rectangle = document.querySelector('.rectangleActiveList');
+  dropdown.classList.toggle("show");
+  rectangle.classList.toggle("open");
+}
+
+// Close it when clicking elsewhere
+function closeDropdownOnClickOutside(event) {
+  const dropdown  = document.getElementById("myDropdown");
+  const rectangle = document.querySelector('.rectangleActiveList');
+  if (!rectangle.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.classList.remove('show');
+    rectangle.classList.remove('open');
+  }
+}
+
+// Update the settings panel (checkboxes, inputs, dropdowns)
 function updateSettingsPanel(sec) {
   const checks = [
-    ['Click Through', window.deskflex.getFlexClickthrough],
-    ['Draggable', window.deskflex.getFlexDraggable],
-    ['Snap Edges', window.deskflex.getFlexSnapEdges],
+    ['Click Through',  window.deskflex.getFlexClickthrough],
+    ['Draggable',      window.deskflex.getFlexDraggable],
+    ['Snap Edges',     window.deskflex.getFlexSnapEdges],
     ['Keep On Screen', window.deskflex.getFlexKeepOnScreen],
-    ['Save Position', window.deskflex.getFlexSavePosition],
-    ['Favorite', window.deskflex.getFlexFavorite],
+    ['Save Position',  window.deskflex.getFlexSavePosition],
+    ['Favorite',       window.deskflex.getFlexFavorite],
   ];
   checks.forEach(([label, getter]) => {
     const val = getter(sec);
     const option = Array.from(checkboxContainer.querySelectorAll('.option'))
       .find(o => o.querySelector('label').textContent.trim() === label);
     if (!option) return;
-
-    if (val === 1 || val === '1') {
-      option.classList.remove('disabled');
-      option.classList.add('checked');
-    } else if (val === 0 || val === '0') {
-      option.classList.remove('disabled');
-      option.classList.remove('checked');
-    } else {
-      option.classList.add('disabled');
-      option.classList.remove('checked');
-    }
+    option.classList.toggle('disabled', !(val === 1 || val === '1'));
+    option.classList.toggle('checked',  val === 1 || val === '1');
   });
 
   windowSettings.classList.remove('disabled');
   document.querySelectorAll('.coords-input, .load-order-input')
     .forEach(i => i.disabled = false);
 
-  const x = window.deskflex.getFlexWindowX(sec);
-  const y = window.deskflex.getFlexWindowY(sec);
-  document.querySelector('.coords-input-x').value = x != null ? x : '';
-  document.querySelector('.coords-input-y').value = y != null ? y : '';
+  document.querySelector('.coords-input-x').value = window.deskflex.getFlexWindowX(sec) || '';
+  document.querySelector('.coords-input-y').value = window.deskflex.getFlexWindowY(sec) || '';
+  document.querySelector('.load-order-input').value = window.deskflex.getFlexLoadOrder(sec) || '';
 
-  const loadOrder = window.deskflex.getFlexLoadOrder(sec);
-  document.querySelector('.load-order-input').value = loadOrder != null ? loadOrder : '';
-
-  const posVal = String(window.deskflex.getFlexPosition(sec));
-  const posMap = {
-    '2': 'Stay topmost',
-    '1': 'Topmost',
-    '0': 'Normal',
-    '-1': 'Bottom',
-    '-2': 'On Desktop'
-  };
-  setDropdown('position', posMap[posVal]);
-
-  const transVal = window.deskflex.getFlexTransparency(sec);
-  const pct = parseInt(transVal, 10);
-  setDropdown('transparency', pct >= 0 && pct <= 100 ? `${pct}%` : 'Select…');
-
-  const hoverVal = String(window.deskflex.getFlexOnHover(sec));
-  const hoverMap = {
-    '0': 'Do Nothing',
-    '1': 'Hide',
-    '2': 'Fade in',
-    '3': 'Fade out'
-  };
-  setDropdown('hover', hoverMap[hoverVal]);
+  // Dropdown mappings
+  const posMap = { '2':'Stay topmost','1':'Topmost','0':'Normal','-1':'Bottom','-2':'On Desktop' };
+  const hoverMap = { '0':'Do Nothing','1':'Hide','2':'Fade in','3':'Fade out' };
+  setDropdown('position',   posMap[String(window.deskflex.getFlexPosition(sec))]   );
+  setDropdown('transparency', (pct => pct>=0&&pct<=100?`${pct}%`:'Select…')
+    (parseInt(window.deskflex.getFlexTransparency(sec),10)) );
+  setDropdown('hover',       hoverMap[String(window.deskflex.getFlexOnHover(sec))]   );
 
   function setDropdown(type, label) {
-    const box = document.querySelector(`.${type}-box`);
+    const box  = document.querySelector(`.${type}-box`);
     const menu = document.getElementById(
-      type === 'position' ? 'positionMenu'
-        : type === 'transparency' ? 'transparencyMenu'
-        : 'hoverMenu'
+      type==='position'?'positionMenu'
+      :type==='transparency'?'transparencyMenu'
+      :'hoverMenu'
     );
     for (let node of box.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeType===Node.TEXT_NODE) {
         node.textContent = label || 'Select…';
         break;
       }
     }
-    Array.from(menu.querySelectorAll('a')).forEach(a => {
-      a.classList.toggle('selected', a.textContent.trim() === label);
-    });
+    Array.from(menu.querySelectorAll('a'))
+      .forEach(a => a.classList.toggle('selected', a.textContent.trim() === label));
   }
 }

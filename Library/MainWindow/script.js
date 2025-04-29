@@ -8,56 +8,6 @@ if (window.deskflex.darkMode) {
 }
 
 /**
- * Dynamically populate dropdown from activeFlex.
- */
-function populateDropdown() {
-  const dropdown = document.getElementById("myDropdown");
-  dropdown.innerHTML = "";
-
-  if (Array.isArray(window.deskflex.activeFlex) && window.deskflex.activeFlex.length > 0) {
-    window.deskflex.activeFlex.forEach(item => {
-      const option = document.createElement("a");
-      option.href = "#";
-      option.textContent = item;
-      dropdown.appendChild(option);
-    });
-  } else {
-    const noItem = document.createElement("a");
-    noItem.href = "#";
-    noItem.textContent = "No Active Flex";
-    noItem.style.pointerEvents = "none"; 
-    noItem.style.opacity = "0.6";         
-    dropdown.appendChild(noItem);
-  }
-}
-
-
-function toggleDropdown() {
-  const dropdown = document.getElementById("myDropdown");
-  const rectangle = document.querySelector('.rectangleActiveList');
-  dropdown.classList.toggle("show");
-  rectangle.classList.toggle("open");
-}
-
-function closeDropdownOnClickOutside(event) {
-  const dropdown = document.getElementById("myDropdown");
-  const rectangle = document.querySelector('.rectangleActiveList');
-  if (!rectangle.contains(event.target) && !dropdown.contains(event.target)) {
-    dropdown.classList.remove("show");
-    rectangle.classList.remove("open");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const openBtn = document.getElementById("toggle-Dropdown");
-  if (openBtn) {
-    openBtn.addEventListener("click", toggleDropdown);
-  }
-  window.addEventListener('click', closeDropdownOnClickOutside);
-  window.addEventListener('DOMContentLoaded', populateDropdown);
-});
-
-/**
  * Animate AddFlex Button
  */
 const icon = document.querySelector('.addFlexIcon');
@@ -87,36 +37,4 @@ btn.addEventListener('click', () => {
   window.deskflex.hideWindow();
 });
 
-/**
- * Open the DropDown Options
- */
-document.querySelectorAll('[data-target]').forEach(box => {
-  const menu = document.getElementById(box.dataset.target);
 
-  box.addEventListener('click', e => {
-    e.stopPropagation(); 
-    const isOpen = menu.classList.toggle('show');
-    box.classList.toggle('open', isOpen);
-
-    if (isOpen) {
-      requestAnimationFrame(() => {
-        const rect = menu.getBoundingClientRect();
-        if (rect.bottom > window.innerHeight) {
-          menu.classList.add('dropup');
-        } else {
-          menu.classList.remove('dropup');
-        }
-      });
-    } else {
-      menu.classList.remove('dropup');
-    }
-  });
-
-  document.addEventListener('click', e => {
-    if (!box.contains(e.target) && menu.classList.contains('show')) {
-      menu.classList.remove('show');
-      box.classList.remove('open');
-      menu.classList.remove('dropup');
-    }
-  });
-});
