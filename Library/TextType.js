@@ -2,18 +2,19 @@
 const { safeInt, escapeHtml, buildActionAttributes } = require('./Utils');
 
 function renderTextWidget(cfg) {
-  const x        = safeInt(cfg.X, 0);
-  const y        = safeInt(cfg.Y, 0);
-  const width    = safeInt(cfg.Width, 200);
-  const height   = safeInt(cfg.Height, 50);
-  const justify  = {
+  const x      = safeInt(cfg.X, 0);
+  const y      = safeInt(cfg.Y, 0);
+  const width  = safeInt(cfg.W, 200);
+  const height = safeInt(cfg.H, 50);
+
+  const justify = {
     CenterCenter: 'center',
     RightCenter:  'flex-end'
   }[cfg.StringAlign] || 'flex-start';
 
-  const fontColor  = cfg.FontColor || '0,0,0';
-  const fontFace   = cfg.FontFace  || 'sans-serif';
-  const fontWeight = cfg.FontWeight|| 'normal';
+  const fontColor  = cfg.FontColor   || '0,0,0';
+  const fontFace   = cfg.FontFace    || 'sans-serif';
+  const fontWeight = cfg.FontWeight  || 'normal';
   const fontSize   = safeInt(cfg.FontSize, 14);
   const smoothing  = cfg.Antialias === '1' ? 'antialiased' : 'none';
   const text       = escapeHtml(cfg.Text || '');

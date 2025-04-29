@@ -1,10 +1,10 @@
+// main.js (or wherever you keep your loader)
 const { BrowserWindow, app } = require('electron');
 const path = require('path');
 const { parseIniWithImports } = require('./IniLoader');
 const { substituteVariables, parseActionList, safeInt } = require('./Utils');
 const { renderTextWidget } = require('./TextType');
 const { renderImageWidget } = require('./ImageType');
-// Import the default export or function directly, not via destructuring
 const getImageSize = require('./Helper/ImageSize');
 
 const widgetWindows = new Map();
@@ -14,6 +14,7 @@ module.exports = { loadWidgetsFromIniFile, unloadWidgetsBySection };
 function loadWidgetsFromIniFile(filePath) {
   console.log('Loading widget config from:', filePath);
 
+  // 1) Parse INI (with imports)
   let sections;
   try {
     sections = parseIniWithImports(filePath);
@@ -22,40 +23,69 @@ function loadWidgetsFromIniFile(filePath) {
     return;
   }
 
+  // 2) Normalize case for the keys we care about
+  for (const cfg of Object.values(sections)) {
+    if (cfg.x !== undefined && cfg.X === undefined)         cfg.X = cfg.x;
+    if (cfg.y !== undefined && cfg.Y === undefined)         cfg.Y = cfg.y;
+    if (cfg.w !== undefined && cfg.W === undefined)         cfg.W = cfg.w;
+    if (cfg.h !== undefined && cfg.H === undefined)         cfg.H = cfg.h;
+    if (cfg.style  !== undefined && cfg.Style  === undefined) cfg.Style  = cfg.style;
+  }
+
+  // 3) Pull out any [Variables] section
   const variables = sections.Variables || {};
   delete sections.Variables;
-  const windowName = path.basename(filePath, '.ini');
-  const baseDir = path.dirname(filePath);
 
-  // Preprocess image widgets to fill missing sizes
-  for (const rawCfg of Object.values(sections)) {
-    if ((rawCfg.Type || '').trim() === 'Image') {
-      const imgRaw = rawCfg.ImageName || '';
-      let imgPath = imgRaw.replace(/"/g, '');
-      if (!path.isAbsolute(imgPath)) {
-        imgPath = path.join(baseDir, imgPath);
+  // 4) Merge in style defaults
+  const usedStyles = new Set();
+  for (const cfg of Object.values(sections)) {
+    if (cfg.Style) {
+      usedStyles.add(cfg.Style);
+      const styleDef = sections[cfg.Style];
+      if (styleDef) {
+        // Only inherit X, Y, W, H, Width, Height
+        ['X','Y','W','H','Width','Height'].forEach(k => {
+          if (styleDef[k] !== undefined && cfg[k] === undefined) {
+            cfg[k] = styleDef[k];
+          }
+        });
+      } else {
+        console.warn(`Style section "${cfg.Style}" not found.`);
       }
-      // Only fetch size if width/height unset
-      const hasWidth = rawCfg.Width || rawCfg.W;
-      const hasHeight = rawCfg.Height || rawCfg.H;
-      if (!hasWidth || !hasHeight) {
+    }
+  }
+  // Drop the style sections themselves
+  usedStyles.forEach(styleName => delete sections[styleName]);
+
+  const windowName = path.basename(filePath, '.ini');
+  const baseDir    = path.dirname(filePath);
+
+  // 5) Auto-fill missing image sizes
+  for (const cfg of Object.values(sections)) {
+    if ((cfg.Type||'').trim() === 'Image') {
+      let img = (cfg.ImageName||'').replace(/"/g,'');
+      if (!path.isAbsolute(img)) img = path.join(baseDir, img);
+
+      const hasW =  cfg.W;
+      const hasH = cfg.Height || cfg.H;
+      if (!hasW || !hasH) {
         try {
-          const size = getImageSize(imgPath);
-          rawCfg.W = rawCfg.W || size.width;
-          rawCfg.H = rawCfg.H || size.height;
-        } catch (err) {
-          console.warn(`Unable to get image size for ${imgPath}:`, err);
+          const size = getImageSize(img);
+          cfg.W = cfg.W || size.width;
+          cfg.H = cfg.H || size.height;
+        } catch (e) {
+          console.warn(`Could not get size for ${img}:`, e);
         }
       }
     }
   }
 
-  // Compute window size based on widgets
-  const { width: winWidth, height: winHeight } = calculateWindowSize(sections);
+  // 6) Compute overall window size
+  const { width: winW, height: winH } = calculateWindowSize(sections);
 
-  const win = createWidgetsWindow(windowName, sections, variables, baseDir, winWidth, winHeight);
+  // 7) Build the BrowserWindow + HTML
+  const win = createWidgetsWindow(windowName, sections, variables, baseDir, winW, winH);
   widgetWindows.set(windowName, win);
-
   return win;
 }
 
@@ -68,25 +98,22 @@ function unloadWidgetsBySection(sectionName) {
   }
 }
 
-function calculateWindowSize(sections) {
-  let maxRight = 0;
-  let maxBottom = 0;
-  for (const rawCfg of Object.values(sections)) {
-    const x = safeInt(rawCfg.X, 0);
-    const y = safeInt(rawCfg.Y, 0);
-    const w = safeInt(rawCfg.Width ?? rawCfg.W, 0);
-    const h = safeInt(rawCfg.Height ?? rawCfg.H, 0);
-    maxRight = Math.max(maxRight, x + w);
-    maxBottom = Math.max(maxBottom, y + h);
+function calculateWindowSize(secs) {
+  let maxR = 0, maxB = 0;
+  for (const cfg of Object.values(secs)) {
+    const x = safeInt(cfg.X, 0);
+    const y = safeInt(cfg.Y, 0);
+    const w = safeInt(cfg.Width ?? cfg.W, 0);
+    const h = safeInt(cfg.Height ?? cfg.H, 0);
+    maxR = Math.max(maxR, x + w);
+    maxB = Math.max(maxB, y + h);
   }
-  // Add small padding
-  return { width: maxRight + 10, height: maxBottom + 10 };
+  return { width: maxR + 10, height: maxB + 10 };
 }
 
-function createWidgetsWindow(windowName, sections, variables, baseDir, width, height) {
+function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
   const win = new BrowserWindow({
-    width,
-    height,
+    width, height,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -103,30 +130,26 @@ function createWidgetsWindow(windowName, sections, variables, baseDir, width, he
 
   let html = `
     <!DOCTYPE html>
-    <html>
-    <head>
+    <html><head>
       <style>
-        body { margin:0; padding:0; background:transparent; position:relative; width:${width}px; height:${height}px; overflow:hidden; app-region:drag}
-        .widget { position:absolute; app-region:drag}
+        body { margin:0; padding:0; background:transparent;
+               width:${width}px; height:${height}px;
+               overflow:hidden; position:relative; app-region:drag; }
+        .widget { position:absolute; app-region:drag; }
       </style>
-    </head>
-    <body>
+    </head><body>
   `;
 
-  Object.values(sections).forEach(rawCfg => {
+  Object.values(secs).forEach(rawCfg => {
+    // substitute variables & parse actions
     const cfg = {};
-    for (const [key, val] of Object.entries(rawCfg)) {
-      const substituted = (typeof val === 'string')
-        ? substituteVariables(val, variables)
-        : val;
-      if (key.endsWith('Action')) {
-        cfg[key] = parseActionList(substituted);
-      } else {
-        cfg[key] = substituted;
-      }
-    }
+    Object.entries(rawCfg).forEach(([k, v]) => {
+      const val = (typeof v === 'string') ? substituteVariables(v, vars) : v;
+      cfg[k] = k.endsWith('Action') ? parseActionList(val) : val;
+    });
 
-    switch ((cfg.Type || '').trim()) {
+    // render it
+    switch ((cfg.Type||'').trim()) {
       case 'Text':
         html += renderTextWidget(cfg);
         break;
@@ -134,25 +157,18 @@ function createWidgetsWindow(windowName, sections, variables, baseDir, width, he
         html += renderImageWidget(cfg, baseDir);
         break;
       default:
-        console.warn(`Unknown widget Type="${cfg.Type}", skipping.`);
+        console.warn(`Skipping unknown Type="${cfg.Type}"`);
     }
   });
 
-  html += `
-    </body>
-    </html>
-  `;
-
+  html += `</body></html>`;
   const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-  const base = 'file://' + baseDir.replace(/\\/g, '/') + '/';
-  win.loadURL(dataUrl, { baseURLForDataURL: base });
+  const baseUrl = 'file://' + baseDir.replace(/\\\\/g, '/') + '/';
+  win.loadURL(dataUrl, { baseURLForDataURL: baseUrl });
 
   win.once('ready-to-show', () => win.show());
   win.on('close', e => {
-    if (!app.isWidgetQuiting) {
-      e.preventDefault();
-      win.hide();
-    }
+    if (!app.isWidgetQuiting) { e.preventDefault(); win.hide(); }
   });
 
   return win;
