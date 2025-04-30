@@ -352,7 +352,7 @@ function closeDropdownOnClickOutside(event) {
   }
 }
 
-// Update the settings panel (checkboxes, inputs, dropdowns)
+// Updated Settings Panel
 function updateSettingsPanel(sec) {
   const checks = [
     ['Click Through',  window.deskflex.getFlexClickthrough],
@@ -362,40 +362,52 @@ function updateSettingsPanel(sec) {
     ['Save Position',  window.deskflex.getFlexSavePosition],
     ['Favorite',       window.deskflex.getFlexFavorite],
   ];
+
   checks.forEach(([label, getter]) => {
     const val = getter(sec);
     const option = Array.from(checkboxContainer.querySelectorAll('.option'))
       .find(o => o.querySelector('label').textContent.trim() === label);
     if (!option) return;
-    option.classList.toggle('disabled', !(val === 1 || val === '1'));
-    option.classList.toggle('checked',  val === 1 || val === '1');
+
+    // Enable for both 0 and 1
+    const supported = (val === 1 || val === '1' || val === 0 || val === '0');
+    if (supported) {
+      option.classList.remove('disabled');
+      option.style.opacity = '1';
+    } else {
+      option.classList.add('disabled');
+      option.style.opacity = '';
+    }
+
+    // Only check when val === 1
+    option.classList.toggle('checked', val === 1 || val === '1');
   });
 
   windowSettings.classList.remove('disabled');
   document.querySelectorAll('.coords-input, .load-order-input')
     .forEach(i => i.disabled = false);
 
-  document.querySelector('.coords-input-x').value = window.deskflex.getFlexWindowX(sec) || '';
-  document.querySelector('.coords-input-y').value = window.deskflex.getFlexWindowY(sec) || '';
-  document.querySelector('.load-order-input').value = window.deskflex.getFlexLoadOrder(sec) || '';
+  document.querySelector('.coords-input-x').value    = window.deskflex.getFlexWindowX(sec) || '';
+  document.querySelector('.coords-input-y').value    = window.deskflex.getFlexWindowY(sec) || '';
+  document.querySelector('.load-order-input').value  = window.deskflex.getFlexLoadOrder(sec) || '';
 
   // Dropdown mappings
-  const posMap = { '2':'Stay topmost','1':'Topmost','0':'Normal','-1':'Bottom','-2':'On Desktop' };
+  const posMap   = { '2':'Stay topmost','1':'Topmost','0':'Normal','-1':'Bottom','-2':'On Desktop' };
   const hoverMap = { '0':'Do Nothing','1':'Hide','2':'Fade in','3':'Fade out' };
-  setDropdown('position',   posMap[String(window.deskflex.getFlexPosition(sec))]   );
+  setDropdown('position',    posMap[String(window.deskflex.getFlexPosition(sec))]);
   setDropdown('transparency', (pct => pct>=0&&pct<=100?`${pct}%`:'Select…')
-    (parseInt(window.deskflex.getFlexTransparency(sec),10)) );
-  setDropdown('hover',       hoverMap[String(window.deskflex.getFlexOnHover(sec))]   );
+    (parseInt(window.deskflex.getFlexTransparency(sec),10)));
+  setDropdown('hover',        hoverMap[String(window.deskflex.getFlexOnHover(sec))]);
 
   function setDropdown(type, label) {
     const box  = document.querySelector(`.${type}-box`);
     const menu = document.getElementById(
-      type==='position'?'positionMenu'
-      :type==='transparency'?'transparencyMenu'
-      :'hoverMenu'
+      type==='position'    ? 'positionMenu'
+    : type==='transparency'? 'transparencyMenu'
+                            : 'hoverMenu'
     );
     for (let node of box.childNodes) {
-      if (node.nodeType===Node.TEXT_NODE) {
+      if (node.nodeType === Node.TEXT_NODE) {
         node.textContent = label || 'Select…';
         break;
       }

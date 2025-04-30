@@ -12,5 +12,8 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^35.2.0"
+  },
+  "dependencies": {
+    "ini": "^5.0.0"
   }
 }
