@@ -5,6 +5,9 @@ const { showStart, getConfigEditorPath, getLogging, getDarkMode, getFlexesPath, 
 const { openFileWithEditor } = require('./OpenConfigFiles');
 const { createTray } = require('./TrayIcon');
 const { loadWidgetsFromIniFile , unloadWidgetsBySection} = require('./WidgetManager');
+const { createLogsWindow } = require('./CreateLogsWindow');
+const { logs, getLogs } = require('./Logs');
+
 
 let mainWindow;
 app.isQuiting = false;
@@ -56,6 +59,10 @@ app.whenReady().then(() => {
       mainWindow = createMainWindow(config);
     }
   });
+
+  ipcMain.handle('deskflex:createLogsWindow', () => {
+    createLogsWindow();
+  }); 
  // const iniFilePath = 'C:\\Users\\nstec\\OneDrive\\Documents\\DeskFlex\\Flexes\\Test\\Test.ini';
  // loadWidgetsFromIniFile(iniFilePath);
  // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
@@ -88,4 +95,12 @@ ipcMain.handle('unload-widget', async (_event, section) => {
     console.error('Error unloading widget:', err);
     return { success: false, message: err.message };
   }
+});
+
+ipcMain.on('log-message', (_event, message, type, source) => {
+  logs(message, type, source);
+});
+
+ipcMain.handle('get-logs', () => {
+  return getLogs();
 });

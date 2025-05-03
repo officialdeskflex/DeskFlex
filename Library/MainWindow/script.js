@@ -1,24 +1,18 @@
-/**
- * Set DarkMode/ColorTheme.
- */
+//Set DarkMode/ColorTheme.
 if (window.deskflex.darkMode) {
   document.body.classList.add('dark-mode');
 } else {
   document.body.classList.remove('dark-mode');
 }
 
-/**
- * Animate AddFlex Button
- */
+// Animate AddFlex Button
 const icon = document.querySelector('.addFlexIcon');
 icon.addEventListener('click', () => {
   icon.classList.add('animate');
   setTimeout(() => icon.classList.remove('animate'), 200);
 });
 
-/**
- * Open the DeskFlex Config Settings
- */
+// Open the DeskFlex Config Settings
 document.addEventListener("DOMContentLoaded", () => {
   const openBtn = document.getElementById("open-settings");
   if (openBtn) {
@@ -28,13 +22,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/**
- * Close the Window
- */
-
+// Close the Window
 const btn = document.getElementById('close-window');
 btn.addEventListener('click', () => {
   window.deskflex.hideWindow();
 });
 
+// ceate the Logs Window
+function createLogsWindow(){
+  window.deskflex.createLogsWindow(); 
+}
 
+function addlog(){
+  window.deskflex.sendLog("DeskFlex Main Window Loaded", "warning", "");
+}

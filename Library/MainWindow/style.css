@@ -1,3 +1,46 @@
+:root {
+  --font-color: rgb(13, 17, 23);
+  --bg-color: rgb(255, 255, 255);
+  --border-color: rgb(200, 200, 200);
+  --btn-bg: rgb(230, 230, 230);
+  --btn-hover-bg: rgb(210, 210, 210);
+  --highlight-color: rgb(80, 230, 255);
+  --divider-color: rgb(200, 200, 200);
+  --tabActive-highlight-color: rgb(200, 200, 200);
+  --tabBorder-highlight-color: rgb(10, 10, 10);
+  --tabFont-color: rgb(10, 10, 10);
+  --structure-highlight-color: rgb(80, 230, 255);
+  --scrollbar-color: rgb(80, 230, 255);
+  --dark-bg-color: rgb(13, 17, 23);
+  --dark-border-color: rgb(100, 100, 100);
+  --dropDownSmall-color:   #f1f1f1;
+  --dropDownSmall-border:#ccc;
+  --dropDownSmall-hover-color:#e0e0e0;
+  --dropDown-Shodow-color:rgba(0, 0, 0, 0.1);
+  --dropDownSmall-Font-color:rgb(0,0,0);
+}
+
+.dark-mode {
+  --font-color: rgb(255, 255, 255);
+  --bg-color: rgb(13, 17, 23);
+  --border-color: rgb(60, 60, 60);
+  --btn-bg: rgb(13, 17, 23);
+  --btn-hover-bg: rgb(30, 35, 42);
+  --divider-color: rgb(60, 60, 60);
+  --tabActive-highlight-color: rgb(200, 200, 200, 0.1);
+  --tabBorder-highlight-color: rgb(200, 200, 200);
+  --tabFont-color: rgb(255, 255, 255);
+  --structure-highlight-color: rgb(80, 230, 255);
+  --scrollbar-color: rgb(80, 230, 255);
+  --dark-bg-color: rgb(13, 17, 23);
+  --dark-border-color: rgb(100, 100, 100);
+  --dropDownSmall-color:rgb(6, 9, 15);
+  --dropDownSmall-border:rgb(100, 100, 100);
+  --dropDownSmall-hover-color:rgb(20, 25, 33);
+  --dropDown-Shodow-color:rgba(255, 255, 255, 0.05);
+  --dropDownSmall-Font-color:rgb(255, 255, 255);
+}
+
 @font-face {
   font-family: 'FluentSystemIcons';
   src: url('../../Fonts/FluentSystemIcons-Regular.woff2') format('woff2'),
@@ -7,8 +50,8 @@
 }
 
 body {
-  background-color: rgb(255, 255, 255);
-  color: rgb(13, 17, 23);
+  background-color: var(--bg-color);
+  color: var(--font-color);
   font-family: system-ui, sans-serif;
   transition: background-color 0.3s, color 0.3s;
 }
@@ -17,24 +60,16 @@ body {
   display: none !important;
 }
 
-.disabled {
+.disabled,
+.container-positions.disabled,
+.checkbox-container.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
 
-.container-positions.disabled, .checkbox-container.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.dark-mode {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-}
-
-/*
-* Tabs Content.
-*/
+/*===========================================================================================================*/
+/*                                 Tabs Styles                                                               */
+/*===========================================================================================================*/
 .tabs {
   display: flex;
   gap: 10px;
@@ -43,42 +78,43 @@ body {
 
 .tab-button {
   padding: 10px 30px;
-  background-color: rgb(230, 230, 230);
-  border: 1px solid rgb(200, 200, 200);
+  background-color: var(--btn-bg);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   font-size: 16px;
   border-radius: 4px;
-  color: rgb(13, 17, 23);
+  color: var(--font-color);
   transition: background-color 0.3s, color 0.3s;
 }
 
-.dark-mode .tab-button {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-  border: 1px solid rgb(100, 100, 100);
-}
-
 .tab-button.active {
+  background-color: var(--tabActive-highlight-color);
+  color: var(--tabFont-color);
+  border-color: var(--tabBorder-highlight-color);
   font-weight: bold;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
-/* 
-* Rectangle Active List.
-*/
+.tab-button:hover:not(.active) {
+  background-color: var(--btn-hover-bg);
+}
+
+/*===========================================================================================================*/
+/*                                 Active Widgets/Flex Content                                               */
+/*===========================================================================================================*/
 .rectangleActiveList {
   width: 200px;
   height: 30px;
   margin-left: 20px;
-  background-color: rgb(230, 230, 230);
-  color: rgb(10, 10, 10);
+  background-color: var(--btn-bg);
+  color: var(--font-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   user-select: none;
   border-radius: 4px;
-  border: 1px solid rgb(200, 200, 200);
+  border: 1px solid var(--border-color);
   padding: 0 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -95,20 +131,13 @@ body {
   transform: rotate(180deg);
 }
 
-.dark-mode .rectangleActiveList {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-  border: 1px solid rgb(100, 100, 100);
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.05);
-}
-
 .dropdown {
   position: absolute;
   z-index: 9999;
   margin-left: 20px;
   display: none;
-  background-color: #f1f1f1;
-  border: 1px solid #ccc;
+  background-color: var(--btn-bg);
+  border: 1px solid var(--border-color);
   min-width: 205px;
   width: fit-content;
   margin-top: 5px;
@@ -121,41 +150,27 @@ body {
   display: block;
 }
 
-.dark-mode .dropdown {
-  background-color: rgb(6, 9, 15);
-  border: 1px solid rgb(100, 100, 100);
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.05);
-}
-
 .dropdown a {
   display: block;
   padding: 10px;
   text-decoration: none;
-  color: black;
+  color: var(--font-color);
   font-size: 12px;
   transition: background-color 0.2s;
 }
 
-.dark-mode .dropdown a {
-  color: rgb(255, 255, 255);
-}
-
 .dropdown a:hover {
-  background-color: #e0e0e0;
+  background-color: var(--btn-hover-bg);
 }
 
-.dark-mode .dropdown a:hover {
-  background-color: rgb(20, 25, 33);
-}
-
-/* 
-* Add Flex Icon.
-*/
+/*===========================================================================================================*/
+/*                                 Add Flex/Widget Content                                                   */
+/*===========================================================================================================*/
 .addFlexIcon {
   font-family: 'FluentSystemIcons';
   font-size: 25px;
   margin-left: 258px;
-  color: rgb(10, 10, 10);
+  color: var(--font-color);
   position: fixed;
   top: 17%;
   transform: translateY(-50%);
@@ -181,25 +196,17 @@ body {
   }
 }
 
-.dark-mode .addFlexIcon {
-  color: rgb(255, 255, 255);
-}
-
-/* 
-* Bottom Button Content
-*/
-
+/*===========================================================================================================*/
+/*                                Bottom Fixed Buttons                                                       */
+/*===========================================================================================================*/
 .div-line {
   position: fixed;
+  z-index: -1;
   bottom: 60px;
   width: 800px;
   height: 1px;
-  background-color: rgb(200, 200, 200);
+  background-color: var(--divider-color);
   left: 1px;
-}
-
-.dark-mode .div-line {
-  background-color: rgb(60, 60, 60);
 }
 
 .button-Left-row {
@@ -210,29 +217,29 @@ body {
   gap: 10px;
 }
 
-.button-Left-row button {
+.button-Left-row button,
+.button-Right-container button,
+.create-package-btn,
+.action-button-container button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 10px;
   font-size: 12px;
   cursor: pointer;
-  background-color: rgb(230, 230, 230);
-  border: 1px solid rgb(200, 200, 200);
-  color: rgb(10, 10, 10);
+  background-color: var(--btn-bg);
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
   border-radius: 4px;
   transition: background-color 0.3s;
+  height: 25px;
 }
 
-.button-Left-row button:hover {
-  background-color: rgb(210, 210, 210);
-}
-
-.dark-mode .button-Left-row button {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-  border: 1px solid rgb(60, 60, 60);
-}
-
-.dark-mode .button-Left-row button:hover {
-  background-color: rgb(30, 35, 42);
+.button-Left-row button:hover,
+.button-Right-container button:hover,
+.create-package-btn:hover,
+.action-button-container button:hover {
+  background-color: var(--btn-hover-bg);
 }
 
 .button-Right-container {
@@ -244,35 +251,9 @@ body {
   gap: 10px;
 }
 
-.button-Right-container button {
-  padding: 6px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  background-color: #e0e0e0;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  color: #111;
-  transition: background-color 0.3s;
-}
-
-.button-Right-container button:hover {
-  background-color: #cccccc;
-}
-
-.dark-mode .button-Right-container button {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-  border: 1px solid rgb(60, 60, 60);
-}
-
-.dark-mode .button-Right-container button:hover {
-  background-color: rgb(30, 35, 42);
-}
-
-/* 
-* Create Package Button
-*/
-
+/*===========================================================================================================*/
+/*                                Create Package Button                                                      */
+/*===========================================================================================================*/
 .create-package-btn {
   position: fixed;
   bottom: 68px;
@@ -280,32 +261,12 @@ body {
   width: 265px;
   height: 30px;
   font-size: 16px;
-  background-color: rgb(230, 230, 230);
-  border: 1px solid rgb(200, 200, 200);
-  color: rgb(10, 10, 10);
   border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
-.dark-mode .create-package-btn {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-  border: 1px solid rgb(60, 60, 60);
-}
-
-.create-package-btn:hover {
-  background-color: #cccccc;
-}
-
-.dark-mode .create-package-btn:hover {
-  background-color: rgb(30, 35, 42);
-}
-
-/*
-*Actions Buttons
-*/
-
+/*===========================================================================================================*/
+/*                                Action Butoons (Load,Refresh,Edit)                                         */
+/*===========================================================================================================*/
 .action-button-container {
   top: 15%;
   right: 20px;
@@ -318,26 +279,422 @@ body {
 
 .action-button-container button {
   width: 70px;
-  height: 25px;
+}
+
+/*===========================================================================================================*/
+/*                                Meta Information                                                           */
+/*===========================================================================================================*/
+.container {
+  position: fixed;
+  left: 320px;
+  top: 15%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.main-ini {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--font-color);
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget {
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--font-color);
+  width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.info-item label {
+  font-weight: normal;
+  width: 90px;
   font-size: 12px;
-  cursor: pointer;
+  color: var(--font-color);
+}
+
+.info-item span.value {
+  display: block;
+  max-width: 350px;
+  font-weight: normal;
+  font-size: 12px;
+  color: var(--font-color);
+  overflow: hidden;
+  line-height: 1.2em;
+  word-break: break-word;
+}
+
+.info-item span.value:not(#information) {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#information {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  max-height: calc(1.2em * 5);
+  overflow: hidden;
+}
+
+.div-line-Info {
+  position: fixed;
+  top: 56%;
+  width: 450px;
+  height: 1px;
+  background-color: var(--divider-color);
+  left: 320px;
+}
+
+.dark-mode .div-line-Info {
+  background-color: rgb(60, 60, 60);
+}
+
+/*===========================================================================================================*/
+/*                               Add Flex Info(MetaInfo)                                                     */
+/*===========================================================================================================*/
+.add-flex-info {
+  position: fixed;
+  top: 50%;
+  left: 320px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  text-decoration: none;
+  color: var(--highlight-color);
+}
+
+.add-flex-info .icon {
+  font-family: 'FluentSystemIcons';
+  font-size: 14px;
+}
+
+.add-flex-info .text {
+  color: inherit;
+}
+
+.add-flex-info:hover .icon,
+.add-flex-info:hover .text {
+  color: var(--highlight-color);
+  transition: color 0.3s ease;
+}
+
+/*===========================================================================================================*/
+/*                            Tree Folder Structure                                                          */
+/*===========================================================================================================*/
+
+.tree-container {
+  width: 240px;
+  height: 320px;
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
+  background-color: var(--bg-color);
+  overflow-x: auto;
+  overflow-y: auto;
+  font-size: 14px;
+  position: fixed;
+  top: 20%;
+}
+
+.tree-container::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.tree-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.tree-container::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-color);
+  border-radius: 4px;
+}
+
+.dark-mode .tree-container {
+  background-color: var(--dark-bg-color);
+  border-color: var(--dark-border-color);
+}
+
+.tree-item {
+  width: 100%;
+  margin-bottom: 4px;
+  box-sizing: border-box;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
   cursor: pointer;
-  background-color: rgb(230, 230, 230);
-  border: 1px solid rgb(200, 200, 200);
-  transition: background-color 0.3s ease;
+  user-select: none;
+  line-height: 1.4;
+  padding: 2px 4px;
+  width: auto;
+  box-sizing: border-box;
 }
 
-.dark-mode .action-button-container button {
-  background-color: rgb(13, 17, 23);
-  color: rgb(255, 255, 255);
-  border: 1px solid rgb(60, 60, 60);
+.tree-item.selected>.tree-node {
+  display: inline-flex;
+  background-color: rgba(80, 230, 255, 0.3);
+  border-radius: 4px;
+  padding-right: 6px;
 }
 
-.action-button-container button:hover {
-  background-color: #cccccc;
+.tree-node .icon {
+  font-family: 'FluentSystemIcons';
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  margin-right: 4px;
+  transition: transform 0.2s;
 }
 
-.dark-mode .action-button-container button:hover {
-  background-color: rgb(30, 35, 42);
+.folder-icon {
+  color: var(--highlight-color);
+}
+
+.file-icon {
+  color: #2196F3;
+}
+
+.tree-node span:last-child {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.children {
+  display: none;
+  margin-left: 24px;
+}
+
+.tree-item.open>.children {
+  display: block;
+}
+
+.children .tree-item {
+  position: relative;
+  padding-left: 12px;
+}
+
+.children .tree-item:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 6px;
+  bottom: 0;
+  border-left: 1px solid var(--border-color);
+}
+
+.tree-node {
+  position: relative;
+}
+
+.tree-node:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  width: 6px;
+  border-top: 1px solid var(--border-color);
+  transform: translateY(-50%);
+}
+
+/*===========================================================================================================*/
+/*                            (Position,Coordinates,LoadOrder,Transparency,OnHover                           */
+/*===========================================================================================================*/
+.container-positions {
+  position: fixed;
+  top: 60%;
+  left: 320px;
+  max-width: 320px;
+  background: rgba(0, 0, 0, 0);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  gap: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.form-group label {
+  display: inline-block;
+  width: 100px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.coords-input,
+.load-order-input {
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  height: 20px;
+  padding: 2px 3px;
+  font-size: 11px;
+  border-radius: 3px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.coords-input {
+  width: 50px;
+}
+
+.coords-input+.coords-input {
+  margin-left: 14px;
+}
+
+.load-order-input {
+  width: 125px;
+}
+
+.position-box,
+.transparency-box,
+.hover-box {
+  margin-left: 0;
+  width: 120px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 3px;
+  padding: 0 6px;
+  font-size: 11px;
+  position: relative;
+  transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.position-box::after,
+.transparency-box::after,
+.hover-box::after {
+  content: "\F2A3";
+  font-family: 'FluentSystemIcons';
+  font-size: 11px;
+  margin-left: 3px;
+  transition: transform 0.3s;
+}
+
+.position-box.open::after,
+.transparency-box.open::after,
+.hover-box.open::after {
+  transform: rotate(180deg);
+}
+
+.position-menu,
+.transparency-menu,
+.hover-menu {
+  position: absolute;
+  z-index: 9999999;
+  top: 100%;
+  left: 0;
+  display: none;
+  width: 130px;
+  white-space: nowrap;
+  font-size: 11px;
+  transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  background-color: var(--dropDownSmall-color);
+  border: 1px solid var(--dropDownSmall-border);
+  box-shadow: 0 2px 4px var(--dropDown-Shodow-color);
+}
+
+.position-menu.show,
+.transparency-menu.show,
+.hover-menu.show {
+  display: block;
+}
+
+.position-menu a,
+.transparency-menu a,
+.hover-menu a {
+  display: block;
+  padding: 4px 8px;
+  text-decoration: none;
+  color: var(--dropDownSmall-Font-color);
+  transition: background-color 0.2s;
+}
+
+.position-menu a:hover,
+.transparency-menu a:hover,
+.hover-menu a:hover {
+  background-color: var(--dropDownSmall-hover-color);
+}
+
+.position-menu.dropup,
+.transparency-menu.dropup,
+.hover-menu.dropup {
+  top: auto;
+  bottom: 100%;
+  margin-bottom: 4px;
+}
+/*===========================================================================================================*/
+/*                                CheckBox Settings                                                          */
+/*===========================================================================================================*/
+.checkbox-container {
+  position: fixed;
+  top: 57%;
+  left: 630px;
+  margin-top: 12px;
+}
+
+.checkbox-container .option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  line-height: 0.8;
+}
+
+.checkbox-container .check-box {
+  display: inline-block;
+  width: 22px;
+  text-align: center;
+  margin-right: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'FluentSystemIcons';
+  font-size: 20px;
+  color: var(--border-color);
+}
+
+.checkbox-container .option .check-box::before {
+  content: "\F292";
+}
+
+.checkbox-container .option.checked .check-box::before {
+  content: "\F28E";
+  color: var(--highlight-color);
+}
+
+.checkbox-container label {
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1.6;
 }

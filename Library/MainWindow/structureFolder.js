@@ -1,8 +1,17 @@
+// Globals and mappings
 let selectedItem = null;
 let detailsPanel, actionButtons, loadButton, refreshButton, editButton;
 let windowSettings, checkboxContainer, addFlexLink;
-window.currentFlexSection = '';
-window.currentFlexFilePath = '';
+
+// Store original settings per section for restore on unload
+const originalSettings = {};
+
+// Maps for dropdown labels
+const posMap   = { '2':'Stay topmost','1':'Topmost','0':'Normal','-1':'Bottom','-2':'On Desktop' };
+const hoverMap = { '0':'Do Nothing','1':'Hide','2':'Fade in','3':'Fade out' };
+
+window.currentFlexSection    = '';
+window.currentFlexFilePath   = '';
 
 window.addEventListener('DOMContentLoaded', () => {
   // Grab UI elements
@@ -77,16 +86,71 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Capture current settings from deskflex for a given section
+function captureSettings(sec) {
+  return {
+    x: window.deskflex.getFlexWindowX(sec) || '',
+    y: window.deskflex.getFlexWindowY(sec) || '',
+    loadOrder: window.deskflex.getFlexLoadOrder(sec) || '',
+    position: String(window.deskflex.getFlexPosition(sec)),
+    transparency: String(window.deskflex.getFlexTransparency(sec)),
+    hover: String(window.deskflex.getFlexOnHover(sec)),
+    options: {
+      'Click Through': window.deskflex.getFlexClickthrough(sec),
+      'Draggable':      window.deskflex.getFlexDraggable(sec),
+      'Snap Edges':     window.deskflex.getFlexSnapEdges(sec),
+      'Keep On Screen': window.deskflex.getFlexKeepOnScreen(sec),
+      'Save Position':  window.deskflex.getFlexSavePosition(sec),
+      'Favorite':       window.deskflex.getFlexFavorite(sec),
+    }
+  };
+}
+
+// Apply a settings snapshot back into the UI
+function applySettings(settings) {
+  document.querySelector('.coords-input-x').value   = settings.x;
+  document.querySelector('.coords-input-y').value   = settings.y;
+  document.querySelector('.load-order-input').value = settings.loadOrder;
+
+  setDropdown('position',    
+    posMap[settings.position] || 'Select…'
+  );
+  setDropdown('transparency', 
+    (pct => pct>=0&&pct<=100?`${pct}%`:'Select…')(parseInt(settings.transparency,10))
+  );
+  setDropdown('hover', hoverMap[settings.hover] || 'Select…');
+
+  Array.from(checkboxContainer.querySelectorAll('.option')).forEach(option => {
+    const label = option.querySelector('label').textContent.trim();
+    const val   = settings.options[label];
+    const supported = (val === 1 || val === '1' || val === 0 || val === '0');
+    if (supported) {
+      option.classList.remove('disabled');
+      option.style.opacity = '1';
+    } else {
+      option.classList.add('disabled');
+      option.style.opacity = '';
+    }
+    option.classList.toggle('checked', val === 1 || val === '1');
+  });
+}
+
 // Load / Unload widget handler
 function onLoadUnload() {
-  const sec = window.currentFlexSection;
+  const sec      = window.currentFlexSection;
+  const filePath = window.currentFlexFilePath;
   if (!sec) return;
-  const isLoadMode = loadButton.textContent.trim().toLowerCase() === 'load';
 
-  window.deskflex[isLoadMode ? 'loadWidget' : 'unloadWidget'](sec)
+  const isLoadMode = loadButton.textContent.trim().toLowerCase() === 'load';
+  const action     = isLoadMode ? 'loadWidget' : 'unloadWidget';
+
+  window.deskflex[action](sec)
     .then(() => window.deskflex.setActiveValue(sec, isLoadMode ? 1 : 0))
     .then(() => {
       if (isLoadMode) {
+        // Snapshot original settings
+        originalSettings[sec] = captureSettings(sec);
+
         loadButton.textContent = 'Unload';
         refreshButton.disabled = false;
         refreshButton.classList.remove('disabled');
@@ -95,22 +159,30 @@ function onLoadUnload() {
         resetOptions();
         updateSettingsPanel(sec);
       } else {
+        // Unload mode
         enableLoadEdit();
         windowSettings.style.opacity    = '0.5';
         checkboxContainer.style.opacity = '0.5';
+        if (originalSettings[sec]) {
+          applySettings(originalSettings[sec]);
+        }
+
+        // ✅ Call resetPlaceholders() here
+        resetPlaceholders();
       }
     })
     .catch(err => console.error(`Failed to ${isLoadMode ? 'load' : 'unload'} widget:`, err));
 }
 
+
 // Handle selection from Active-Flex dropdown
 function handleActiveFlexSelection(sec) {
-  const base = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
+  const base     = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
   const fullPath = `${base}\\${sec}`;
+
   window.currentFlexSection  = sec;
   window.currentFlexFilePath = fullPath;
 
-  // Mirror .ini select logic:
   displayFlexInfo(fullPath);
   showDetails();
   enableLoadEdit();
@@ -133,48 +205,14 @@ function handleActiveFlexSelection(sec) {
     checkboxContainer.style.opacity = '0.5';
   }
 
-  if (!window.deskflex.hasFlexInfoSection(sec)) {
+  // ALWAYS pass full file path here
+  if (!window.deskflex.hasFlexInfoSection(fullPath)) {
     addFlexLink.classList.remove('hidden');
+    console.log('No FlexInfo section found for', fullPath);
   } else {
     addFlexLink.classList.add('hidden');
+    console.log('FlexInfo section found for', fullPath);
   }
-}
-
-// Reset all checkbox options to unchecked & disabled
-function resetOptions() {
-  checkboxContainer.querySelectorAll('.option').forEach(opt => {
-    opt.classList.add('disabled');
-    opt.classList.remove('checked');
-  });
-}
-
-// Disable all controls
-function disableAll() {
-  [loadButton, refreshButton, editButton].forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add('disabled');
-  });
-  windowSettings.classList.add('disabled');
-  checkboxContainer.querySelectorAll('.option').forEach(opt => {
-    opt.classList.add('disabled');
-    opt.querySelector('.check-box').textContent = '';
-  });
-}
-
-// Enable load & edit only
-function enableLoadEdit() {
-  loadButton.textContent = 'Load';
-  [loadButton, editButton].forEach(btn => {
-    btn.disabled = false;
-    btn.classList.remove('disabled');
-  });
-  refreshButton.disabled = true;
-  refreshButton.classList.add('disabled');
-  windowSettings.classList.add('disabled');
-  checkboxContainer.querySelectorAll('.option').forEach(opt => {
-    opt.classList.add('disabled');
-    opt.querySelector('.check-box').textContent = '';
-  });
 }
 
 // Tree item click handler
@@ -187,11 +225,12 @@ function selectItem(item) {
   if (name.toLowerCase().endsWith('.ini')) {
     const fullPath = getFullPath(item);
     window.currentFlexFilePath = fullPath;
+
     displayFlexInfo(fullPath);
     showDetails();
     enableLoadEdit();
 
-    const sec       = window.currentFlexSection;
+    const sec      = window.currentFlexSection;
     const statusVal = window.deskflex.getFlexStatus(sec);
     const isActive  = statusVal === 1 || statusVal === '1';
     if (isActive) {
@@ -210,7 +249,7 @@ function selectItem(item) {
       checkboxContainer.style.opacity = '0.5';
     }
 
-    if (!window.deskflex.hasFlexInfoSection(sec)) {
+    if (!window.deskflex.hasFlexInfoSection(fullPath)) {
       addFlexLink.classList.remove('hidden');
     } else {
       addFlexLink.classList.add('hidden');
@@ -261,7 +300,7 @@ function renderTree(container, obj, path = '') {
   });
 }
 
-// Listen for clicks deeper in the tree
+// Listen for clicks deeper in the tree (no-op here, kept for future)
 function initIniClickListener() {
   document.getElementById('folderTree').addEventListener('click', e => {
     const header = e.target.closest('.tree-node');
@@ -278,7 +317,41 @@ function showDetails() {
   detailsPanel.classList.remove('hidden');
 }
 
-// Display metadata from the INI
+function disableAll() {
+  [loadButton, refreshButton, editButton].forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add('disabled');
+  });
+  windowSettings.classList.add('disabled');
+  checkboxContainer.querySelectorAll('.option').forEach(opt => {
+    opt.classList.add('disabled');
+    opt.querySelector('.check-box').textContent = '';
+  });
+}
+
+function enableLoadEdit() {
+  loadButton.textContent = 'Load';
+  [loadButton, editButton].forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('disabled');
+  });
+  refreshButton.disabled = true;
+  refreshButton.classList.add('disabled');
+  windowSettings.classList.add('disabled');
+  checkboxContainer.querySelectorAll('.option').forEach(opt => {
+    opt.classList.add('disabled');
+    opt.querySelector('.check-box').textContent = '';
+  });
+}
+
+function resetOptions() {
+  checkboxContainer.querySelectorAll('.option').forEach(opt => {
+    opt.classList.add('disabled');
+    opt.classList.remove('checked');
+  });
+}
+
+// Display metadata from the INI and set currentFlexSection based on path
 function displayFlexInfo(filePath) {
   const flexInfo = window.deskflex.getFlexInfo(filePath) || {};
   document.getElementById('name').textContent        = flexInfo.Name        || '-';
@@ -391,28 +464,53 @@ function updateSettingsPanel(sec) {
   document.querySelector('.coords-input-y').value    = window.deskflex.getFlexWindowY(sec) || '';
   document.querySelector('.load-order-input').value  = window.deskflex.getFlexLoadOrder(sec) || '';
 
-  // Dropdown mappings
-  const posMap   = { '2':'Stay topmost','1':'Topmost','0':'Normal','-1':'Bottom','-2':'On Desktop' };
-  const hoverMap = { '0':'Do Nothing','1':'Hide','2':'Fade in','3':'Fade out' };
   setDropdown('position',    posMap[String(window.deskflex.getFlexPosition(sec))]);
   setDropdown('transparency', (pct => pct>=0&&pct<=100?`${pct}%`:'Select…')
-    (parseInt(window.deskflex.getFlexTransparency(sec),10)));
+    (parseInt(window.deskflex.getFlexTransparency(sec),10))
+  );
   setDropdown('hover',        hoverMap[String(window.deskflex.getFlexOnHover(sec))]);
+}
 
-  function setDropdown(type, label) {
-    const box  = document.querySelector(`.${type}-box`);
+// Helper to set dropdown UI
+function setDropdown(type, label) {
+  const box  = document.querySelector(`.${type}-box`);
+  const menu = document.getElementById(
+    type==='position'    ? 'positionMenu'
+  : type==='transparency'? 'transparencyMenu'
+                          : 'hoverMenu'
+  );
+  for (let node of box.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      node.textContent = label || 'Select…';
+      break;
+    }
+  }
+  Array.from(menu.querySelectorAll('a'))
+    .forEach(a => a.classList.toggle('selected', a.textContent.trim() === label));
+}
+
+function resetPlaceholders() {
+  const container = document.querySelector('.container-positions');
+  container.querySelectorAll('input[type="text"]').forEach(input => {
+    input.value = '';
+  });
+  ['position', 'transparency', 'hover'].forEach(type => {
+    const box = document.querySelector(`.${type}-box`);
     const menu = document.getElementById(
-      type==='position'    ? 'positionMenu'
-    : type==='transparency'? 'transparencyMenu'
-                            : 'hoverMenu'
+      type === 'position' ? 'positionMenu' :
+      type === 'transparency' ? 'transparencyMenu' : 'hoverMenu'
     );
     for (let node of box.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
-        node.textContent = label || 'Select…';
+        node.textContent = 'Select…';
         break;
       }
     }
-    Array.from(menu.querySelectorAll('a'))
-      .forEach(a => a.classList.toggle('selected', a.textContent.trim() === label));
-  }
+    Array.from(menu.querySelectorAll('a')).forEach(a => {
+      a.classList.remove('selected');
+    });
+  });
+  document.querySelectorAll('.option.checked').forEach(option => {
+    option.classList.remove('checked');
+  });
 }

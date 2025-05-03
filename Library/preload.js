@@ -15,9 +15,6 @@ contextBridge.exposeInMainWorld('deskflex', {
     hasFlexInfoSection: (filePath) => hasFlexInfoSection(filePath),
     setActiveValue: (sectionName, value) => setActiveValue(sectionName, value),
     
-    /**
-     *  Flex Section Information Form Settings File
-     */
     getFlexStatus: (flexSection) => getFlexStatus(flexSection),
     getFlexWindowX: (flexSection) => getFlexWindowX(flexSection),
     getFlexWindowY: (flexSection) => getFlexWindowY(flexSection),
@@ -33,5 +30,10 @@ contextBridge.exposeInMainWorld('deskflex', {
     getFlexLoadOrder: (flexSection) => getFlexLoadOrder(flexSection),
 
     loadWidget: (section) => {return ipcRenderer.invoke('load-widget', section);},
-    unloadWidget: (section) => {return ipcRenderer.invoke('unload-widget', section);}
+    unloadWidget: (section) => {return ipcRenderer.invoke('unload-widget', section);},
+
+    sendLog: (message, type, source = '') => ipcRenderer.send('log-message', message, type, source),
+    getLogs: () => ipcRenderer.invoke('get-logs'),
+
+    createLogsWindow: () => ipcRenderer.invoke('deskflex:createLogsWindow')
 });

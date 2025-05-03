@@ -145,11 +145,7 @@ function setIniValue(sectionName, keyName, value) {
 
 const setActiveValue = (sectionName, value) => setIniValue(sectionName, 'Active', value);
 
-
-/**
- * DeskFlex Section Information.
- */
-
+//DeskFlex Section Information.
 const getLogging = () => parseInt(getIniValue('DeskFlex', 'Logging')) || 0;
 const getDebugging = () => parseInt(getIniValue('DeskFlex', 'Debugging')) || 0;
 const getDarkMode = () => parseInt(getIniValue('DeskFlex', 'DarkMode')) || 0;
@@ -157,10 +153,7 @@ const getFlexesPath = () => getIniValue('DeskFlex', 'FlexesPath');
 const showStart = () => parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
 const getConfigEditorPath = () => getIniValue('DeskFlex', 'ConfigEditor');
 
-/**
- *  Flex Section Information Form Settings File.
- */
-
+// Flex Section Information Form Settings File.
 function getFlexStatus(flexSection) { return getIniValue(flexSection, 'Active'); }
 function getFlexWindowX(flexSection) { return getIniValue(flexSection, 'WindowX'); }
 function getFlexWindowY(flexSection) { return getIniValue(flexSection, 'WindowY'); }
