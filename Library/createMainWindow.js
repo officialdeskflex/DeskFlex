@@ -10,6 +10,8 @@ function createMainWindow(config) {
     icon: path.join(__dirname, '..', 'assets', 'DeskFlex.png'),
     webPreferences: {
       nodeIntegration: true,
+    //  enableRemoteModule: false,
+    //  devTools: false, // only in production
       preload: path.join(__dirname, 'preload.js')
     }
   });
