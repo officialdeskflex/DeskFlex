@@ -1,13 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const { getDarkMode, getFolderStructure, getActiveFlex, getFlexesPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition ,getFlexLoadOrder,setActiveValue} = require('./ConfigFile');
+const { getDarkMode, getFolderStructure, getActiveFlex, getWidgetsPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition ,getFlexLoadOrder,setActiveValue} = require('./ConfigFile');
 const { getFlexInfo, hasFlexInfoSection, } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
     darkMode: getDarkMode(),
     folderStructure: getFolderStructure(),
     activeFlex: getActiveFlex(),
-    flexPath: getFlexesPath(),
+    flexPath: getWidgetsPath(),
     settingsFile: path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini"),
     openConfigSettings: (filePath) => { ipcRenderer.send('open-config-settings', filePath) },
     hideWindow: () => ipcRenderer.send('hide-window'),

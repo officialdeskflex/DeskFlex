@@ -1,6 +1,6 @@
 const { logs } = require('./Logs');
 const { getDeskFlexVersion, getDeskFlexLang } = require('./RegkeyValues');
-const { getConfigEditorPath, getDarkMode, getFlexesPath } = require('./ConfigFile');
+const { getConfigEditorPath, getDarkMode, getWidgetsPath } = require('./ConfigFile');
 
 async function runDeskFlexInfo() {
     try {
@@ -15,7 +15,7 @@ async function runDeskFlexInfo() {
 
     logs(`Config Editor Path: ${getConfigEditorPath()}`, "Info", "DeskFlex");
     logs(`Dark Mode: ${getDarkMode() ? 'Enabled' : 'Disabled'}`, "Info", "DeskFlex");
-    logs(`Widgets Path: ${getFlexesPath()}`, "Info", "DeskFlex");
+    logs(`Widgets Path: ${getWidgetsPath()}`, "Info", "DeskFlex");
 }
 
 module.exports = { runDeskFlexInfo };

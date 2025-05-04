@@ -72,7 +72,7 @@ function getActiveFlex() {
  * Function to get the folder structure for .ini files as JSON
  * @returns {object} - JSON object representing the folder structure with .ini files.
  */
-function getFolderStructure(folderPath = getFlexesPath()) {
+function getFolderStructure(folderPath = getWidgetsPath()) {
     const result = {};
     if (!fs.existsSync(folderPath)) return result;
     const items = fs.readdirSync(folderPath);
@@ -149,7 +149,7 @@ const setActiveValue = (sectionName, value) => setIniValue(sectionName, 'Active'
 const getLogging = () => parseInt(getIniValue('DeskFlex', 'Logging')) || 0;
 const getDebugging = () => parseInt(getIniValue('DeskFlex', 'Debugging')) || 0;
 const getDarkMode = () => parseInt(getIniValue('DeskFlex', 'DarkMode')) || 0;
-const getFlexesPath = () => getIniValue('DeskFlex', 'FlexesPath');
+const getWidgetsPath = () => getIniValue('DeskFlex', 'WidgetsPath');
 const showStart = () => parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
 const getConfigEditorPath = () => getIniValue('DeskFlex', 'ConfigEditor');
 
@@ -168,4 +168,4 @@ function getFlexFavorite(flexSection) { return getIniValue(flexSection, 'Favorit
 function getFlexSavePosition(flexSection) { return getIniValue(flexSection, 'SavePosition'); }
 function getFlexLoadOrder(flexSection) { return getIniValue(flexSection, 'LoadOrder'); }
 
-module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getFlexesPath, getDebugging, getFolderStructure, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition, getFlexLoadOrder, setActiveValue };
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition, getFlexLoadOrder, setActiveValue };
