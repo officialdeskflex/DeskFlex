@@ -7,7 +7,7 @@ const keyMap  = Object.keys(DEFAULT).reduce((m,k)=>(m[k.toLowerCase()]=k,m), {})
 /**
  * @param {string} file - path to the .ini file
  */
-function getFlexInfo(file) {
+function getWidgetInfo(file) {
   if (!fs.existsSync(file)) return { ...DEFAULT };
   let cfg;
   try {
@@ -39,4 +39,4 @@ function hasWidgetInfoSection(file) {
   }
 }
 
-module.exports = { getFlexInfo, hasWidgetInfoSection };
+module.exports = { getWidgetInfo, hasWidgetInfoSection };

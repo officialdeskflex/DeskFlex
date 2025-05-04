@@ -353,7 +353,7 @@ function resetOptions() {
 
 // Display metadata from the INI and set currentWidgetSection based on path
 function displayFlexInfo(filePath) {
-  const flexInfo = window.deskflex.getFlexInfo(filePath) || {};
+  const flexInfo = window.deskflex.getWidgetInfo(filePath) || {};
   document.getElementById('name').textContent        = flexInfo.Name        || '-';
   document.getElementById('author').textContent      = flexInfo.Author      || '-';
   document.getElementById('version').textContent     = flexInfo.Version     || '-';
