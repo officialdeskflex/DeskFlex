@@ -362,8 +362,8 @@ function displayWidgetInfo(filePath) {
 
   const parts    = filePath.split('\\');
   const fileName = parts.pop();
-  const idxFlex  = parts.indexOf('Flexes');
-  const widgetArr = idxFlex >= 0 ? parts.slice(idxFlex + 1) : parts;
+  const idxWidget  = parts.indexOf('Flexes');
+  const widgetArr = idxWidget >= 0 ? parts.slice(idxWidget + 1) : parts;
 
   window.currentWidgetSection = widgetArr.concat(fileName).join('\\');
   document.getElementById('main-ini').textContent = fileName;
