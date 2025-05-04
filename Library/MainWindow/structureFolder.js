@@ -177,7 +177,7 @@ function onLoadUnload() {
 
 // Handle selection from Active-Flex dropdown
 function handleActiveWidgetSelection(sec) {
-  const base     = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
+  const base     = (window.deskflex.widgetPath || window.deskflex.widgetPath || '').replace(/[\/\\]+$/, '');
   const fullPath = `${base}\\${sec}`;
 
   window.currentWidgetSection  = sec;
@@ -378,7 +378,7 @@ function getFullPath(item) {
     segs.unshift(node.querySelector('span:last-child').textContent);
     node = node.closest('.children')?.parentElement.querySelector(':scope > .tree-node');
   }
-  const base = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
+  const base = (window.deskflex.widgetPath || window.deskflex.widgetPath || '').replace(/[\/\\]+$/, '');
   return `${base}\\${segs.join('\\')}`;
 }
 
