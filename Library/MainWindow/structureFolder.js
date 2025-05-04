@@ -10,7 +10,7 @@ const originalSettings = {};
 const posMap   = { '2':'Stay topmost','1':'Topmost','0':'Normal','-1':'Bottom','-2':'On Desktop' };
 const hoverMap = { '0':'Do Nothing','1':'Hide','2':'Fade in','3':'Fade out' };
 
-window.currentFlexSection    = '';
+window.currentWidgetSection    = '';
 window.currentFlexFilePath   = '';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -137,7 +137,7 @@ function applySettings(settings) {
 
 // Load / Unload widget handler
 function onLoadUnload() {
-  const sec      = window.currentFlexSection;
+  const sec      = window.currentWidgetSection;
   const filePath = window.currentFlexFilePath;
   if (!sec) return;
 
@@ -180,7 +180,7 @@ function handleActiveFlexSelection(sec) {
   const base     = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
   const fullPath = `${base}\\${sec}`;
 
-  window.currentFlexSection  = sec;
+  window.currentWidgetSection  = sec;
   window.currentFlexFilePath = fullPath;
 
   displayFlexInfo(fullPath);
@@ -230,7 +230,7 @@ function selectItem(item) {
     showDetails();
     enableLoadEdit();
 
-    const sec      = window.currentFlexSection;
+    const sec      = window.currentWidgetSection;
     const statusVal = window.deskflex.getWidgetStatus(sec);
     const isActive  = statusVal === 1 || statusVal === '1';
     if (isActive) {
@@ -351,7 +351,7 @@ function resetOptions() {
   });
 }
 
-// Display metadata from the INI and set currentFlexSection based on path
+// Display metadata from the INI and set currentWidgetSection based on path
 function displayFlexInfo(filePath) {
   const flexInfo = window.deskflex.getFlexInfo(filePath) || {};
   document.getElementById('name').textContent        = flexInfo.Name        || '-';
@@ -365,7 +365,7 @@ function displayFlexInfo(filePath) {
   const idxFlex  = parts.indexOf('Flexes');
   const widgetArr = idxFlex >= 0 ? parts.slice(idxFlex + 1) : parts;
 
-  window.currentFlexSection = widgetArr.concat(fileName).join('\\');
+  window.currentWidgetSection = widgetArr.concat(fileName).join('\\');
   document.getElementById('main-ini').textContent = fileName;
   document.getElementById('widget').textContent   = widgetArr.join('\\') || '-';
 }
