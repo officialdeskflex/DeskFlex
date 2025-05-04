@@ -176,7 +176,7 @@ function onLoadUnload() {
 
 
 // Handle selection from Active-Flex dropdown
-function handleActiveFlexSelection(sec) {
+function handleActiveWidgetSelection(sec) {
   const base     = (window.deskflex.flexpath || window.deskflex.flexPath || '').replace(/[\/\\]+$/, '');
   const fullPath = `${base}\\${sec}`;
 
@@ -386,14 +386,14 @@ function getFullPath(item) {
 function populateDropdown() {
   const dropdown = document.getElementById("myDropdown");
   dropdown.innerHTML = "";
-  if (Array.isArray(window.deskflex.activeFlex) && window.deskflex.activeFlex.length) {
-    window.deskflex.activeFlex.forEach(sec => {
+  if (Array.isArray(window.deskflex.activeWidget) && window.deskflex.activeWidget.length) {
+    window.deskflex.activeWidget.forEach(sec => {
       const option = document.createElement("a");
       option.href = "#";
       option.textContent = sec;
       option.addEventListener('click', e => {
         e.preventDefault();
-        handleActiveFlexSelection(sec);
+        handleActiveWidgetSelection(sec);
       });
       dropdown.appendChild(option);
     });
