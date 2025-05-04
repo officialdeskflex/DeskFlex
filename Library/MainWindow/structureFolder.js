@@ -206,7 +206,7 @@ function handleActiveFlexSelection(sec) {
   }
 
   // ALWAYS pass full file path here
-  if (!window.deskflex.hasFlexInfoSection(fullPath)) {
+  if (!window.deskflex.hasWidgetInfoSection(fullPath)) {
     addFlexLink.classList.remove('hidden');
     console.log('No FlexInfo section found for', fullPath);
   } else {
@@ -249,7 +249,7 @@ function selectItem(item) {
       checkboxContainer.style.opacity = '0.5';
     }
 
-    if (!window.deskflex.hasFlexInfoSection(fullPath)) {
+    if (!window.deskflex.hasWidgetInfoSection(fullPath)) {
       addFlexLink.classList.remove('hidden');
     } else {
       addFlexLink.classList.add('hidden');

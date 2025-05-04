@@ -29,7 +29,7 @@ function getFlexInfo(file) {
 /**
  * @param {string} file - path to the .ini file
  */
-function hasFlexInfoSection(file) {
+function hasWidgetInfoSection(file) {
   if (!fs.existsSync(file)) return false;
   try {
     const cfg = ini.parse(fs.readFileSync(file, 'utf-8'));
@@ -39,4 +39,4 @@ function hasFlexInfoSection(file) {
   }
 }
 
-module.exports = { getFlexInfo, hasFlexInfoSection };
+module.exports = { getFlexInfo, hasWidgetInfoSection };

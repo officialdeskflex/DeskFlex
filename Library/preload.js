@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
 const { getDarkMode, getFolderStructure, getActiveWidgets, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition ,getWidgetLoadOrder,setActiveValue} = require('./ConfigFile');
-const { getFlexInfo, hasFlexInfoSection, } = require('./ReadInfoSection');
+const { getFlexInfo, hasWidgetInfoSection, } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
     darkMode: getDarkMode(),
@@ -12,7 +12,7 @@ contextBridge.exposeInMainWorld('deskflex', {
     openConfigSettings: (filePath) => { ipcRenderer.send('open-config-settings', filePath) },
     hideWindow: () => ipcRenderer.send('hide-window'),
     getFlexInfo: (filePath) => getFlexInfo(filePath),
-    hasFlexInfoSection: (filePath) => hasFlexInfoSection(filePath),
+    hasWidgetInfoSection: (filePath) => hasWidgetInfoSection(filePath),
     setActiveValue: (sectionName, value) => setActiveValue(sectionName, value),
     
     getWidgetStatus: (widgetSection) => getWidgetStatus(widgetSection),
