@@ -9,13 +9,13 @@
 
 <body>
   <div class="tabs">
-    <button class="tab-button active" id="flexTab">Flexes</button>
+    <button class="tab-button active" id="widgetTab">Flexes</button>
     <button class="tab-button" id="settingsTab">Settings</button>
   </div>
 
   <!-- Flex Tab Content -->
   <div id="flexContent" class="content">
-    <div class="rectangleActiveList" id="toggle-Dropdown">Active Flex</div>
+    <div class="rectangleActiveList" id="toggle-Dropdown">Active Widget</div>
     <div class="dropdown" id="myDropdown"></div>
     <div><span class="addWidgetIcon">&#xE063;</span></div>
     <div class="tree-container" id="folderTree"></div>
@@ -137,18 +137,18 @@
   </div>
 
   <script>
-    const flexTab = document.getElementById('flexTab');
+    const widgetTab = document.getElementById('widgetTab');
     const settingsTab = document.getElementById('settingsTab');
     const flexContent = document.getElementById('flexContent');
     const settingsContent = document.getElementById('settingsContent');
 
     function activateTab(tab) {
-      [flexTab, settingsTab].forEach(t => t.classList.remove('active'));
+      [widgetTab, settingsTab].forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
     }
 
-    flexTab.addEventListener('click', () => {
-      activateTab(flexTab);
+    widgetTab.addEventListener('click', () => {
+      activateTab(widgetTab);
       flexContent.style.display = 'block';
       settingsContent.style.display = 'none';
     });

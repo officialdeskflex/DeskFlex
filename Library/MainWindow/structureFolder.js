@@ -45,7 +45,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Active-Flex dropdown toggle
+  // Active-Widget dropdown toggle
   const openBtn = document.getElementById('toggle-Dropdown');
   if (openBtn) {
     openBtn.addEventListener('click', e => {
@@ -57,7 +57,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Close dropdown on outside click
   window.addEventListener('click', closeDropdownOnClickOutside);
 
-  // Populate Active-Flex list
+  // Populate Active-Widget list
   populateDropdown();
 
   // Wire any custom dropdowns (data-target)
@@ -175,7 +175,7 @@ function onLoadUnload() {
 }
 
 
-// Handle selection from Active-Flex dropdown
+// Handle selection from Active-Widget dropdown
 function handleActiveWidgetSelection(sec) {
   const base     = (window.deskflex.widgetPath || window.deskflex.widgetPath || '').replace(/[\/\\]+$/, '');
   const fullPath = `${base}\\${sec}`;
@@ -382,7 +382,7 @@ function getFullPath(item) {
   return `${base}\\${segs.join('\\')}`;
 }
 
-// Populate & wire Active-Flex dropdown
+// Populate & wire Active-Widget dropdown
 function populateDropdown() {
   const dropdown = document.getElementById("myDropdown");
   dropdown.innerHTML = "";
@@ -400,14 +400,14 @@ function populateDropdown() {
   } else {
     const noItem = document.createElement("a");
     noItem.href = "#";
-    noItem.textContent = "No Active Flex";
+    noItem.textContent = "No Active Widget";
     noItem.style.pointerEvents = "none";
     noItem.style.opacity = "0.6";
     dropdown.appendChild(noItem);
   }
 }
 
-// Toggle the Active-Flex dropdown
+// Toggle the Active-Widget dropdown
 function toggleDropdown() {
   const dropdown  = document.getElementById("myDropdown");
   const rectangle = document.querySelector('.rectangleActiveList');
