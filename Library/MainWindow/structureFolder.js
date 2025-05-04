@@ -183,7 +183,7 @@ function handleActiveWidgetSelection(sec) {
   window.currentWidgetSection  = sec;
   window.currentFlexFilePath = fullPath;
 
-  displayFlexInfo(fullPath);
+  displayWidgetInfo(fullPath);
   showDetails();
   enableLoadEdit();
 
@@ -208,10 +208,10 @@ function handleActiveWidgetSelection(sec) {
   // ALWAYS pass full file path here
   if (!window.deskflex.hasWidgetInfoSection(fullPath)) {
     addWidgetLink.classList.remove('hidden');
-    console.log('No FlexInfo section found for', fullPath);
+    console.log('No WidgetInfo section found for', fullPath);
   } else {
     addWidgetLink.classList.add('hidden');
-    console.log('FlexInfo section found for', fullPath);
+    console.log('WidgetInfo section found for', fullPath);
   }
 }
 
@@ -226,7 +226,7 @@ function selectItem(item) {
     const fullPath = getFullPath(item);
     window.currentFlexFilePath = fullPath;
 
-    displayFlexInfo(fullPath);
+    displayWidgetInfo(fullPath);
     showDetails();
     enableLoadEdit();
 
@@ -352,13 +352,13 @@ function resetOptions() {
 }
 
 // Display metadata from the INI and set currentWidgetSection based on path
-function displayFlexInfo(filePath) {
-  const flexInfo = window.deskflex.getWidgetInfo(filePath) || {};
-  document.getElementById('name').textContent        = flexInfo.Name        || '-';
-  document.getElementById('author').textContent      = flexInfo.Author      || '-';
-  document.getElementById('version').textContent     = flexInfo.Version     || '-';
-  document.getElementById('license').textContent     = flexInfo.License     || '-';
-  document.getElementById('information').textContent = flexInfo.Information || 'No additional info.';
+function displayWidgetInfo(filePath) {
+  const widgetinfo = window.deskflex.getWidgetInfo(filePath) || {};
+  document.getElementById('name').textContent        = widgetinfo.Name        || '-';
+  document.getElementById('author').textContent      = widgetinfo.Author      || '-';
+  document.getElementById('version').textContent     = widgetinfo.Version     || '-';
+  document.getElementById('license').textContent     = widgetinfo.License     || '-';
+  document.getElementById('information').textContent = widgetinfo.Information || 'No additional info.';
 
   const parts    = filePath.split('\\');
   const fileName = parts.pop();
