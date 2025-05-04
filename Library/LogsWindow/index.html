@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About DeskFlex</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="tabs">
+    <button class="tab-button active" id="LogsTabButton">Logs</button>
+    <button class="tab-button" id="FlexesTabButton">Flexes</button>
+    <button class="tab-button" id="PluginsTabButton">Plugins</button>
+    <button class="tab-button" id="VersionTabButton">Version</button>
+  </div>
+
+  <div class="rectangle"></div>
+
+  <div id="LogsTab">
+    <div class="log-filters">
+      <div class="log-filter-item" onclick="toggleFilter('info')">
+        <span class="checkbox-icon checked" id="infoFilter">&#xF28E;</span> Info
+      </div>
+      <div class="log-filter-item" onclick="toggleFilter('error')">
+        <span class="checkbox-icon checked" id="errorFilter">&#xF28E;</span> Error
+      </div>
+      <div class="log-filter-item" onclick="toggleFilter('debug')">
+        <span class="checkbox-icon checked" id="debugFilter">&#xF28E;</span> Debug
+      </div>
+      <div class="log-filter-item" onclick="toggleFilter('warning')">
+        <span class="checkbox-icon checked" id="warningFilter">&#xF28E;</span> Warning
+      </div>
+    </div>
+
+    <div id="logContainer" class="logs-container">
+      <table class="logs-table">
+        <colgroup>
+          <col class="logs-column type">
+          <col class="logs-column time">
+          <col class="logs-column source">
+          <col class="logs-column message">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="logs-header">Type<div class="logs-resize-handle"></div>
+            </th>
+            <th class="logs-header">Time<div class="logs-resize-handle"></div>
+            </th>
+            <th class="logs-header">Source<div class="logs-resize-handle"></div>
+            </th>
+            <th class="logs-header">Message<div class="logs-resize-handle"></div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="logsBody">
+          <!-- Logs will be injected here -->
+        </tbody>
+      </table>
+    </div>
+      <div class="logs-rectangle"></div>
+  </div>
+
+  <div id="Flexes" class="content" style="display:none;">
+    <p>nasir</p>
+  </div>
+
+  <div id="Plugins" class="content" style="display:none;">
+    <p>Plugin content</p>
+  </div>
+
+  <div id="Version" class="content" style="display:none;">
+    <p>Version info</p>
+  </div>
+
+
+  <script src="script.js"></script>
+</body>
+
+</html>

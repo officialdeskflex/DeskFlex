@@ -102,11 +102,15 @@
 }
 
 .logs-column {
-  width: 150px;
+  width: 65px;
 }
 
 .logs-column.message {
   width: 300px;
+}
+
+.logs-column.source {
+  width: 100px;
 }
 
 .logs-header,

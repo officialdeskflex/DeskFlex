@@ -7,7 +7,7 @@ const { createTray } = require('./TrayIcon');
 const { loadWidgetsFromIniFile , unloadWidgetsBySection} = require('./WidgetManager');
 const { createLogsWindow } = require('./CreateLogsWindow');
 const { logs, getLogs } = require('./Logs');
-
+const { runDeskFlexInfo } = require('./InitialLogs');
 
 let mainWindow;
 app.isQuiting = false;
@@ -63,6 +63,7 @@ app.whenReady().then(() => {
   ipcMain.handle('deskflex:createLogsWindow', () => {
     createLogsWindow();
   }); 
+  runDeskFlexInfo();
  // const iniFilePath = 'C:\\Users\\nstec\\OneDrive\\Documents\\DeskFlex\\Flexes\\Test\\Test.ini';
  // loadWidgetsFromIniFile(iniFilePath);
  // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
