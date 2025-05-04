@@ -1,7 +1,7 @@
 // Globals and mappings
 let selectedItem = null;
 let detailsPanel, actionButtons, loadButton, refreshButton, editButton;
-let windowSettings, checkboxContainer, addFlexLink;
+let windowSettings, checkboxContainer, addWidgetLink;
 
 // Store original settings per section for restore on unload
 const originalSettings = {};
@@ -22,10 +22,10 @@ window.addEventListener('DOMContentLoaded', () => {
   editButton        = actionButtons.querySelector('button:nth-child(3)');
   windowSettings    = document.querySelector('.container-positions');
   checkboxContainer = document.querySelector('.checkbox-container');
-  addFlexLink       = document.querySelector('.add-flex-info');
+  addWidgetLink       = document.querySelector('.add-widget-info');
 
   // Initial UI state
-  addFlexLink.classList.add('hidden');
+  addWidgetLink.classList.add('hidden');
   windowSettings.style.opacity    = '0.5';
   checkboxContainer.style.opacity = '0.5';
   hideDetails();
@@ -207,10 +207,10 @@ function handleActiveWidgetSelection(sec) {
 
   // ALWAYS pass full file path here
   if (!window.deskflex.hasWidgetInfoSection(fullPath)) {
-    addFlexLink.classList.remove('hidden');
+    addWidgetLink.classList.remove('hidden');
     console.log('No FlexInfo section found for', fullPath);
   } else {
-    addFlexLink.classList.add('hidden');
+    addWidgetLink.classList.add('hidden');
     console.log('FlexInfo section found for', fullPath);
   }
 }
@@ -250,14 +250,14 @@ function selectItem(item) {
     }
 
     if (!window.deskflex.hasWidgetInfoSection(fullPath)) {
-      addFlexLink.classList.remove('hidden');
+      addWidgetLink.classList.remove('hidden');
     } else {
-      addFlexLink.classList.add('hidden');
+      addWidgetLink.classList.add('hidden');
     }
   } else {
     hideDetails();
     disableAll();
-    addFlexLink.classList.add('hidden');
+    addWidgetLink.classList.add('hidden');
   }
 }
 

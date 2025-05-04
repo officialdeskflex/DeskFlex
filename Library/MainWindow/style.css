@@ -166,7 +166,7 @@ body {
 /*===========================================================================================================*/
 /*                                 Add Flex/Widget Content                                                   */
 /*===========================================================================================================*/
-.addFlexIcon {
+.addWidgetIcon {
   font-family: 'FluentSystemIcons';
   font-size: 25px;
   margin-left: 258px;
@@ -178,7 +178,7 @@ body {
   cursor: pointer;
 }
 
-.addFlexIcon.animate {
+.addWidgetIcon.animate {
   animation: shrinkBounce 0.2s ease;
 }
 
@@ -367,7 +367,7 @@ body {
 /*===========================================================================================================*/
 /*                               Add Flex Info(MetaInfo)                                                     */
 /*===========================================================================================================*/
-.add-flex-info {
+.add-widget-info {
   position: fixed;
   top: 50%;
   left: 320px;
@@ -379,17 +379,17 @@ body {
   color: var(--highlight-color);
 }
 
-.add-flex-info .icon {
+.add-widget-info .icon {
   font-family: 'FluentSystemIcons';
   font-size: 14px;
 }
 
-.add-flex-info .text {
+.add-widget-info .text {
   color: inherit;
 }
 
-.add-flex-info:hover .icon,
-.add-flex-info:hover .text {
+.add-widget-info:hover .icon,
+.add-widget-info:hover .text {
   color: var(--highlight-color);
   transition: color 0.3s ease;
 }

@@ -5,8 +5,8 @@ if (window.deskflex.darkMode) {
   document.body.classList.remove('dark-mode');
 }
 
-// Animate AddFlex Button
-const icon = document.querySelector('.addFlexIcon');
+// Animate addWidget Button
+const icon = document.querySelector('.addWidgetIcon');
 icon.addEventListener('click', () => {
   icon.classList.add('animate');
   setTimeout(() => icon.classList.remove('animate'), 200);
