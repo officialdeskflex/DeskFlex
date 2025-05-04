@@ -96,7 +96,7 @@ function toggleFilter(type) {
 // Tabs Toggle Handler
 const tabs = {
   LogsTabButton: 'LogsTab',
-  FlexesTabButton: 'Flexes',
+  WidgetsTabButton: 'Flexes',
   PluginsTabButton: 'Plugins',
   VersionTabButton: 'Version'
 };

@@ -19,7 +19,7 @@ const config = {
   debugging: getDebugging(),
   darkMode: getDarkMode(),
   activeWidget: getActiveWidgets(),
-  flexesPath: getWidgetsPath(),
+  widgetsPath: getWidgetsPath(),
   folderStructure: getFolderStructure(),
 };
 
@@ -33,7 +33,7 @@ const config = {
   // console.log("Flexes Structure:", JSON.stringify(config.folderStructure, null, 2));
 }*/
 
-//console.log(`Flexes Path is: ${config.flexesPath}`);
+//console.log(`Flexes Path is: ${config.widgetsPath}`);
 
 /*
  * IPC Commands
@@ -78,7 +78,7 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('load-widget', async (_event, section) => {
   try {
-    const fullPath = path.join(config.flexesPath, section);
+    const fullPath = path.join(config.widgetsPath, section);
     loadWidgetsFromIniFile(fullPath);
     return { success: true };
   } catch (err) {
