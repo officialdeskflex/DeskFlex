@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const { getDarkMode, getFolderStructure, getActiveFlex, getWidgetsPath, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition ,getFlexLoadOrder,setActiveValue} = require('./ConfigFile');
+const { getDarkMode, getFolderStructure, getActiveFlex, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition ,getWidgetLoadOrder,setActiveValue} = require('./ConfigFile');
 const { getFlexInfo, hasFlexInfoSection, } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
@@ -15,19 +15,19 @@ contextBridge.exposeInMainWorld('deskflex', {
     hasFlexInfoSection: (filePath) => hasFlexInfoSection(filePath),
     setActiveValue: (sectionName, value) => setActiveValue(sectionName, value),
     
-    getFlexStatus: (flexSection) => getFlexStatus(flexSection),
-    getFlexWindowX: (flexSection) => getFlexWindowX(flexSection),
-    getFlexWindowY: (flexSection) => getFlexWindowY(flexSection),
-    getFlexPosition: (flexSection) => getFlexPosition(flexSection),
-    getFlexClickthrough: (flexSection) => getFlexClickthrough(flexSection),
-    getFlexDraggable: (flexSection) => getFlexDraggable(flexSection),
-    getFlexSnapEdges: (flexSection) => getFlexSnapEdges(flexSection),
-    getFlexKeepOnScreen: (flexSection) => getFlexKeepOnScreen(flexSection),
-    getFlexOnHover: (flexSection) => getFlexOnHover(flexSection),
-    getFlexTransparency: (flexSection) => getFlexTransparency(flexSection),
-    getFlexFavorite: (flexSection) => getFlexFavorite(flexSection),
-    getFlexSavePosition: (flexSection) => getFlexSavePosition(flexSection),
-    getFlexLoadOrder: (flexSection) => getFlexLoadOrder(flexSection),
+    getWidgetStatus: (flexSection) => getWidgetStatus(flexSection),
+    getWidgetWindowX: (flexSection) => getWidgetWindowX(flexSection),
+    getWidgetWindowY: (flexSection) => getWidgetWindowY(flexSection),
+    getWidgetPosition: (flexSection) => getWidgetPosition(flexSection),
+    getWidgetClickthrough: (flexSection) => getWidgetClickthrough(flexSection),
+    getWidgetDraggable: (flexSection) => getWidgetDraggable(flexSection),
+    getWidgetSnapEdges: (flexSection) => getWidgetSnapEdges(flexSection),
+    getWidgetKeepOnScreen: (flexSection) => getWidgetKeepOnScreen(flexSection),
+    getWidgetOnHover: (flexSection) => getWidgetOnHover(flexSection),
+    getWidgetTransparency: (flexSection) => getWidgetTransparency(flexSection),
+    getWidgetFavorite: (flexSection) => getWidgetFavorite(flexSection),
+    getWidgetSavePosition: (flexSection) => getWidgetSavePosition(flexSection),
+    getWidgetLoadOrder: (flexSection) => getWidgetLoadOrder(flexSection),
 
     loadWidget: (section) => {return ipcRenderer.invoke('load-widget', section);},
     unloadWidget: (section) => {return ipcRenderer.invoke('unload-widget', section);},

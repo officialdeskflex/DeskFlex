@@ -89,19 +89,19 @@ window.addEventListener('DOMContentLoaded', () => {
 // Capture current settings from deskflex for a given section
 function captureSettings(sec) {
   return {
-    x: window.deskflex.getFlexWindowX(sec) || '',
-    y: window.deskflex.getFlexWindowY(sec) || '',
-    loadOrder: window.deskflex.getFlexLoadOrder(sec) || '',
-    position: String(window.deskflex.getFlexPosition(sec)),
-    transparency: String(window.deskflex.getFlexTransparency(sec)),
-    hover: String(window.deskflex.getFlexOnHover(sec)),
+    x: window.deskflex.getWidgetWindowX(sec) || '',
+    y: window.deskflex.getWidgetWindowY(sec) || '',
+    loadOrder: window.deskflex.getWidgetLoadOrder(sec) || '',
+    position: String(window.deskflex.getWidgetPosition(sec)),
+    transparency: String(window.deskflex.getWidgetTransparency(sec)),
+    hover: String(window.deskflex.getWidgetOnHover(sec)),
     options: {
-      'Click Through': window.deskflex.getFlexClickthrough(sec),
-      'Draggable':      window.deskflex.getFlexDraggable(sec),
-      'Snap Edges':     window.deskflex.getFlexSnapEdges(sec),
-      'Keep On Screen': window.deskflex.getFlexKeepOnScreen(sec),
-      'Save Position':  window.deskflex.getFlexSavePosition(sec),
-      'Favorite':       window.deskflex.getFlexFavorite(sec),
+      'Click Through': window.deskflex.getWidgetClickthrough(sec),
+      'Draggable':      window.deskflex.getWidgetDraggable(sec),
+      'Snap Edges':     window.deskflex.getWidgetSnapEdges(sec),
+      'Keep On Screen': window.deskflex.getWidgetKeepOnScreen(sec),
+      'Save Position':  window.deskflex.getWidgetSavePosition(sec),
+      'Favorite':       window.deskflex.getWidgetFavorite(sec),
     }
   };
 }
@@ -187,7 +187,7 @@ function handleActiveFlexSelection(sec) {
   showDetails();
   enableLoadEdit();
 
-  const statusVal = window.deskflex.getFlexStatus(sec);
+  const statusVal = window.deskflex.getWidgetStatus(sec);
   const isActive  = statusVal === 1 || statusVal === '1';
   if (isActive) {
     loadButton.textContent = 'Unload';
@@ -231,7 +231,7 @@ function selectItem(item) {
     enableLoadEdit();
 
     const sec      = window.currentFlexSection;
-    const statusVal = window.deskflex.getFlexStatus(sec);
+    const statusVal = window.deskflex.getWidgetStatus(sec);
     const isActive  = statusVal === 1 || statusVal === '1';
     if (isActive) {
       loadButton.textContent = 'Unload';
@@ -428,12 +428,12 @@ function closeDropdownOnClickOutside(event) {
 // Updated Settings Panel
 function updateSettingsPanel(sec) {
   const checks = [
-    ['Click Through',  window.deskflex.getFlexClickthrough],
-    ['Draggable',      window.deskflex.getFlexDraggable],
-    ['Snap Edges',     window.deskflex.getFlexSnapEdges],
-    ['Keep On Screen', window.deskflex.getFlexKeepOnScreen],
-    ['Save Position',  window.deskflex.getFlexSavePosition],
-    ['Favorite',       window.deskflex.getFlexFavorite],
+    ['Click Through',  window.deskflex.getWidgetClickthrough],
+    ['Draggable',      window.deskflex.getWidgetDraggable],
+    ['Snap Edges',     window.deskflex.getWidgetSnapEdges],
+    ['Keep On Screen', window.deskflex.getWidgetKeepOnScreen],
+    ['Save Position',  window.deskflex.getWidgetSavePosition],
+    ['Favorite',       window.deskflex.getWidgetFavorite],
   ];
 
   checks.forEach(([label, getter]) => {
@@ -460,15 +460,15 @@ function updateSettingsPanel(sec) {
   document.querySelectorAll('.coords-input, .load-order-input')
     .forEach(i => i.disabled = false);
 
-  document.querySelector('.coords-input-x').value    = window.deskflex.getFlexWindowX(sec) || '';
-  document.querySelector('.coords-input-y').value    = window.deskflex.getFlexWindowY(sec) || '';
-  document.querySelector('.load-order-input').value  = window.deskflex.getFlexLoadOrder(sec) || '';
+  document.querySelector('.coords-input-x').value    = window.deskflex.getWidgetWindowX(sec) || '';
+  document.querySelector('.coords-input-y').value    = window.deskflex.getWidgetWindowY(sec) || '';
+  document.querySelector('.load-order-input').value  = window.deskflex.getWidgetLoadOrder(sec) || '';
 
-  setDropdown('position',    posMap[String(window.deskflex.getFlexPosition(sec))]);
+  setDropdown('position',    posMap[String(window.deskflex.getWidgetPosition(sec))]);
   setDropdown('transparency', (pct => pct>=0&&pct<=100?`${pct}%`:'Select…')
-    (parseInt(window.deskflex.getFlexTransparency(sec),10))
+    (parseInt(window.deskflex.getWidgetTransparency(sec),10))
   );
-  setDropdown('hover',        hoverMap[String(window.deskflex.getFlexOnHover(sec))]);
+  setDropdown('hover',        hoverMap[String(window.deskflex.getWidgetOnHover(sec))]);
 }
 
 // Helper to set dropdown UI

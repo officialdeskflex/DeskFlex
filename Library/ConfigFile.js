@@ -154,18 +154,18 @@ const showStart = () => parseInt(getIniValue('DeskFlex', 'ShowOnStart')) || 0;
 const getConfigEditorPath = () => getIniValue('DeskFlex', 'ConfigEditor');
 
 // Flex Section Information Form Settings File.
-function getFlexStatus(flexSection) { return getIniValue(flexSection, 'Active'); }
-function getFlexWindowX(flexSection) { return getIniValue(flexSection, 'WindowX'); }
-function getFlexWindowY(flexSection) { return getIniValue(flexSection, 'WindowY'); }
-function getFlexPosition(flexSection) { return getIniValue(flexSection, 'Position'); }
-function getFlexClickthrough(flexSection) { return getIniValue(flexSection, 'Clickthrough'); }
-function getFlexDraggable(flexSection) { return getIniValue(flexSection, 'Draggable'); }
-function getFlexSnapEdges(flexSection) { return getIniValue(flexSection, 'SnapEdges'); }
-function getFlexKeepOnScreen(flexSection) { return getIniValue(flexSection, 'KeepOnScreen'); }
-function getFlexOnHover(flexSection) { return getIniValue(flexSection, 'OnHover'); }
-function getFlexTransparency(flexSection) { return getIniValue(flexSection, 'Transparency'); }
-function getFlexFavorite(flexSection) { return getIniValue(flexSection, 'Favorite'); }
-function getFlexSavePosition(flexSection) { return getIniValue(flexSection, 'SavePosition'); }
-function getFlexLoadOrder(flexSection) { return getIniValue(flexSection, 'LoadOrder'); }
+function getWidgetStatus(flexSection) { return getIniValue(flexSection, 'Active'); }
+function getWidgetWindowX(flexSection) { return getIniValue(flexSection, 'WindowX'); }
+function getWidgetWindowY(flexSection) { return getIniValue(flexSection, 'WindowY'); }
+function getWidgetPosition(flexSection) { return getIniValue(flexSection, 'Position'); }
+function getWidgetClickthrough(flexSection) { return getIniValue(flexSection, 'Clickthrough'); }
+function getWidgetDraggable(flexSection) { return getIniValue(flexSection, 'Draggable'); }
+function getWidgetSnapEdges(flexSection) { return getIniValue(flexSection, 'SnapEdges'); }
+function getWidgetKeepOnScreen(flexSection) { return getIniValue(flexSection, 'KeepOnScreen'); }
+function getWidgetOnHover(flexSection) { return getIniValue(flexSection, 'OnHover'); }
+function getWidgetTransparency(flexSection) { return getIniValue(flexSection, 'Transparency'); }
+function getWidgetFavorite(flexSection) { return getIniValue(flexSection, 'Favorite'); }
+function getWidgetSavePosition(flexSection) { return getIniValue(flexSection, 'SavePosition'); }
+function getWidgetLoadOrder(flexSection) { return getIniValue(flexSection, 'LoadOrder'); }
 
-module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getFlexStatus, getFlexWindowX, getFlexWindowY, getFlexPosition, getFlexClickthrough, getFlexDraggable, getFlexSnapEdges, getFlexKeepOnScreen, getFlexOnHover, getFlexTransparency, getFlexFavorite, getFlexSavePosition, getFlexLoadOrder, setActiveValue };
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue };
