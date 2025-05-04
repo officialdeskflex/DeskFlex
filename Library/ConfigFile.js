@@ -39,7 +39,7 @@ function getIniValue(sectionName, keyName) {
 /**
  * Reads the INI file and returns a JSON object of all sections that have Active=1.
  */
-function getActiveFlex() {
+function getActiveWidgets() {
     const filePath = path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini");
     if (!fs.existsSync(filePath)) return [];
     const data = fs.readFileSync(filePath, 'utf-8');
@@ -168,4 +168,4 @@ function getWidgetFavorite(widgetSection) { return getIniValue(widgetSection, 'F
 function getWidgetSavePosition(widgetSection) { return getIniValue(widgetSection, 'SavePosition'); }
 function getWidgetLoadOrder(widgetSection) { return getIniValue(widgetSection, 'LoadOrder'); }
 
-module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveFlex, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue };
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveWidgets, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue };

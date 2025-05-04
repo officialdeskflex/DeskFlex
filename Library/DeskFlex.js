@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { createMainWindow } = require('./CreateMainWindow');
-const { showStart, getConfigEditorPath, getLogging, getDarkMode, getWidgetsPath, getActiveFlex, getDebugging, getFolderStructure } = require('./ConfigFile');
+const { showStart, getConfigEditorPath, getLogging, getDarkMode, getWidgetsPath, getActiveWidgets, getDebugging, getFolderStructure } = require('./ConfigFile');
 const { openFileWithEditor } = require('./OpenConfigFiles');
 const { createTray } = require('./TrayIcon');
 const { loadWidgetsFromIniFile , unloadWidgetsBySection} = require('./WidgetManager');
@@ -18,7 +18,7 @@ const config = {
   logging: getLogging(),
   debugging: getDebugging(),
   darkMode: getDarkMode(),
-  activeFlex: getActiveFlex(),
+  activeFlex: getActiveWidgets(),
   flexesPath: getWidgetsPath(),
   folderStructure: getFolderStructure(),
 };
