@@ -1,41 +1,42 @@
 :root {
-    --font-color: rgb(13, 17, 23);
-    --bg-color: rgb(255, 255, 255);
-    --border-color: rgb(200, 200, 200);
-    --btn-bg: rgb(230, 230, 230);
-    --btn-hover-bg: rgb(210, 210, 210);
-    --highlight-color: rgb(10, 10, 10);
-    --divider-color: rgb(200, 200, 200);
-    --scrollbar-color: rgb(80, 230, 255);
-  }
-  
-  .dark-mode {
-    --font-color: rgb(255, 255, 255);
-    --bg-color: rgb(13, 17, 23);
-    --border-color: rgb(60, 60, 60);
-    --btn-bg: rgb(13, 17, 23);
-    --btn-hover-bg: rgb(30, 35, 42);
-    --highlight-color: rgb(255, 255, 255);
-    --divider-color: rgb(60, 60, 60);
-  }
-  
-  @font-face {
-    font-family: 'FluentSystemIcons';
-    src: url('../../Fonts/FluentSystemIcons-Regular.woff2') format('woff2'),
-         url('../../Fonts/FluentSystemIcons-Regular.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-  }
-  
-  body {
-    background-color: var(--bg-color);
-    color: var(--font-color);
-    font-family: system-ui, sans-serif;
-    transition: background-color 0.3s, color 0.3s;
-  }
+  --font-color: rgb(13, 17, 23);
+  --bg-color: rgb(255, 255, 255);
+  --border-color: rgb(200, 200, 200);
+  --btn-bg: rgb(230, 230, 230);
+  --btn-hover-bg: rgb(210, 210, 210);
+  --highlight-color: rgb(10, 10, 10);
+  --divider-color: rgb(200, 200, 200);
+  --scrollbar-color: rgb(80, 230, 255);
+}
 
+.dark-mode {
+  --font-color: rgb(255, 255, 255);
+  --bg-color: rgb(13, 17, 23);
+  --border-color: rgb(60, 60, 60);
+  --btn-bg: rgb(13, 17, 23);
+  --btn-hover-bg: rgb(30, 35, 42);
+  --highlight-color: rgb(255, 255, 255);
+  --divider-color: rgb(60, 60, 60);
+}
 
-  /* Tabs */
+@font-face {
+  font-family: "FluentSystemIcons";
+  src: url("../../Fonts/FluentSystemIcons-Regular.woff2") format("woff2"),
+    url("../../Fonts/FluentSystemIcons-Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  font-family: system-ui, sans-serif;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/*===========================================================================================================*/
+/*                                Tabs Buttons                                                               */
+/*===========================================================================================================*/
 .tabs {
   display: flex;
   gap: 10px;
@@ -53,7 +54,6 @@
   transition: background-color 0.3s, color 0.3s;
 }
 
-/* Active Tab Styling */
 .tab-button.active {
   background-color: var(--tabActive-highlight-color);
   color: var(--tabFont-color);
@@ -78,10 +78,12 @@
   background: transparent;
 }
 
-/* Logs Table */
+/*===========================================================================================================*/
+/*                                Logs Table                                                                 */
+/*===========================================================================================================*/
 
 .logs-container {
-  position: fixed; 
+  position: fixed;
   width: 841px;
   height: 270px;
   top: 70px;
@@ -89,7 +91,7 @@
   margin: 0 auto;
   overflow-x: auto;
   overflow-y: auto;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Optional visual enhancement */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .logs-table {
@@ -98,7 +100,7 @@
   table-layout: fixed;
   background-color: var(--bg-color);
   color: var(--font-color);
-  font-size: 12px; 
+  font-size: 12px;
 }
 
 .logs-column {
@@ -116,7 +118,7 @@
 .logs-header,
 .logs-cell {
   border: 1px solid var(--border-color);
-  padding: 4px 8px; 
+  padding: 4px 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -131,7 +133,6 @@
   background-color: var(--bg-color);
   box-shadow: inset 0 1px 0 var(--border-color), 0 2px 2px rgba(0, 0, 0, 0.05);
 }
-
 
 .logs-resize-handle {
   position: absolute;
@@ -173,7 +174,7 @@
 }
 
 .icon {
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 16px;
   display: inline-block;
   width: 20px;
@@ -182,14 +183,24 @@
   vertical-align: middle;
 }
 
-.icon.info { color: #0078D4; }   /* Blue */
-.icon.warning { color: #FFB900; } /* Yellow */
-.icon.debug { color: #107C10; }  /* Green */
-.icon.error { color: #D13438; }  /* Red */
+.icon.info {
+  color: #0078d4;
+}
+.icon.warning {
+  color: #ffb900;
+}
+.icon.debug {
+  color: #107c10;
+}
+.icon.error {
+  color: #d13438;
+}
 
-/*Logs Filter*/
+/*===========================================================================================================*/
+/*                                Logs Filter                                                                */
+/*===========================================================================================================*/
 .checkbox-icon {
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 18px;
   cursor: pointer;
   margin-right: 8px;
@@ -218,4 +229,27 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+}
+
+/*===========================================================================================================*/
+/*                                Clear Button                                                               */
+/*===========================================================================================================*/
+.clear-Button {
+  z-index: 99999;
+  position: fixed;
+  bottom: 10px;
+  right: 20px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: var(--btn-bg);
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  height: 25px;
+}
+
+.clear-Button:hover {
+  background-color: var(--btn-hover-bg);
 }

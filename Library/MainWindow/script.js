@@ -1,18 +1,15 @@
-
-
-
 //Set DarkMode/ColorTheme.
 if (window.deskflex.darkMode) {
-  document.body.classList.add('dark-mode');
+  document.body.classList.add("dark-mode");
 } else {
-  document.body.classList.remove('dark-mode');
+  document.body.classList.remove("dark-mode");
 }
 
 // Animate addWidget Button
-const icon = document.querySelector('.addWidgetIcon');
-icon.addEventListener('click', () => {
-  icon.classList.add('animate');
-  setTimeout(() => icon.classList.remove('animate'), 200);
+const icon = document.querySelector(".addWidgetIcon");
+icon.addEventListener("click", () => {
+  icon.classList.add("animate");
+  setTimeout(() => icon.classList.remove("animate"), 200);
 });
 
 // Open the DeskFlex Config Settings
@@ -26,16 +23,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Close the Window
-const btn = document.getElementById('close-window');
-btn.addEventListener('click', () => {
+const btn = document.getElementById("close-window");
+btn.addEventListener("click", () => {
   window.deskflex.hideWindow();
 });
 
 // ceate the Logs Window
-function createLogsWindow(){
-  window.deskflex.createLogsWindow(); 
+function createLogsWindow() {
+  window.deskflex.createLogsWindow();
 }
 
-function addlog(){
+function addlog() {
   window.deskflex.sendLog("DeskFlex Main Window Loaded", "warning", "");
 }

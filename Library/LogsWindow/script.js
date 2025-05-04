@@ -20,6 +20,13 @@ function resetLogs() {
   updateLogs();
 }
 
+function clearAllLogs(){
+  window.deskflex.clearAllLogs().then(() => {
+    lastLogCount = 0;
+    document.getElementById('logsBody').innerHTML = '';
+    updateLogs();
+  });
+}
 function updateLogs() {
   window.deskflex.getLogs().then(logs => {
     const tbody = document.getElementById('logsBody');

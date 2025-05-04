@@ -18,7 +18,7 @@ const {
   unloadWidgetsBySection,
 } = require("./WidgetManager");
 const { createLogsWindow } = require("./CreateLogsWindow");
-const { logs, getLogs } = require("./Logs");
+const { logs, getLogs,clearAllLogs } = require("./Logs");
 const { runDeskFlexVersion } = require("./InitialLogs");
 
 let mainWindow;
@@ -115,3 +115,8 @@ ipcMain.on("log-message", (_event, message, type, source) => {
 ipcMain.handle("get-logs", () => {
   return getLogs();
 });
+
+ipcMain.handle("clear-logs", () => {
+  clearAllLogs();
+});
+

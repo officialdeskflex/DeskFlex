@@ -13,11 +13,11 @@
   --scrollbar-color: rgb(80, 230, 255);
   --dark-bg-color: rgb(13, 17, 23);
   --dark-border-color: rgb(100, 100, 100);
-  --dropDownSmall-color:   #f1f1f1;
-  --dropDownSmall-border:#ccc;
-  --dropDownSmall-hover-color:#e0e0e0;
-  --dropDown-Shodow-color:rgba(0, 0, 0, 0.1);
-  --dropDownSmall-Font-color:rgb(0,0,0);
+  --dropDownSmall-color: #f1f1f1;
+  --dropDownSmall-border: #ccc;
+  --dropDownSmall-hover-color: #e0e0e0;
+  --dropDown-Shodow-color: rgba(0, 0, 0, 0.1);
+  --dropDownSmall-Font-color: rgb(0, 0, 0);
 }
 
 .dark-mode {
@@ -34,17 +34,17 @@
   --scrollbar-color: rgb(80, 230, 255);
   --dark-bg-color: rgb(13, 17, 23);
   --dark-border-color: rgb(100, 100, 100);
-  --dropDownSmall-color:rgb(6, 9, 15);
-  --dropDownSmall-border:rgb(100, 100, 100);
-  --dropDownSmall-hover-color:rgb(20, 25, 33);
-  --dropDown-Shodow-color:rgba(255, 255, 255, 0.05);
-  --dropDownSmall-Font-color:rgb(255, 255, 255);
+  --dropDownSmall-color: rgb(6, 9, 15);
+  --dropDownSmall-border: rgb(100, 100, 100);
+  --dropDownSmall-hover-color: rgb(20, 25, 33);
+  --dropDown-Shodow-color: rgba(255, 255, 255, 0.05);
+  --dropDownSmall-Font-color: rgb(255, 255, 255);
 }
 
 @font-face {
-  font-family: 'FluentSystemIcons';
-  src: url('../../Fonts/FluentSystemIcons-Regular.woff2') format('woff2'),
-    url('../../Fonts/FluentSystemIcons-Regular.woff') format('woff');
+  font-family: "FluentSystemIcons";
+  src: url("../../Fonts/FluentSystemIcons-Regular.woff2") format("woff2"),
+    url("../../Fonts/FluentSystemIcons-Regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
 }
@@ -121,7 +121,7 @@ body {
 
 .rectangleActiveList::after {
   content: "\F2A3";
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 16px;
   margin-left: 8px;
   transition: transform 0.3s;
@@ -167,7 +167,7 @@ body {
 /*                                 Add Flex/Widget Content                                                   */
 /*===========================================================================================================*/
 .addWidgetIcon {
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 25px;
   margin-left: 258px;
   color: var(--font-color);
@@ -380,7 +380,7 @@ body {
 }
 
 .add-widget-info .icon {
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 14px;
 }
 
@@ -450,7 +450,7 @@ body {
   box-sizing: border-box;
 }
 
-.tree-item.selected>.tree-node {
+.tree-item.selected > .tree-node {
   display: inline-flex;
   background-color: rgba(80, 230, 255, 0.3);
   border-radius: 4px;
@@ -458,7 +458,7 @@ body {
 }
 
 .tree-node .icon {
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 16px;
   width: 20px;
   text-align: center;
@@ -471,7 +471,7 @@ body {
 }
 
 .file-icon {
-  color: #2196F3;
+  color: #2196f3;
 }
 
 .tree-node span:last-child {
@@ -484,7 +484,7 @@ body {
   margin-left: 24px;
 }
 
-.tree-item.open>.children {
+.tree-item.open > .children {
   display: block;
 }
 
@@ -494,7 +494,7 @@ body {
 }
 
 .children .tree-item:before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 6px;
@@ -507,7 +507,7 @@ body {
 }
 
 .tree-node:before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: -6px;
@@ -562,7 +562,7 @@ body {
   width: 50px;
 }
 
-.coords-input+.coords-input {
+.coords-input + .coords-input {
   margin-left: 14px;
 }
 
@@ -596,7 +596,7 @@ body {
 .transparency-box::after,
 .hover-box::after {
   content: "\F2A3";
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 11px;
   margin-left: 3px;
   transition: transform 0.3s;
@@ -678,7 +678,7 @@ body {
   margin-right: 12px;
   cursor: pointer;
   user-select: none;
-  font-family: 'FluentSystemIcons';
+  font-family: "FluentSystemIcons";
   font-size: 20px;
   color: var(--border-color);
 }

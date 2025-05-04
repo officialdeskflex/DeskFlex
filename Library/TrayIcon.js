@@ -1,5 +1,6 @@
 const { Tray, Menu, app } = require('electron');
 const path = require('path');
+const { clearAllLogs } = require("./Logs");
 
 let tray = null;
 
@@ -19,6 +20,7 @@ function createTray(win) {
       label: 'Exit',
       click: () => {
         app.isQuiting = true;
+        clearAllLogs();
         app.quit();
       }
     }

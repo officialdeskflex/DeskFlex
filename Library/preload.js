@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('deskflex', {
 
     sendLog: (message, type, source = '') => ipcRenderer.send('log-message', message, type, source),
     getLogs: () => ipcRenderer.invoke('get-logs'),
+    clearAllLogs: () => ipcRenderer.invoke('clear-logs'),
 
     createLogsWindow: () => ipcRenderer.invoke('deskflex:createLogsWindow')
 });

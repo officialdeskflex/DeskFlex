@@ -1,4 +1,3 @@
-// main.js (or wherever you keep your loader)
 const { BrowserWindow, app } = require('electron');
 const path = require('path');
 const { parseIniWithImports } = require('./IniLoader');

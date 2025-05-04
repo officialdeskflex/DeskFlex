@@ -36,9 +36,8 @@ function getIniValue(sectionName, keyName) {
   return result[sectionName]?.[keyName] ?? null;
 }
 
-/**
- * Reads the INI file and returns a JSON object of all sections that have Active=1.
- */
+// Reads the INI file and returns a JSON object of all sections that have Active=1.
+
 function getActiveWidgets() {
   const filePath = path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini");
   if (!fs.existsSync(filePath)) return [];
