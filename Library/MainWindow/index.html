@@ -1,167 +1,192 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Manage DeskFlex</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <title>Manage DeskFlex</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-  <div class="tabs">
-    <button class="tab-button active" id="widgetTab">Flexes</button>
-    <button class="tab-button" id="settingsTab">Settings</button>
-  </div>
-
-  <!-- Flex Tab Content -->
-  <div id="flexContent" class="content">
-    <div class="rectangleActiveList" id="toggle-Dropdown">Active Widget</div>
-    <div class="dropdown" id="myDropdown"></div>
-    <div><span class="addWidgetIcon">&#xE063;</span></div>
-    <div class="tree-container" id="folderTree"></div>
-    <button class="create-package-btn" onclick="addlog()">Create .flex Package</button>
-    <div id="details-panel" class="container">
-      <div id="main-ini" class="main-ini">-</div>
-      <div id="widget" class="widget">-</div>
-      <div class="info-item">
-        <label>Name:</label>
-        <span id="name" class="value">-</span>
-      </div>
-      <div class="info-item">
-        <label>Author:</label>
-        <span id="author" class="value">-</span>
-      </div>
-      <div class="info-item">
-        <label>Version:</label>
-        <span id="version" class="value">-</span>
-      </div>
-      <div class="info-item">
-        <label>License:</label>
-        <span id="license" class="value">-</span>
-      </div>
-      <div class="info-item">
-        <label>Information:</label>
-        <span id="information" class="value">-</span>
-      </div>
+  <body>
+    <div class="tabs">
+      <button class="tab-button active" id="widgetTab">Widgets</button>
+      <button class="tab-button" id="settingsTab">Settings</button>
     </div>
-    <div class="container-positions">
-      <div class="form-group">
-        <label>Coordinates:</label>
-        <input type="text" class="coords-input coords-input-x" placeholder="X">
-        <input type="text" class="coords-input coords-input-y" placeholder="Y">
+
+    <!-- Flex Tab Content -->
+    <div id="widgetContent" class="content">
+      <div class="rectangleActiveList" id="toggle-Dropdown">Active Widget</div>
+      <div class="dropdown" id="myDropdown"></div>
+      <div><span class="addWidgetIcon">&#xE063;</span></div>
+      <div class="tree-container" id="folderTree"></div>
+
+      <button class="create-package-btn" onclick="addlog()">
+        Create .flex Package
+      </button>
+
+      <div id="details-panel" class="container">
+        <div id="main-ini" class="main-ini">-</div>
+        <div id="widget" class="widget">-</div>
+        <div class="info-item">
+          <label>Name:</label>
+          <span id="name" class="value">-</span>
+        </div>
+        <div class="info-item">
+          <label>Author:</label>
+          <span id="author" class="value">-</span>
+        </div>
+        <div class="info-item">
+          <label>Version:</label>
+          <span id="version" class="value">-</span>
+        </div>
+        <div class="info-item">
+          <label>License:</label>
+          <span id="license" class="value">-</span>
+        </div>
+        <div class="info-item">
+          <label>Information:</label>
+          <span id="information" class="value">-</span>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Load order:</label>
-        <input type="text" class="load-order-input" placeholder="Order">
+      <a href="#" class="add-widget-info">
+        <span class="icon">&#xE173;</span>
+        <span class="text">Add Widget Info</span>
+      </a>
+      <div class="div-line-Info"></div>
+
+      <div class="action-button-container">
+        <button>Load</button>
+        <button>Refresh</button>
+        <button>Edit</button>
       </div>
-      <div class="form-group">
-        <label>Position:</label>
-        <div class="position-box" data-target="positionMenu">Select…
-          <div class="position-menu" id="positionMenu">
-            <a href="#">On Desktop</a>
-            <a href="#">Bottom</a>
-            <a href="#">Normal</a>
-            <a href="#">TopMost</a>
-            <a href="#">Stay topmost</a>
+
+      <div class="container-positions">
+        <div class="form-group">
+          <label>Coordinates:</label>
+          <input
+            type="text"
+            class="coords-input coords-input-x"
+            placeholder="X"
+          />
+          <input
+            type="text"
+            class="coords-input coords-input-y"
+            placeholder="Y"
+          />
+        </div>
+        <div class="form-group">
+          <label>Load order:</label>
+          <input type="text" class="load-order-input" placeholder="Order" />
+        </div>
+        <div class="form-group">
+          <label>Position:</label>
+          <div class="position-box" data-target="positionMenu">
+            Select…
+            <div class="position-menu" id="positionMenu">
+              <a href="#">On Desktop</a>
+              <a href="#">Bottom</a>
+              <a href="#">Normal</a>
+              <a href="#">TopMost</a>
+              <a href="#">Stay topmost</a>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Transparency:</label>
+          <div class="transparency-box" data-target="transparencyMenu">
+            Select…
+            <div class="transparency-menu" id="transparencyMenu">
+              <a href="#">0%</a>
+              <a href="#">10%</a>
+              <a href="#">20%</a>
+              <a href="#">30%</a>
+              <a href="#">40%</a>
+              <a href="#">50%</a>
+              <a href="#">60%</a>
+              <a href="#">70%</a>
+              <a href="#">80%</a>
+              <a href="#">90%</a>
+              <a href="#">~100%</a>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>On hover:</label>
+          <div class="hover-box" data-target="hoverMenu">
+            Select…
+            <div class="hover-menu" id="hoverMenu">
+              <a href="#">Do Nothing</a>
+              <a href="#">Fade in</a>
+              <a href="#">Fade out</a>
+              <a href="#">Hide</a>
+            </div>
           </div>
         </div>
       </div>
-      <div class="form-group">
-        <label>Transparency:</label>
-        <div class="transparency-box" data-target="transparencyMenu">Select…
-          <div class="transparency-menu" id="transparencyMenu">
-            <a href="#">0%</a>
-            <a href="#">10%</a>
-            <a href="#">20%</a>
-            <a href="#">30%</a>
-            <a href="#">40%</a>
-            <a href="#">50%</a>
-            <a href="#">60%</a>
-            <a href="#">70%</a>
-            <a href="#">80%</a>
-            <a href="#">90%</a>
-            <a href="#">~100%</a>
-          </div>
+
+      <div class="checkbox-container">
+        <div class="option">
+          <span class="check-box"></span><label>Click Through</label>
         </div>
-      </div>
-      <div class="form-group">
-        <label>On hover:</label>
-        <div class="hover-box" data-target="hoverMenu">Select…
-          <div class="hover-menu" id="hoverMenu">
-            <a href="#">Do Nothing</a>
-            <a href="#">Fade in</a>
-            <a href="#">Fade out</a>
-            <a href="#">Hide</a>
-          </div>
+        <div class="option">
+          <span class="check-box"></span><label>Draggable</label>
+        </div>
+        <div class="option">
+          <span class="check-box"></span><label>Snap Edges</label>
+        </div>
+        <div class="option">
+          <span class="check-box"></span><label>Keep On Screen</label>
+        </div>
+        <div class="option">
+          <span class="check-box"></span><label>Save Position</label>
+        </div>
+        <div class="option">
+          <span class="check-box"></span><label>Favorite</label>
         </div>
       </div>
     </div>
 
-    <div class="checkbox-container">
-      <div class="option"><span class="check-box"></span><label>Click Through</label></div>
-      <div class="option"><span class="check-box"></span><label>Draggable</label></div>
-      <div class="option"><span class="check-box"></span><label>Snap Edges</label></div>
-      <div class="option"><span class="check-box"></span><label>Keep On Screen</label></div>
-      <div class="option"><span class="check-box"></span><label>Save Position</label></div>
-      <div class="option"><span class="check-box"></span><label>Favorite</label></div>
+    <!-- Settings Tab Content: logs only -->
+    <div id="settingsContent" class="content" style="display: none">
+      <pre id="logContainer" style="height: 300px; overflow-y: auto"></pre>
     </div>
 
-    <div class="action-button-container">
-      <button>Load</button>
-      <button>Refresh</button>
-      <button>Edit</button>
+    <!-- Common controls -->
+    <div class="div-line"></div>
+    <div class="button-Left-row">
+      <button onclick="resetPlaceholders()">Refresh All</button>
+      <button id="open-settings">Edit Settings</button>
+      <button onclick="createLogsWindow()">Open Log</button>
+    </div>
+    <div class="button-Right-container">
+      <button>Help</button>
+      <button id="close-window">Close</button>
     </div>
 
-    <a href="#" class="add-widget-info">
-      <span class="icon">&#xE173;</span>
-      <span class="text">Add WidgetInfo</span>
-    </a>
-    <div class="div-line-Info"></div>
-  </div>
+    <script>
+      const widgetTab = document.getElementById("widgetTab");
+      const settingsTab = document.getElementById("settingsTab");
+      const widgetContent = document.getElementById("widgetContent");
+      const settingsContent = document.getElementById("settingsContent");
 
-  <!-- Settings Tab Content: logs only -->
-  <div id="settingsContent" class="content" style="display:none;">
-    <pre id="logContainer" style="height: 300px; overflow-y: auto;"></pre>
-  </div>
+      function activateTab(tab) {
+        [widgetTab, settingsTab].forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+      }
 
-  <!-- Common controls -->
-  <div class="div-line"></div>
-  <div class="button-Left-row">
-    <button onclick="resetPlaceholders()">Refresh All</button>
-    <button id="open-settings">Edit Settings</button>
-    <button onclick="createLogsWindow()">Open Log</button>
-  </div>
-  <div class="button-Right-container">
-    <button>Help</button>
-    <button id="close-window">Close</button>
-  </div>
+      widgetTab.addEventListener("click", () => {
+        activateTab(widgetTab);
+        widgetContent.style.display = "block";
+        settingsContent.style.display = "none";
+      });
 
-  <script>
-    const widgetTab = document.getElementById('widgetTab');
-    const settingsTab = document.getElementById('settingsTab');
-    const flexContent = document.getElementById('flexContent');
-    const settingsContent = document.getElementById('settingsContent');
+      settingsTab.addEventListener("click", () => {
+        activateTab(settingsTab);
+        widgetContent.style.display = "none";
+        settingsContent.style.display = "block";
+      });
+    </script>
 
-    function activateTab(tab) {
-      [widgetTab, settingsTab].forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-    }
-
-    widgetTab.addEventListener('click', () => {
-      activateTab(widgetTab);
-      flexContent.style.display = 'block';
-      settingsContent.style.display = 'none';
-    });
-
-    settingsTab.addEventListener('click', () => {
-      activateTab(settingsTab);
-      flexContent.style.display = 'none';
-      settingsContent.style.display = 'block';
-    });
-  </script>
-
-  <script src="script.js"></script>
-  <script src="structureFolder.js"></script>
-</body>
-
+    <script src="script.js"></script>
+    <script src="structureFolder.js"></script>
+  </body>
 </html>
