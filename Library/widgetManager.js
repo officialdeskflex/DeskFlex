@@ -62,7 +62,7 @@ function loadWidgetsFromIniFile(filePath) {
   // 5) Auto-fill missing image sizes
   for (const cfg of Object.values(sections)) {
     if ((cfg.Type||'').trim() === 'Image') {
-      let img = (cfg.ImageName||'').replace(/"/g,'');
+      let img = (cfg.ImageName||'').replace(/"/g, '');
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
 
       const hasW =  cfg.W;
@@ -123,10 +123,13 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: true,
-      preload: path.join(__dirname, 'widgetActions.js')
     }
   });
 
+  // Determine path to widgetActions.js for injection
+  const actionsPath = path.join(__dirname, 'WidgetActions.js').replace(/\\/g, '/');
+
+  // Build initial HTML
   let html = `
     <!DOCTYPE html>
     <html><head>
@@ -134,11 +137,12 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
         body { margin:0; padding:0; background:transparent;
                width:${width}px; height:${height}px;
                overflow:hidden; position:relative; app-region:drag; }
-        .widget { position:absolute; app-region:drag; }
+        .widget { position:absolute; app-region:no-drag; }
       </style>
     </head><body>
   `;
 
+  // Render each widget section
   Object.values(secs).forEach(rawCfg => {
     // substitute variables & parse actions
     const cfg = {};
@@ -160,9 +164,17 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
     }
   });
 
-  html += `</body></html>`;
+  // Inject widgetActions and close HTML
+  html += `
+      <script>
+        require('${actionsPath}');
+      </script>
+    </body></html>
+  `;
+
+  // Load into BrowserWindow
   const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-  const baseUrl = 'file://' + baseDir.replace(/\\\\/g, '/') + '/';
+  const baseUrl = 'file://' + baseDir.replace(/\\/g, '/') + '/';
   win.loadURL(dataUrl, { baseURLForDataURL: baseUrl });
 
   win.once('ready-to-show', () => win.show());
