@@ -1,18 +1,9 @@
 // IniLoader.js
-// ──────────────────
-// Provides parseIniWithImports for merging @import’d INI/INC files.
-
 const fs   = require('fs');
 const path = require('path');
 const ini  = require('ini');
 
-/**
- * Recursively parse an INI file + any @import directives.
- * @param {string} filePath - absolute or relative path to .ini/.inc
- * @param {Set<string>} visited - tracks files to avoid cycles
- * @returns {Object} sections object as returned by ini.parse, merged
- */
-function parseIniWithImports(filePath, visited = new Set()) {
+function parseIni(filePath, visited = new Set()) {
   const absPath = path.isAbsolute(filePath)
     ? filePath
     : path.resolve(path.dirname(module.parent.filename), filePath);
@@ -24,7 +15,11 @@ function parseIniWithImports(filePath, visited = new Set()) {
 
   let raw = fs.readFileSync(absPath, 'utf-8');
 
-  // 1) Find @import lines
+  raw = raw.replace(
+    /^(\s*\w+Action\s*=\s*)(\[!.*)$/gm,
+    '$1"$2\""'
+  );
+
   const importRegex = /^\s*@import=(.+)$/gm;
   let match;
   const importedSections = {};
@@ -34,8 +29,7 @@ function parseIniWithImports(filePath, visited = new Set()) {
     const resolved   = path.isAbsolute(importPath)
       ? importPath
       : path.resolve(path.dirname(absPath), importPath);
-    const childSecs  = parseIniWithImports(resolved, visited);
-    // merge childSecs into importedSections
+    const childSecs  = parseIni(resolved, visited);
     Object.entries(childSecs).forEach(([secName, kv]) => {
       importedSections[secName] = {
         ...(importedSections[secName] || {}),
@@ -44,13 +38,8 @@ function parseIniWithImports(filePath, visited = new Set()) {
     });
   }
 
-  // 2) Remove all @import lines before parsing
   raw = raw.replace(importRegex, '');
-
-  // 3) Parse this file’s own sections
   const ownSections = ini.parse(raw);
-
-  // 4) Merge importedSections + ownSections (own overrides imported)
   const merged = { ...importedSections };
   Object.entries(ownSections).forEach(([secName, kv]) => {
     merged[secName] = {
@@ -62,4 +51,4 @@ function parseIniWithImports(filePath, visited = new Set()) {
   return merged;
 }
 
-module.exports = { parseIniWithImports };
+module.exports = { parseIni };

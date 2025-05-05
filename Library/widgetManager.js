@@ -1,8 +1,14 @@
+// widgetManager.js
 const { BrowserWindow, app } = require('electron');
 const path = require('path');
-const { parseIniWithImports } = require('./IniLoader');
-const { substituteVariables, parseActionList, safeInt } = require('./Utils');
-const { renderTextWidget } = require('./TextType');
+const { parseIni } = require('./IniLoader');
+const {
+  substituteVariables,
+  safeInt,
+  buildActionAttributes,
+  escapeHtml
+} = require('./Utils');
+const { renderTextWidget }  = require('./TextType');
 const { renderImageWidget } = require('./ImageType');
 const getImageSize = require('./Helper/ImageSize');
 
@@ -11,80 +17,69 @@ const widgetWindows = new Map();
 module.exports = { loadWidgetsFromIniFile, unloadWidgetsBySection };
 
 function loadWidgetsFromIniFile(filePath) {
-  console.log('Loading widget config from:', filePath);
-
-  // 1) Parse INI (with imports)
   let sections;
   try {
-    sections = parseIniWithImports(filePath);
+    sections = parseIni(filePath);
   } catch (err) {
     console.error(`Failed to parse ${path.basename(filePath)}:`, err);
     return;
   }
 
-  // 2) Normalize case for the keys we care about
   for (const cfg of Object.values(sections)) {
-    if (cfg.x !== undefined && cfg.X === undefined)         cfg.X = cfg.x;
-    if (cfg.y !== undefined && cfg.Y === undefined)         cfg.Y = cfg.y;
-    if (cfg.w !== undefined && cfg.W === undefined)         cfg.W = cfg.w;
-    if (cfg.h !== undefined && cfg.H === undefined)         cfg.H = cfg.h;
-    if (cfg.style  !== undefined && cfg.Style  === undefined) cfg.Style  = cfg.style;
+    ['x','y','w','h','style'].forEach(k => {
+      const low = k.toLowerCase();
+      const up  = k.toUpperCase();
+      if (cfg[low] !== undefined && cfg[up] === undefined) {
+        cfg[up] = cfg[low];
+      }
+    });
   }
 
-  // 3) Pull out any [Variables] section
-  const variables = sections.Variables || {};
+  const vars = sections.Variables || {};
   delete sections.Variables;
 
-  // 4) Merge in style defaults
-  const usedStyles = new Set();
+  const used = new Set();
   for (const cfg of Object.values(sections)) {
     if (cfg.Style) {
-      usedStyles.add(cfg.Style);
-      const styleDef = sections[cfg.Style];
-      if (styleDef) {
-        // Only inherit X, Y, W, H, Width, Height
+      used.add(cfg.Style);
+      const styleSec = sections[cfg.Style];
+      if (styleSec) {
         ['X','Y','W','H','Width','Height'].forEach(k => {
-          if (styleDef[k] !== undefined && cfg[k] === undefined) {
-            cfg[k] = styleDef[k];
+          if (styleSec[k] !== undefined && cfg[k] === undefined) {
+            cfg[k] = styleSec[k];
           }
         });
       } else {
-        console.warn(`Style section "${cfg.Style}" not found.`);
+        console.warn(`Style "${cfg.Style}" not found.`);
       }
     }
   }
-  // Drop the style sections themselves
-  usedStyles.forEach(styleName => delete sections[styleName]);
+  used.forEach(s => delete sections[s]);
 
-  const windowName = path.basename(filePath, '.ini');
-  const baseDir    = path.dirname(filePath);
-
-  // 5) Auto-fill missing image sizes
+  const baseDir = path.dirname(filePath);
   for (const cfg of Object.values(sections)) {
-    if ((cfg.Type||'').trim() === 'Image') {
+    if ((cfg.Type||'').trim().toLowerCase() === 'image') {
       let img = (cfg.ImageName||'').replace(/"/g, '');
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
-
-      const hasW =  cfg.W;
-      const hasH = cfg.Height || cfg.H;
+      const hasW = cfg.W || cfg.Width;
+      const hasH = cfg.H || cfg.Height;
       if (!hasW || !hasH) {
         try {
-          const size = getImageSize(img);
-          cfg.W = cfg.W || size.width;
-          cfg.H = cfg.H || size.height;
+          const sz = getImageSize(img);
+          cfg.W = cfg.W || sz.width;
+          cfg.H = cfg.H || sz.height;
         } catch (e) {
-          console.warn(`Could not get size for ${img}:`, e);
+          console.warn(`Could not size ${img}:`, e);
         }
       }
     }
   }
 
-  // 6) Compute overall window size
   const { width: winW, height: winH } = calculateWindowSize(sections);
 
-  // 7) Build the BrowserWindow + HTML
-  const win = createWidgetsWindow(windowName, sections, variables, baseDir, winW, winH);
-  widgetWindows.set(windowName, win);
+  const name = path.basename(filePath, '.ini');
+  const win  = createWidgetsWindow(name, sections, vars, baseDir, winW, winH);
+  widgetWindows.set(name, win);
   return win;
 }
 
@@ -126,13 +121,10 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
     }
   });
 
-  // Determine path to widgetActions.js for injection
-  const actionsPath = path.join(__dirname, 'WidgetActions.js').replace(/\\/g, '/');
-
-  // Build initial HTML
   let html = `
     <!DOCTYPE html>
     <html><head>
+      <meta charset="utf-8">
       <style>
         body { margin:0; padding:0; background:transparent;
                width:${width}px; height:${height}px;
@@ -142,16 +134,12 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
     </head><body>
   `;
 
-  // Render each widget section
-  Object.values(secs).forEach(rawCfg => {
-    // substitute variables & parse actions
+  for (const raw of Object.values(secs)) {
     const cfg = {};
-    Object.entries(rawCfg).forEach(([k, v]) => {
-      const val = (typeof v === 'string') ? substituteVariables(v, vars) : v;
-      cfg[k] = k.endsWith('Action') ? parseActionList(val) : val;
-    });
-
-    // render it
+    for (let [k, v] of Object.entries(raw)) {
+      if (typeof v === 'string') v = substituteVariables(v, vars);
+      cfg[k] = v;
+    }
     switch ((cfg.Type||'').trim()) {
       case 'Text':
         html += renderTextWidget(cfg);
@@ -162,17 +150,11 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
       default:
         console.warn(`Skipping unknown Type="${cfg.Type}"`);
     }
-  });
+  }
 
-  // Inject widgetActions and close HTML
-  html += `
-      <script>
-        require('${actionsPath}');
-      </script>
-    </body></html>
-  `;
+  const actionsPath = path.join(__dirname, 'widgetActions.js').replace(/\\/g, '/');
+  html += `<script>require('${actionsPath}')</script></body></html>`;
 
-  // Load into BrowserWindow
   const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
   const baseUrl = 'file://' + baseDir.replace(/\\/g, '/') + '/';
   win.loadURL(dataUrl, { baseURLForDataURL: baseUrl });

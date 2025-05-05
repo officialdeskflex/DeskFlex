@@ -2,54 +2,81 @@
 const { exec } = require('child_process');
 
 const buttonMap = {
-  0: 'Left',
-  1: 'Middle',
-  2: 'Right',
-  3: 'X1',
-  4: 'X2'
+  0: 'left',
+  1: 'middle',
+  2: 'right',
+  3: 'x1',
+  4: 'x2'
 };
 
-function runAction(el, key) {
-  const data = el.dataset[key.toLowerCase()];
+function log(msg) {
+  console.log(msg);
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function runAction(el, keyName) {
+  const data = el.dataset[keyName.toLowerCase()];
   if (!data) return;
+
+  let actions;
   try {
-    JSON.parse(data).forEach(cmd => exec(cmd));
+    actions = JSON.parse(data);
   } catch (e) {
-    console.error('Invalid action list for', key, e);
+    console.error('Invalid action JSON for', keyName, e);
+    return;
+  }
+
+  console.log(`runAction[${keyName}]:`, actions);
+
+  for (const act of actions) {
+    const type = (act.type || 'execute').toLowerCase();
+    const p    = act.param;
+
+    if (type === 'delay') {
+      const ms = parseInt(p, 10);
+      if (Number.isFinite(ms) && ms > 0) {
+        await delay(ms);
+      }
+    }
+    else if (type === 'log' || type === 'logs') {
+      log(p);
+    }
+    else if (type === 'execute') {
+      exec(p, err => {
+        if (err) console.error(`Exec failed (${p}):`, err);
+      });
+    }
+    else {
+      console.warn(`Unknown action type "${type}"`, act);
+    }
   }
 }
 
 function wireWidgetEvents() {
   document.querySelectorAll('.widget').forEach(el => {
-    // disable default context menu
     el.addEventListener('contextmenu', e => e.preventDefault());
 
-    // mouse down/up
-    el.addEventListener('mousedown', e => {
-      const btn = buttonMap[e.button];
-      if (btn) runAction(el, btn + 'MouseDownAction');
-    });
-    el.addEventListener('mouseup',   e => {
-      const btn = buttonMap[e.button];
-      if (btn) runAction(el, btn + 'MouseUpAction');
-    });
-
-    // double-click
-    el.addEventListener('dblclick', e => {
-      const btn = buttonMap[e.button];
-      if (btn) runAction(el, btn + 'MouseDoubleClickAction');
+    ['down', 'up', 'doubleclick'].forEach(evt => {
+      el.addEventListener(
+        evt === 'doubleclick' ? 'dblclick' : `mouse${evt}`,
+        e => {
+          const btn = buttonMap[e.button];
+          if (btn) runAction(el, `${btn}mouse${evt}action`);
+        }
+      );
     });
 
-    // hover
-    el.addEventListener('mouseover',  () => runAction(el, 'MouseOverAction'));
-    el.addEventListener('mouseleave', () => runAction(el, 'MouseLeaveAction'));
+    el.addEventListener('mouseover',  () => runAction(el, 'mouseoveraction'));
+    el.addEventListener('mouseleave', () => runAction(el, 'mouseleaveaction'));
 
-    // scroll
     el.addEventListener('wheel', e => {
-      if (e.deltaY > 0) runAction(el, 'MouseScrollDownAction');
-      else if (e.deltaY < 0) runAction(el, 'MouseScrollUpAction');
-      if (e.deltaX > 0) runAction(el, 'MouseScrollRightAction');
-      else if (e.deltaX < 0) runAction(el, 'MouseScrollLeftAction');
+      if (e.deltaY > 0) runAction(el, 'mousescrolldownaction');
+      else if (e.deltaY < 0) runAction(el, 'mousescrollupaction');
+      if (e.deltaX > 0) runAction(el, 'mousescrollrightaction');
+      else if (e.deltaX < 0) runAction(el, 'mousescrollleftaction');
     });
   });
 }
