@@ -1,24 +1,36 @@
-// TextType.js
 const { safeInt, escapeHtml, buildActionAttributes } = require('../Utils');
 
 function renderTextWidget(cfg) {
-  const x      = safeInt(cfg.X, 0);
-  const y      = safeInt(cfg.Y, 0);
-  const width  = safeInt(cfg.W, 200);
-  const height = safeInt(cfg.H, 50);
+  // Normalize keys to lowercase for case-insensitive access
+  const c = {};
+  Object.keys(cfg).forEach(key => {
+    c[key.toLowerCase()] = cfg[key];
+  });
 
+  // Position and size
+  const x      = safeInt(c.x, 0);
+  const y      = safeInt(c.y, 0);
+  const width  = safeInt(c.w, 200);
+  const height = safeInt(c.h, 50);
+
+  // Text alignment mapping
   const justify = {
-    CenterCenter: 'center',
-    RightCenter:  'flex-end'
-  }[cfg.StringAlign] || 'flex-start';
+    'centercenter': 'center',
+    'rightcenter':  'flex-end'
+  }[c.stringalign] || 'flex-start';
 
-  const fontColor  = cfg.FontColor   || '0,0,0';
-  const fontFace   = cfg.FontFace    || 'sans-serif';
-  const fontWeight = cfg.FontWeight  || 'normal';
-  const fontSize   = safeInt(cfg.FontSize, 14);
-  const smoothing  = cfg.Antialias === '1' ? 'antialiased' : 'none';
-  const text       = escapeHtml(cfg.Text || '');
-  const attrStr    = buildActionAttributes(cfg);
+  // Font properties
+  const fontColor  = c.fontcolor   || '0,0,0';
+  const fontFace   = c.fontface    || 'sans-serif';
+  const fontWeight = c.fontweight  || 'normal';
+  const fontSize   = safeInt(c.fontsize, 14);
+  const smoothing  = c.antialias === '1' ? 'antialiased' : 'none';
+
+  // Text content
+  const text = escapeHtml(c.text || '');
+
+  // Build interactive attributes (use original cfg for actions)
+  const attrStr = buildActionAttributes(cfg);
 
   return `
     <div class="widget no-drag"${attrStr} style="

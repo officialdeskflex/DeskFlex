@@ -1,29 +1,35 @@
-// ImageType.js
 const path = require('path');
 const { safeInt, stripQuotes, buildActionAttributes } = require('../Utils');
 
 function renderImageWidget(cfg, baseDir) {
-  const x      = safeInt(cfg.X, 0);
-  const y      = safeInt(cfg.Y, 0);
-  const width  = safeInt(cfg.W, 100);
-  const height = safeInt(cfg.H, 100);
+  // Normalize keys to lowercase for case-insensitive access
+  const c = {};
+  Object.keys(cfg).forEach(key => {
+    c[key.toLowerCase()] = cfg[key];
+  });
+
+  // Position and size
+  const x      = safeInt(c.x, 0);
+  const y      = safeInt(c.y, 0);
+  const width  = safeInt(c.w, 100);
+  const height = safeInt(c.h, 100);
 
   // Determine object-fit from PreserveAspectRatio (0=fill,1=contain,2=cover)
-  const mode      = safeInt(cfg.PreserveAspectRatio, 0);
+  const mode      = safeInt(c.preserveaspectratio, 0);
   const objectFit = { 0: 'fill', 1: 'contain', 2: 'cover' }[mode] || 'fill';
   const maskSize  = mode === 0 ? '100% 100%' : mode === 1 ? 'contain' : 'cover';
 
   // Grayscale filter
-  const grayFilter = cfg.GrayScale == '1' ? 'grayscale(100%)' : '';
+  const grayFilter = c.grayscale == '1' ? 'grayscale(100%)' : '';
 
   // ImageAlpha as 0-255 → normalized opacity 0-1
-  let alphaInt = parseInt(cfg.ImageAlpha, 10);
+  let alphaInt = parseInt(c.imagealpha, 10);
   if (isNaN(alphaInt)) alphaInt = 255;
   alphaInt = Math.min(255, Math.max(0, alphaInt));
   const alpha = (alphaInt / 255).toFixed(3);
 
   // ImageFlip: None, Horizontal, Vertical, Both
-  const flipMode = (cfg.ImageFlip || 'None').toLowerCase();
+  const flipMode = (c.imageflip || 'None').toLowerCase();
   let flipTransform = '';
   switch (flipMode) {
     case 'horizontal': flipTransform = 'scaleX(-1)'; break;
@@ -32,7 +38,7 @@ function renderImageWidget(cfg, baseDir) {
   }
 
   // ImageRotate: degrees (can be negative)
-  const rotateAngle     = parseFloat(cfg.ImageRotate) || 0;
+  const rotateAngle     = parseFloat(c.imagerotate) || 0;
   const rotateTransform = `rotate(${rotateAngle}deg)`;
 
   // Combine flip + rotate transforms
@@ -40,16 +46,17 @@ function renderImageWidget(cfg, baseDir) {
   const transformStyle = transform ? `transform: ${transform}; transform-origin: center center;` : '';
 
   // Prepare image source path & attributes
-  let imgName = stripQuotes(cfg.ImageName || '');
+  let imgName = stripQuotes(c.imagename || '');
   if (!path.isAbsolute(imgName)) imgName = path.join(baseDir, imgName);
   const srcPath = imgName.replace(/\\/g, '/');
   const attrStr = buildActionAttributes(cfg);
 
   // Determine if we're tinting
-  const hasTint = !!cfg.ImageTint;
+  const tintVal = c.imagetint;
+  const hasTint = typeof tintVal !== 'undefined' && tintVal !== null && tintVal !== '';
   let tintDiv = '';
   if (hasTint) {
-    const parts = stripQuotes(cfg.ImageTint).split(',').map(n => parseInt(n, 10));
+    const parts = stripQuotes(tintVal).split(',').map(n => parseInt(n, 10));
     const [r = 255, g = 255, b = 255, aTint = 255] = parts;
     const cr = Math.min(255, Math.max(0, r));
     const cg = Math.min(255, Math.max(0, g));

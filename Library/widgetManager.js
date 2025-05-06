@@ -8,8 +8,8 @@ const {
   buildActionAttributes,
   escapeHtml,
 } = require("./Utils");
-const { renderTextWidget } = require("./TypesSections/TextType");
-const { renderImageWidget } = require("./TypesSections/ImageType");
+const { renderTextWidget } = require("./TypeSections/TextType");
+const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
 
 const widgetWindows = new Map();
@@ -161,7 +161,7 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
   }
 
   const actionsPath = path
-    .join(__dirname, "widgetActions.js")
+    .join(__dirname, "WidgetActions.js")
     .replace(/\\/g, "/");
   html += `<script>require('${actionsPath}')</script></body></html>`;
 
