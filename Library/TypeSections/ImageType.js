@@ -1,6 +1,6 @@
 // ImageType.js
 const path = require('path');
-const { safeInt, stripQuotes, buildActionAttributes } = require('./Utils');
+const { safeInt, stripQuotes, buildActionAttributes } = require('../Utils');
 
 function renderImageWidget(cfg, baseDir) {
   const x      = safeInt(cfg.X, 0);

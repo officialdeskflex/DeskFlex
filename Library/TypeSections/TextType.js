@@ -1,5 +1,5 @@
 // TextType.js
-const { safeInt, escapeHtml, buildActionAttributes } = require('./Utils');
+const { safeInt, escapeHtml, buildActionAttributes } = require('../Utils');
 
 function renderTextWidget(cfg) {
   const x      = safeInt(cfg.X, 0);
