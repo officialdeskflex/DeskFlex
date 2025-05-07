@@ -7,55 +7,35 @@ const {
   safeInt,
   buildActionAttributes,
   escapeHtml,
+  resolveIniPath,
+  resolveKey,
 } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
-const { getWidgetsPath } = require("./ConfigFile");
 
-// Map to store widget windows keyed by normalized, absolute INI file path
+const { init: initWidgetBangs, moveWidgetWindow } = require("./WidgetBangs");
+
+// This map holds all BrowserWindows keyed by absolute INI path
 const widgetWindows = new Map();
+
+// Wire up widgetBangs to use our map
+initWidgetBangs(widgetWindows);
 
 // Expose API
 module.exports = {
   loadWidget,
   unloadWidget,
-  moveWidgetWindow, 
+  widgetWindows,
 };
 
-// Listen for MoveWindow requests from renderer
-ipcMain.on("widget-move-window", (event, x, y, identifier) => {
-  moveWidgetWindow(x, y, identifier);
-});
-
 /**
- * Resolve a key in widgetWindows from either a section name or an INI path.
+ * Handle move requests from the renderer
  */
-function resolveKey(identifier) {
-  if (!identifier.includes(path.sep) && !path.extname(identifier)) {
-    for (const key of widgetWindows.keys()) {
-      if (path.basename(key, ".ini").toLowerCase() === identifier.toLowerCase()) {
-        return key;
-      }
-    }
-    return undefined;
-  }
-  return resolveIniPath(identifier);
-}
-
-/**
- * Resolve an INI path to an absolute normalized path, defaulting to getWidgetsPath().
- */
-function resolveIniPath(filePath) {
-  const baseDir = getWidgetsPath();
-  let absPath = path.isAbsolute(filePath)
-    ? filePath
-    : path.join(baseDir, filePath);
-
-  if (!path.extname(absPath)) {
-    absPath += ".ini";
-  }
-  return path.normalize(path.resolve(absPath));
+if (ipcMain && typeof ipcMain.on === "function") {
+  ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
+    moveWidgetWindow(x, y, identifier);
+  });
 }
 
 function loadWidget(filePath) {
@@ -70,9 +50,9 @@ function loadWidget(filePath) {
     return;
   }
 
-  // Normalize lowercase → uppercase keys
+  // Normalize x/y/w/h/style keys
   for (const cfg of Object.values(sections)) {
-    ["x","y","w","h","style"].forEach(k => {
+    ["x", "y", "w", "h", "style"].forEach(k => {
       const low = k.toLowerCase(), up = k.toUpperCase();
       if (cfg[low] !== undefined && cfg[up] === undefined) {
         cfg[up] = cfg[low];
@@ -80,7 +60,7 @@ function loadWidget(filePath) {
     });
   }
 
-  // Extract Variables
+  // Extract and delete Variables section
   const vars = sections.Variables || {};
   delete sections.Variables;
 
@@ -89,11 +69,11 @@ function loadWidget(filePath) {
   for (const cfg of Object.values(sections)) {
     if (cfg.Style) {
       usedStyles.add(cfg.Style);
-      const baseStyle = sections[cfg.Style];
-      if (baseStyle) {
+      const base = sections[cfg.Style];
+      if (base) {
         ["X","Y","W","H","Width","Height"].forEach(k => {
-          if (baseStyle[k] !== undefined && cfg[k] === undefined) {
-            cfg[k] = baseStyle[k];
+          if (base[k] !== undefined && cfg[k] === undefined) {
+            cfg[k] = base[k];
           }
         });
       } else {
@@ -103,11 +83,11 @@ function loadWidget(filePath) {
   }
   usedStyles.forEach(s => delete sections[s]);
 
-  // Auto-size images
+  // Auto‑size images if needed
   const baseDir = path.dirname(iniPath);
   for (const cfg of Object.values(sections)) {
-    if ((cfg.Type||"").trim().toLowerCase() === "image") {
-      let img = (cfg.ImageName||"").replace(/"/g,"");
+    if ((cfg.Type || "").trim().toLowerCase() === "image") {
+      let img = (cfg.ImageName || "").replace(/"/g, "");
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
       const hasW = cfg.W || cfg.Width;
       const hasH = cfg.H || cfg.Height;
@@ -123,10 +103,10 @@ function loadWidget(filePath) {
     }
   }
 
-  // Compute overall window size
+  // Compute window size
   const { width: winW, height: winH } = calculateWindowSize(sections);
 
-  // Create and store the window
+  // Create & show window
   const win = createWidgetsWindow(iniPath, sections, vars, baseDir, winW, winH);
   widgetWindows.set(iniPath, win);
   console.log("widgetManager: stored window for", iniPath);
@@ -134,23 +114,13 @@ function loadWidget(filePath) {
 }
 
 function unloadWidget(identifier) {
-  const key = resolveKey(identifier);
-  console.log("widgetManager: unloading section", identifier, "->", key);
+  const key = resolveKey(widgetWindows, identifier);
+  console.log("widgetManager: unloading", identifier, "→", key);
   if (key) {
     app.isWidgetQuiting = true;
-    widgetWindows.get(key)?.close();
+    const win = widgetWindows.get(key);
+    if (win) win.close();
     widgetWindows.delete(key);
-  }
-}
-/**
- * Move the widget window to (x, y) by section name or INI path.
- * Signature changed: (x, y, identifier)
- */
-function moveWidgetWindow(x, y, identifier) {
-  const key = resolveKey(identifier);
-  const win = widgetWindows.get(key);
-  if (win) {
-    win.setPosition(safeInt(x, 0), safeInt(y, 0));
   }
 }
 
@@ -177,30 +147,29 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: true
-    }
+      webSecurity: true,
+    },
   });
 
   win.setTitle(name);
   let html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
     <style>
-      body {
-        margin:0; padding:0;
-        background:transparent;
-        width:${width}px; height:${height}px;
-        overflow:hidden; position:relative;
-        -webkit-app-region:drag;
-      }
+      body { margin:0; padding:0; background:transparent;
+             width:${width}px; height:${height}px;
+             overflow:hidden; position:relative;
+             -webkit-app-region:drag; }
       .widget,*{ -webkit-app-region:no-drag }
     </style>
-  </head><body></body></html>`;
+  </head><body>`;
 
   for (const raw of Object.values(secs)) {
     const cfg = {};
-    for (const [k,vRaw] of Object.entries(raw)) {
-      cfg[k] = typeof vRaw === "string" ? substituteVariables(vRaw, vars) : vRaw;
+    for (const [k, vRaw] of Object.entries(raw)) {
+      cfg[k] = typeof vRaw === "string"
+        ? substituteVariables(vRaw, vars)
+        : vRaw;
     }
-    switch ((cfg.Type||"").trim()) {
+    switch ((cfg.Type || "").trim()) {
       case "Text":
         html += renderTextWidget(cfg);
         break;
@@ -212,12 +181,12 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
     }
   }
 
-  const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g,"/");
-  html += `<script>require('${actionsPath}')</script>`;
+  const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g, "/");
+  html += `<script>require('${actionsPath}')</script></body></html>`;
 
   win.loadURL(
     "data:text/html;charset=utf-8," + encodeURIComponent(html),
-    { baseURLForDataURL: "file://" + baseDir.replace(/\\/g,"/") + "/" }
+    { baseURLForDataURL: "file://" + baseDir.replace(/\\/g, "/") + "/" }
   );
 
   win.once("ready-to-show", () => win.show());
