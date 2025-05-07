@@ -14,12 +14,13 @@ const {
 const { openFileWithEditor } = require("./OpenConfigFiles");
 const { createTray } = require("./TrayIcon");
 const {
-  loadWidgetsFromIniFile,
-  unloadWidgetsBySection,
+  loadWidget,
+  unloadWidget,
 } = require("./WidgetManager");
 const { createLogsWindow } = require("./CreateLogsWindow");
 const { logs, getLogs,clearAllLogs } = require("./Logs");
 const { runDeskFlexVersion } = require("./InitialLogs");
+const { console } = require("inspector");
 
 let mainWindow;
 app.isQuiting = false;
@@ -75,7 +76,7 @@ app.whenReady().then(() => {
   });
   runDeskFlexVersion();
   // const iniFilePath = 'C:\\Users\\nstec\\OneDrive\\Documents\\DeskFlex\\Widgets\\Test\\Test.ini';
-  // loadWidgetsFromIniFile(iniFilePath);
+  // loadWidget(iniFilePath);
   // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
   // loadWidgetsFromIniFolder(iniFolder);
 });
@@ -89,7 +90,7 @@ app.on("window-all-closed", () => {
 ipcMain.handle("load-widget", async (_event, section) => {
   try {
     const fullPath = path.join(config.widgetsPath, section);
-    loadWidgetsFromIniFile(fullPath);
+    loadWidget(fullPath);
     return { success: true };
   } catch (err) {
     console.error("Error loading widget:", err);
@@ -100,7 +101,7 @@ ipcMain.handle("load-widget", async (_event, section) => {
 ipcMain.handle("unload-widget", async (_event, section) => {
   try {
     const sectionName = path.basename(section, ".ini");
-    unloadWidgetsBySection(sectionName);
+    unloadWidget(sectionName);
     return { success: true };
   } catch (err) {
     console.error("Error unloading widget:", err);

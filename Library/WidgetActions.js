@@ -1,12 +1,13 @@
-// widgetActions.js
-const { exec } = require('child_process');
+// WidgetActions.js
+const { exec } = require("child_process");
+const { ipcRenderer } = require("electron");
 
 const buttonMap = {
-  0: 'left',
-  1: 'middle',
-  2: 'right',
-  3: 'x1',
-  4: 'x2'
+  0: "left",
+  1: "middle",
+  2: "right",
+  3: "x1",
+  4: "x2",
 };
 
 function log(msg) {
@@ -18,36 +19,56 @@ function delay(ms) {
 }
 
 async function runAction(el, keyName) {
-  const data = el.dataset[keyName.toLowerCase()];
-  if (!data) return;
+  const raw = el.dataset[keyName.toLowerCase()];
+  if (!raw) return;
 
   let actions;
   try {
-    actions = JSON.parse(data);
+    actions = JSON.parse(raw);
   } catch (e) {
-    console.error('Invalid action JSON for', keyName, e);
+    console.error("Invalid action JSON for", keyName, e);
     return;
   }
 
-  console.log(`runAction[${keyName}]:`, actions);
-
   for (const act of actions) {
-    const type = (act.type || 'execute').toLowerCase();
-    const p    = act.param;
+    const type = (act.type || "execute").toLowerCase();
+    const p = act.param;
 
-    if (type === 'delay') {
+    if (type === "delay") {
       const ms = parseInt(p, 10);
       if (Number.isFinite(ms) && ms > 0) {
         await delay(ms);
       }
     }
-    else if (type === 'log' || type === 'logs') {
+    else if (type === "log" || type === "logs") {
       log(p);
     }
-    else if (type === 'execute') {
+    else if (type === "execute") {
       exec(p, err => {
         if (err) console.error(`Exec failed (${p}):`, err);
       });
+    }
+    else if (type === "movewindow") {
+      // support param as array or space-separated string
+      let tokens = Array.isArray(p)
+        ? p.map(String)
+        : p.match(/"([^"]+)"|\S+/g).map(t => t.replace(/^"|"$/g, ""));
+      let section, x, y;
+
+      // If first two are numeric → [x, y, section]
+      if (!isNaN(tokens[0]) && !isNaN(tokens[1]) && isNaN(tokens[2])) {
+        x = parseInt(tokens[0], 10);
+        y = parseInt(tokens[1], 10);
+        section = tokens[2];
+      } else {
+        // fallback to [section, x, y]
+        section = tokens[0];
+        x = parseInt(tokens[1], 10);
+        y = parseInt(tokens[2], 10);
+      }
+
+      // send in (x, y, section) order
+      ipcRenderer.send("widget-move-window", x, y, section);
     }
     else {
       console.warn(`Unknown action type "${type}"`, act);
@@ -56,12 +77,12 @@ async function runAction(el, keyName) {
 }
 
 function wireWidgetEvents() {
-  document.querySelectorAll('.widget').forEach(el => {
-    el.addEventListener('contextmenu', e => e.preventDefault());
+  document.querySelectorAll(".widget").forEach(el => {
+    el.addEventListener("contextmenu", e => e.preventDefault());
 
-    ['down', 'up', 'doubleclick'].forEach(evt => {
+    ["down","up","doubleclick"].forEach(evt => {
       el.addEventListener(
-        evt === 'doubleclick' ? 'dblclick' : `mouse${evt}`,
+        evt === "doubleclick" ? "dblclick" : `mouse${evt}`,
         e => {
           const btn = buttonMap[e.button];
           if (btn) runAction(el, `${btn}mouse${evt}action`);
@@ -69,16 +90,16 @@ function wireWidgetEvents() {
       );
     });
 
-    el.addEventListener('mouseover',  () => runAction(el, 'mouseoveraction'));
-    el.addEventListener('mouseleave', () => runAction(el, 'mouseleaveaction'));
+    el.addEventListener("mouseover",  () => runAction(el, "mouseoveraction"));
+    el.addEventListener("mouseleave", () => runAction(el, "mouseleaveaction"));
 
-    el.addEventListener('wheel', e => {
-      if (e.deltaY > 0) runAction(el, 'mousescrolldownaction');
-      else if (e.deltaY < 0) runAction(el, 'mousescrollupaction');
-      if (e.deltaX > 0) runAction(el, 'mousescrollrightaction');
-      else if (e.deltaX < 0) runAction(el, 'mousescrollleftaction');
+    el.addEventListener("wheel", e => {
+      if (e.deltaY > 0) runAction(el, "mousescrolldownaction");
+      else if (e.deltaY < 0) runAction(el, "mousescrollupaction");
+      if (e.deltaX > 0) runAction(el, "mousescrollrightaction");
+      else if (e.deltaX < 0) runAction(el, "mousescrollleftaction");
     });
   });
 }
 
-window.addEventListener('DOMContentLoaded', wireWidgetEvents);
+window.addEventListener("DOMContentLoaded", wireWidgetEvents);
