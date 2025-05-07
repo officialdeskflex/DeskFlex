@@ -27,26 +27,22 @@ function parseActionList(s) {
   if (typeof s !== 'string') return [];
   const actions = [];
   const str = s.trim();
-  const bracketed = /\[!\s*(\w+)\s+((?:"[^"]*"|'[^']*'|[^[\]]+?))\s*\]/g;
+  const bracketed = /\[!\s*(\w+)\s+((?:"[^"]*"|'[^']*'|[^\[\]]+?))\s*\]/g;
   let match;
   while ((match = bracketed.exec(str))) {
-    const rawType  = match[1];
-    let rawParam   = match[2].trim();
-    rawParam       = stripQuotes(rawParam);
-    actions.push({
-      type:  rawType.toLowerCase(),
-      param: rawParam
-    });
+    const rawType = match[1];
+    let rawParam = match[2].trim();
+    rawParam = stripQuotes(rawParam);
+    actions.push({ type: rawType.toLowerCase(), param: rawParam });
   }
 
   if (!actions.length) {
-    const single = /^\s*!\s*(\w+)\s+"([^"]+)"\s*$/;
-    const m2     = str.match(single);
+    const single = /^\s*!\s*(\w+)(?:\s+(['"])(.*?)\2|\s+(.+))\s*$/;
+    const m2 = str.match(single);
     if (m2) {
-      actions.push({
-        type:  m2[1].toLowerCase(),
-        param: m2[2]
-      });
+      const cmdType = m2[1].toLowerCase();
+      const cmdParam = m2[3] != null ? m2[3] : (m2[4] || '').trim();
+      actions.push({ type: cmdType, param: cmdParam });
     }
   }
 
@@ -56,8 +52,7 @@ function parseActionList(s) {
       if (Array.isArray(arr)) {
         arr.forEach(cmd => actions.push({ type: 'execute', param: cmd }));
       }
-    } catch {
-    }
+    } catch {}
   }
 
   return actions;
@@ -82,5 +77,5 @@ module.exports = {
   escapeHtml,
   substituteVariables,
   parseActionList,
-  buildActionAttributes
+  buildActionAttributes,
 };

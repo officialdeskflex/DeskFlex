@@ -40,7 +40,7 @@ async function runAction(el, keyName) {
         await delay(ms);
       }
     }
-    else if (type === "log" || type === "logs") {
+    else if (type === "log" ) {
       log(p);
     }
     else if (type === "execute") {
@@ -48,7 +48,7 @@ async function runAction(el, keyName) {
         if (err) console.error(`Exec failed (${p}):`, err);
       });
     }
-    else if (type === "movewindow") {
+    else if (type === "move") {
       // support param as array or space-separated string
       let tokens = Array.isArray(p)
         ? p.map(String)
