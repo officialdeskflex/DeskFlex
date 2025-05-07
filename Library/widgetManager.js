@@ -14,6 +14,17 @@ const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
 
+// Imports from ConfigFile for per-widget settings
+const {
+  getWidgetClickthrough,
+  getWidgetWindowX,
+  getWidgetWindowY,
+  getWidgetDraggable,
+  getWidgetSnapEdges,
+  getWidgetTransparency,
+  getWidgetOnHover,
+  getWidgetsPath,
+} = require("./ConfigFile");
 const { init: initWidgetBangs, moveWidgetWindow } = require("./WidgetBangs");
 
 // This map holds all BrowserWindows keyed by absolute INI path
@@ -32,16 +43,42 @@ module.exports = {
 /**
  * Handle move requests from the renderer
  */
-if (ipcMain && typeof ipcMain.on === "function") {
-  ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
-    moveWidgetWindow(x, y, identifier);
-  });
-}
+ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
+  moveWidgetWindow(x, y, identifier);
+});
+
+/**
+ * Allow renderer to query current window position
+ */
+ipcMain.handle("widget-get-position", (_e, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return { x: 0, y: 0 };
+  const win = widgetWindows.get(key);
+  const [x, y] = win.getPosition();
+  return { x, y };
+});
 
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
   console.log("widgetManager: loading INI at", iniPath);
 
+  // Derive section name (relative path under Widgets base)
+  const widgetsBase = getWidgetsPath();
+  const sectionName = path
+    .relative(widgetsBase, iniPath)
+    .replace(/\[/g, "\\");
+  console.log(`widgetManager: sectionName → ${sectionName}`);
+
+  // Retrieve per-widget configs
+  const clickVal = Number(getWidgetClickthrough(sectionName)) === 1 ? 1 : 0;
+  const winX = safeInt(getWidgetWindowX(sectionName), null);
+  const winY = safeInt(getWidgetWindowY(sectionName), null);
+  const draggable = Number(getWidgetDraggable(sectionName)) === 1;
+  const snapEdges = getWidgetSnapEdges(sectionName) || "";
+  const transparencyPercent = safeInt(getWidgetTransparency(sectionName), 100);
+  const onHover = Number(getWidgetOnHover(sectionName)) || 0;
+
+  // Parse INI sections
   let sections;
   try {
     sections = parseIni(iniPath);
@@ -52,15 +89,16 @@ function loadWidget(filePath) {
 
   // Normalize x/y/w/h/style keys
   for (const cfg of Object.values(sections)) {
-    ["x", "y", "w", "h", "style"].forEach(k => {
-      const low = k.toLowerCase(), up = k.toUpperCase();
+    ["x", "y", "w", "h", "style"].forEach((k) => {
+      const low = k.toLowerCase(),
+        up = k.toUpperCase();
       if (cfg[low] !== undefined && cfg[up] === undefined) {
         cfg[up] = cfg[low];
       }
     });
   }
 
-  // Extract and delete Variables section
+  // Extract Variables section
   const vars = sections.Variables || {};
   delete sections.Variables;
 
@@ -71,7 +109,7 @@ function loadWidget(filePath) {
       usedStyles.add(cfg.Style);
       const base = sections[cfg.Style];
       if (base) {
-        ["X","Y","W","H","Width","Height"].forEach(k => {
+        ["X", "Y", "W", "H", "Width", "Height"].forEach((k) => {
           if (base[k] !== undefined && cfg[k] === undefined) {
             cfg[k] = base[k];
           }
@@ -81,9 +119,9 @@ function loadWidget(filePath) {
       }
     }
   }
-  usedStyles.forEach(s => delete sections[s]);
+  usedStyles.forEach((s) => delete sections[s]);
 
-  // Auto‑size images if needed
+  // Auto-size images
   const baseDir = path.dirname(iniPath);
   for (const cfg of Object.values(sections)) {
     if ((cfg.Type || "").trim().toLowerCase() === "image") {
@@ -106,9 +144,32 @@ function loadWidget(filePath) {
   // Compute window size
   const { width: winW, height: winH } = calculateWindowSize(sections);
 
-  // Create & show window
-  const win = createWidgetsWindow(iniPath, sections, vars, baseDir, winW, winH);
+  // Create & show window, passing draggable flag
+  const win = createWidgetsWindow(
+    iniPath,
+    sectionName,
+    sections,
+    vars,
+    baseDir,
+    winW,
+    winH,
+    draggable
+  );
   widgetWindows.set(iniPath, win);
+
+  // Apply per-widget settings
+  if (winX !== null && winY !== null) win.setPosition(winX, winY);
+  win.setMovable(draggable);
+  if (clickVal === 0) {
+    win.setIgnoreMouseEvents(true, { forward: true });
+    console.log(`widgetManager: click-through MODE for ${sectionName}`);
+  } else {
+    console.log(`widgetManager: interactive MODE for ${sectionName}`);
+  }
+  win.setOpacity(transparencyPercent / 100);
+  win.snapEdges = snapEdges;
+  win.onHoverBehavior = onHover;
+
   console.log("widgetManager: stored window for", iniPath);
   return win;
 }
@@ -125,19 +186,32 @@ function unloadWidget(identifier) {
 }
 
 function calculateWindowSize(secs) {
-  let maxR = 0, maxB = 0;
+  let maxR = 0,
+    maxB = 0;
   for (const cfg of Object.values(secs)) {
-    const x = safeInt(cfg.X, 0), y = safeInt(cfg.Y, 0);
-    const w = safeInt(cfg.Width ?? cfg.W, 0), h = safeInt(cfg.Height ?? cfg.H, 0);
+    const x = safeInt(cfg.X, 0),
+      y = safeInt(cfg.Y, 0);
+    const w = safeInt(cfg.Width ?? cfg.W, 0),
+      h = safeInt(cfg.Height ?? cfg.H, 0);
     maxR = Math.max(maxR, x + w);
     maxB = Math.max(maxB, y + h);
   }
   return { width: maxR + 10, height: maxB + 10 };
 }
 
-function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
+function createWidgetsWindow(
+  name,
+  sectionName,
+  secs,
+  vars,
+  baseDir,
+  width,
+  height,
+  draggable
+) {
   const win = new BrowserWindow({
-    width, height,
+    width,
+    height,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -152,22 +226,38 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
   });
 
   win.setTitle(name);
-  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-    <style>
-      body { margin:0; padding:0; background:transparent;
-             width:${width}px; height:${height}px;
-             overflow:hidden; position:relative;
-             -webkit-app-region:drag; }
-      .widget,*{ -webkit-app-region:no-drag }
-    </style>
-  </head><body>`;
 
+  // Build HTML with manual drag logic conditional on 'draggable'
+  let html = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        width: ${width}px;
+        height: ${height}px;
+        overflow: hidden;
+        position: relative;
+        -webkit-app-region: no-drag;
+      }
+      .widget {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body data-section="${sectionName}" data-draggable="${draggable ? '1' : '0'}">
+`;
+
+  // Inject widget markup
   for (const raw of Object.values(secs)) {
     const cfg = {};
     for (const [k, vRaw] of Object.entries(raw)) {
-      cfg[k] = typeof vRaw === "string"
-        ? substituteVariables(vRaw, vars)
-        : vRaw;
+      cfg[k] =
+        typeof vRaw === "string" ? substituteVariables(vRaw, vars) : vRaw;
     }
     switch ((cfg.Type || "").trim()) {
       case "Text":
@@ -181,8 +271,39 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
     }
   }
 
-  const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g, "/");
-  html += `<script>require('${actionsPath}')</script></body></html>`;
+  // Manual drag + actions wiring
+  const actionsPath = path
+    .join(__dirname, "WidgetActions.js")
+    .replace(/\\/g, "/");
+  html += `
+<script>
+  const { ipcRenderer } = require('electron');
+  (function(){
+    const section = document.body.dataset.section;
+    const isDraggable = document.body.dataset.draggable === '1';
+    if (!isDraggable) return;
+
+    let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+    window.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      dragging = true;
+      startX = e.screenX; startY = e.screenY;
+      ipcRenderer.invoke('widget-get-position', section).then(pos => {
+        origX = pos.x; origY = pos.y;
+      });
+    });
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const dx = e.screenX - startX, dy = e.screenY - startY;
+      ipcRenderer.send('widget-move-window', origX + dx, origY + dy, section);
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+  })();
+</script>
+<script>require('${actionsPath}')</script>
+</body>
+</html>
+`;
 
   win.loadURL(
     "data:text/html;charset=utf-8," + encodeURIComponent(html),
@@ -190,7 +311,7 @@ function createWidgetsWindow(name, secs, vars, baseDir, width, height) {
   );
 
   win.once("ready-to-show", () => win.show());
-  win.on("close", e => {
+  win.on("close", (e) => {
     if (!app.isWidgetQuiting) {
       e.preventDefault();
       win.hide();
