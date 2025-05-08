@@ -1,3 +1,4 @@
+// WidgetManager.js
 const { BrowserWindow, app, ipcMain } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
@@ -78,6 +79,22 @@ ipcMain.handle("widget-reset-size", (_e, identifier) => {
   return false;
 });
 
+// --- New: handle transparency changes ---
+ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return;
+  const win = widgetWindows.get(key);
+  if (!win) return;
+
+  const pct = parseFloat(rawPercent);
+  if (Number.isFinite(pct) && pct >= 0 && pct <= 100) {
+    win.setOpacity(pct / 100);
+    console.log(`Set transparency of ${identifier} to ${pct}%`);
+  } else {
+    console.warn("Invalid transparency value:", rawPercent);
+  }
+});
+
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
   console.log("widgetManager: loading INI at", iniPath);
@@ -137,15 +154,15 @@ function loadWidget(filePath) {
   // auto‐size images
   const baseDir = path.dirname(iniPath);
   for (const cfg of Object.values(sections)) {
-    if ((cfg.Type||"").trim().toLowerCase()==="image") {
+    if ((cfg.Type||"").trim().toLowerCase() === "image") {
       let img = (cfg.ImageName||"").replace(/"/g,"");
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
-      const hasW = cfg.W||cfg.Width, hasH = cfg.H||cfg.Height;
-      if (!hasW||!hasH) {
+      const hasW = cfg.W || cfg.Width, hasH = cfg.H || cfg.Height;
+      if (!hasW || !hasH) {
         try {
           const sz = getImageSize(img);
-          cfg.W = cfg.W||sz.width;
-          cfg.H = cfg.H||sz.height;
+          cfg.W = cfg.W || sz.width;
+          cfg.H = cfg.H || sz.height;
         } catch (e) {
           console.warn(`Could not size ${img}:`, e);
         }
@@ -170,20 +187,20 @@ function loadWidget(filePath) {
   win.setMinimumSize(finalWidth, finalHeight);
   win.setMaximumSize(finalWidth, finalHeight);
 
-  if (winX!==null && winY!==null) {
+  if (winX !== null && winY !== null) {
     win.setBounds({ x: winX, y: winY, width: finalWidth, height: finalHeight });
   }
 
   win.setMovable(false);
 
-  if (clickVal===0) {
+  if (clickVal === 0) {
     win.setIgnoreMouseEvents(true, { forward: true });
     console.log(`widgetManager: click-through MODE for ${sectionName}`);
   } else {
     console.log(`widgetManager: interactive MODE for ${sectionName}`);
   }
 
-  win.setOpacity(transparencyPercent/100);
+  win.setOpacity(transparencyPercent / 100);
   win.snapEdges       = snapEdges;
   win.onHoverBehavior = onHover;
   win.isWidgetDraggable = draggable;
@@ -206,8 +223,8 @@ function unloadWidget(identifier) {
 function calculateWindowSize(secs) {
   let maxR = 0, maxB = 0;
   for (const cfg of Object.values(secs)) {
-    const x = safeInt(cfg.X,0), y = safeInt(cfg.Y,0);
-    const w = safeInt(cfg.Width??cfg.W,0), h = safeInt(cfg.Height??cfg.H,0);
+    const x = safeInt(cfg.X, 0), y = safeInt(cfg.Y, 0);
+    const w = safeInt(cfg.Width ?? cfg.W, 0), h = safeInt(cfg.Height ?? cfg.H, 0);
     maxR = Math.max(maxR, x + w);
     maxB = Math.max(maxB, y + h);
   }
@@ -257,7 +274,7 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
   </head>
   <body
     data-section="${sectionName}"
-    data-draggable="${draggable? '1':'0'}"
+    data-draggable="${draggable ? '1' : '0'}"
     data-width="${width}"
     data-height="${height}"
   >
@@ -266,10 +283,10 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
 
   for (const raw of Object.values(secs)) {
     const cfg = {};
-    for (const [k,v] of Object.entries(raw)) {
-      cfg[k] = typeof v==="string"? substituteVariables(v, vars): v;
+    for (const [k, v] of Object.entries(raw)) {
+      cfg[k] = typeof v === "string" ? substituteVariables(v, vars) : v;
     }
-    switch ((cfg.Type||"").trim()) {
+    switch ((cfg.Type || "").trim()) {
       case "Text":
         html += renderTextWidget(cfg);
         break;
@@ -281,8 +298,8 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
     }
   }
 
-  const dragPath    = path.join(__dirname, "WidgetDrag.js").replace(/\\/g,"/");
-  const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g,"/");
+  const dragPath    = path.join(__dirname, "WidgetDrag.js").replace(/\\/g, "/");
+  const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g, "/");
 
   html += `</div>
     <script>require("${dragPath}")</script>
@@ -293,7 +310,7 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
 
   win.loadURL(
     "data:text/html;charset=utf-8," + encodeURIComponent(html),
-    { baseURLForDataURL: "file://" + baseDir.replace(/\\/g,"/") + "/" }
+    { baseURLForDataURL: "file://" + baseDir.replace(/\\/g, "/") + "/" }
   );
 
   win.once("ready-to-show", () => {
