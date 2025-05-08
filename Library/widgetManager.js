@@ -1,11 +1,9 @@
-// WidgetManager.js
 const { BrowserWindow, app, ipcMain } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
 const {
   substituteVariables,
   safeInt,
-  buildActionAttributes,
   escapeHtml,
   resolveIniPath,
   resolveKey,
@@ -13,8 +11,6 @@ const {
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
-
-// Imports from ConfigFile for per-widget settings
 const {
   getWidgetClickthrough,
   getWidgetWindowX,
@@ -27,58 +23,76 @@ const {
 } = require("./ConfigFile");
 const { init: initWidgetBangs, moveWidgetWindow } = require("./WidgetBangs");
 
-// This map holds all BrowserWindows keyed by absolute INI path
 const widgetWindows = new Map();
+const windowSizes   = new Map();
 
-// Wire up widgetBangs to use our map
 initWidgetBangs(widgetWindows);
 
-// Expose API
 module.exports = {
   loadWidget,
   unloadWidget,
   widgetWindows,
 };
 
-/**
- * Handle move requests from the renderer
- */
+function moveWidgetWindowSafely(x, y, identifier) {
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return false;
+  const win = widgetWindows.get(key);
+  if (!win) return false;
+  const originalSize = windowSizes.get(key);
+  if (!originalSize) return false;
+
+  win.setBounds({
+    x: Math.round(x),
+    y: Math.round(y),
+    width: originalSize.width,
+    height: originalSize.height,
+  });
+  return true;
+}
+
 ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
-  moveWidgetWindow(x, y, identifier);
+  if (!moveWidgetWindowSafely(x, y, identifier)) {
+    moveWidgetWindow(x, y, identifier);
+  }
 });
 
-/**
- * Allow renderer to query current window position
- */
 ipcMain.handle("widget-get-position", (_e, identifier) => {
   const key = resolveKey(widgetWindows, identifier);
   if (!key) return { x: 0, y: 0 };
   const win = widgetWindows.get(key);
-  const [x, y] = win.getPosition();
-  return { x, y };
+  const b = win.getBounds();
+  return { x: b.x, y: b.y };
+});
+
+ipcMain.handle("widget-reset-size", (_e, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return false;
+  const win = widgetWindows.get(key);
+  const originalSize = windowSizes.get(key);
+  if (win && originalSize) {
+    const { x, y } = win.getBounds();
+    win.setBounds({ x, y, width: originalSize.width, height: originalSize.height });
+    return true;
+  }
+  return false;
 });
 
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
   console.log("widgetManager: loading INI at", iniPath);
 
-  // Derive section name (relative path under Widgets base)
   const widgetsBase = getWidgetsPath();
-  const sectionName = path
-    .relative(widgetsBase, iniPath)
-    .replace(/\[/g, "\\");
-  console.log(`widgetManager: sectionName → ${sectionName}`);
+  const sectionName = path.relative(widgetsBase, iniPath).replace(/\[/g, "\\");
 
-  // Retrieve per-widget configs
-  const clickVal = Number(getWidgetClickthrough(sectionName)) === 1 ? 1 : 0;
-  const winX = safeInt(getWidgetWindowX(sectionName), null);
-  const winY = safeInt(getWidgetWindowY(sectionName), null);
-  const draggable = Number(getWidgetDraggable(sectionName)) === 1;
-  const snapEdges = getWidgetSnapEdges(sectionName) || "";
+  const clickVal            = Number(getWidgetClickthrough(sectionName)) === 1 ? 1 : 0;
+  const winX                = safeInt(getWidgetWindowX(sectionName), null);
+  const winY                = safeInt(getWidgetWindowY(sectionName), null);
+  const draggable           = Number(getWidgetDraggable(sectionName)) === 1;
+  const snapEdges           = getWidgetSnapEdges(sectionName) || "";
   const transparencyPercent = safeInt(getWidgetTransparency(sectionName), 100);
-  const onHover = Number(getWidgetOnHover(sectionName)) || 0;
+  const onHover             = Number(getWidgetOnHover(sectionName)) || 0;
 
-  // Parse INI sections
   let sections;
   try {
     sections = parseIni(iniPath);
@@ -87,29 +101,28 @@ function loadWidget(filePath) {
     return;
   }
 
-  // Normalize x/y/w/h/style keys
+  // normalize cfg keys
   for (const cfg of Object.values(sections)) {
-    ["x", "y", "w", "h", "style"].forEach((k) => {
-      const low = k.toLowerCase(),
-        up = k.toUpperCase();
+    ["x", "y", "w", "h", "style"].forEach(k => {
+      const low = k.toLowerCase(), up = k.toUpperCase();
       if (cfg[low] !== undefined && cfg[up] === undefined) {
         cfg[up] = cfg[low];
       }
     });
   }
 
-  // Extract Variables section
+  // extract Variables
   const vars = sections.Variables || {};
   delete sections.Variables;
 
-  // Style inheritance
+  // style inheritance
   const usedStyles = new Set();
   for (const cfg of Object.values(sections)) {
     if (cfg.Style) {
       usedStyles.add(cfg.Style);
       const base = sections[cfg.Style];
       if (base) {
-        ["X", "Y", "W", "H", "Width", "Height"].forEach((k) => {
+        ["X","Y","W","H","Width","Height"].forEach(k => {
           if (base[k] !== undefined && cfg[k] === undefined) {
             cfg[k] = base[k];
           }
@@ -119,21 +132,20 @@ function loadWidget(filePath) {
       }
     }
   }
-  usedStyles.forEach((s) => delete sections[s]);
+  usedStyles.forEach(s => delete sections[s]);
 
-  // Auto-size images
+  // auto‐size images
   const baseDir = path.dirname(iniPath);
   for (const cfg of Object.values(sections)) {
-    if ((cfg.Type || "").trim().toLowerCase() === "image") {
-      let img = (cfg.ImageName || "").replace(/"/g, "");
+    if ((cfg.Type||"").trim().toLowerCase()==="image") {
+      let img = (cfg.ImageName||"").replace(/"/g,"");
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
-      const hasW = cfg.W || cfg.Width;
-      const hasH = cfg.H || cfg.Height;
-      if (!hasW || !hasH) {
+      const hasW = cfg.W||cfg.Width, hasH = cfg.H||cfg.Height;
+      if (!hasW||!hasH) {
         try {
           const sz = getImageSize(img);
-          cfg.W = cfg.W || sz.width;
-          cfg.H = cfg.H || sz.height;
+          cfg.W = cfg.W||sz.width;
+          cfg.H = cfg.H||sz.height;
         } catch (e) {
           console.warn(`Could not size ${img}:`, e);
         }
@@ -141,34 +153,40 @@ function loadWidget(filePath) {
     }
   }
 
-  // Compute window size
+  // compute window size
   const { width: winW, height: winH } = calculateWindowSize(sections);
+  const finalWidth  = Math.round(winW);
+  const finalHeight = Math.round(winH);
 
-  // Create & show window, passing draggable flag
   const win = createWidgetsWindow(
-    iniPath,
-    sectionName,
-    sections,
-    vars,
-    baseDir,
-    winW,
-    winH,
-    draggable
+    iniPath, sectionName, sections, vars, baseDir,
+    finalWidth, finalHeight, draggable
   );
-  widgetWindows.set(iniPath, win);
 
-  // Apply per-widget settings
-  if (winX !== null && winY !== null) win.setPosition(winX, winY);
-  win.setMovable(draggable);
-  if (clickVal === 0) {
+  widgetWindows.set(iniPath, win);
+  windowSizes.set(iniPath, { width: finalWidth, height: finalHeight });
+
+  win.setBounds({ width: finalWidth, height: finalHeight });
+  win.setMinimumSize(finalWidth, finalHeight);
+  win.setMaximumSize(finalWidth, finalHeight);
+
+  if (winX!==null && winY!==null) {
+    win.setBounds({ x: winX, y: winY, width: finalWidth, height: finalHeight });
+  }
+
+  win.setMovable(false);
+
+  if (clickVal===0) {
     win.setIgnoreMouseEvents(true, { forward: true });
     console.log(`widgetManager: click-through MODE for ${sectionName}`);
   } else {
     console.log(`widgetManager: interactive MODE for ${sectionName}`);
   }
-  win.setOpacity(transparencyPercent / 100);
-  win.snapEdges = snapEdges;
+
+  win.setOpacity(transparencyPercent/100);
+  win.snapEdges       = snapEdges;
   win.onHoverBehavior = onHover;
+  win.isWidgetDraggable = draggable;
 
   console.log("widgetManager: stored window for", iniPath);
   return win;
@@ -186,36 +204,24 @@ function unloadWidget(identifier) {
 }
 
 function calculateWindowSize(secs) {
-  let maxR = 0,
-    maxB = 0;
+  let maxR = 0, maxB = 0;
   for (const cfg of Object.values(secs)) {
-    const x = safeInt(cfg.X, 0),
-      y = safeInt(cfg.Y, 0);
-    const w = safeInt(cfg.Width ?? cfg.W, 0),
-      h = safeInt(cfg.Height ?? cfg.H, 0);
+    const x = safeInt(cfg.X,0), y = safeInt(cfg.Y,0);
+    const w = safeInt(cfg.Width??cfg.W,0), h = safeInt(cfg.Height??cfg.H,0);
     maxR = Math.max(maxR, x + w);
     maxB = Math.max(maxB, y + h);
   }
   return { width: maxR + 10, height: maxB + 10 };
 }
 
-function createWidgetsWindow(
-  name,
-  sectionName,
-  secs,
-  vars,
-  baseDir,
-  width,
-  height,
-  draggable
-) {
+function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, height, draggable) {
   const win = new BrowserWindow({
-    width,
-    height,
+    width, height,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
+    useContentSize: true,
     hasShadow: false,
     show: false,
     webPreferences: {
@@ -227,39 +233,43 @@ function createWidgetsWindow(
 
   win.setTitle(name);
 
-  // Build HTML with manual drag logic conditional on 'draggable'
   let html = `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-        background: transparent;
-        width: ${width}px;
-        height: ${height}px;
-        overflow: hidden;
-        position: relative;
-        -webkit-app-region: no-drag;
+      html, body {
+        margin:0; padding:0;
+        background:transparent;
+        width:${width}px; height:${height}px;
+        overflow:hidden; position:relative;
+        -webkit-app-region:no-drag;
+        box-sizing:border-box;
       }
-      .widget {
-        position: absolute;
+      #container {
+        position:fixed; top:0; left:0;
+        width:${width}px; height:${height}px;
+        overflow:hidden;
       }
+      .widget { position:absolute; }
     </style>
   </head>
-  <body data-section="${sectionName}" data-draggable="${draggable ? '1' : '0'}">
+  <body
+    data-section="${sectionName}"
+    data-draggable="${draggable? '1':'0'}"
+    data-width="${width}"
+    data-height="${height}"
+  >
+    <div id="container">
 `;
 
-  // Inject widget markup
   for (const raw of Object.values(secs)) {
     const cfg = {};
-    for (const [k, vRaw] of Object.entries(raw)) {
-      cfg[k] =
-        typeof vRaw === "string" ? substituteVariables(vRaw, vars) : vRaw;
+    for (const [k,v] of Object.entries(raw)) {
+      cfg[k] = typeof v==="string"? substituteVariables(v, vars): v;
     }
-    switch ((cfg.Type || "").trim()) {
+    switch ((cfg.Type||"").trim()) {
       case "Text":
         html += renderTextWidget(cfg);
         break;
@@ -271,51 +281,36 @@ function createWidgetsWindow(
     }
   }
 
-  // Manual drag + actions wiring
-  const actionsPath = path
-    .join(__dirname, "WidgetActions.js")
-    .replace(/\\/g, "/");
-  html += `
-<script>
-  const { ipcRenderer } = require('electron');
-  (function(){
-    const section = document.body.dataset.section;
-    const isDraggable = document.body.dataset.draggable === '1';
-    if (!isDraggable) return;
+  const dragPath    = path.join(__dirname, "WidgetDrag.js").replace(/\\/g,"/");
+  const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g,"/");
 
-    let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
-    window.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      dragging = true;
-      startX = e.screenX; startY = e.screenY;
-      ipcRenderer.invoke('widget-get-position', section).then(pos => {
-        origX = pos.x; origY = pos.y;
-      });
-    });
-    window.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      const dx = e.screenX - startX, dy = e.screenY - startY;
-      ipcRenderer.send('widget-move-window', origX + dx, origY + dy, section);
-    });
-    window.addEventListener('mouseup', () => { dragging = false; });
-  })();
-</script>
-<script>require('${actionsPath}')</script>
-</body>
+  html += `</div>
+    <script>require("${dragPath}")</script>
+    <script>require("${actionsPath}")</script>
+  </body>
 </html>
 `;
 
   win.loadURL(
     "data:text/html;charset=utf-8," + encodeURIComponent(html),
-    { baseURLForDataURL: "file://" + baseDir.replace(/\\/g, "/") + "/" }
+    { baseURLForDataURL: "file://" + baseDir.replace(/\\/g,"/") + "/" }
   );
 
-  win.once("ready-to-show", () => win.show());
+  win.once("ready-to-show", () => {
+    win.setBounds({ width, height });
+    win.show();
+  });
+
+  // enforce fixed size
+  const lockSize = () => {
+    const s = windowSizes.get(name);
+    if (s) win.setBounds({ width: s.width, height: s.height });
+  };
+  win.on("resize", lockSize);
+  win.on("blur",   lockSize);
+  win.on("show",   lockSize);
   win.on("close", (e) => {
-    if (!app.isWidgetQuiting) {
-      e.preventDefault();
-      win.hide();
-    }
+    if (!app.isWidgetQuiting) { e.preventDefault(); win.hide(); }
   });
 
   return win;
