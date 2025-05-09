@@ -2,42 +2,19 @@
 const { BrowserWindow, app, ipcMain, screen } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
-const {
-  substituteVariables,
-  safeInt,
-  escapeHtml,
-  resolveIniPath,
-  resolveKey,
-} = require("./Utils");
+const { substituteVariables, safeInt, escapeHtml, resolveIniPath, resolveKey } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
-const {
-  getWidgetClickthrough,
-  getWidgetWindowX,
-  getWidgetWindowY,
-  getWidgetDraggable,
-  getWidgetSnapEdges,
-  getWidgetTransparency,
-  getWidgetOnHover,
-  getWidgetsPath,
-  getWidgetKeepOnScreen,       // ← new import
-} = require("./ConfigFile");
-const {
-  init: initWidgetBangs,
-  moveWidgetWindow,
-} = require("./WidgetBangs");
+const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen } = require("./ConfigFile");
+const { init: initWidgetBangs, moveWidgetWindow } = require("./WidgetBangs");
 
 const widgetWindows = new Map();
 const windowSizes   = new Map();
 
 initWidgetBangs(widgetWindows);
 
-module.exports = {
-  loadWidget,
-  unloadWidget,
-  widgetWindows,
-};
+module.exports = { loadWidget, unloadWidget, widgetWindows };
 
 function moveWidgetWindowSafely(x, y, identifier) {
   const key = resolveKey(widgetWindows, identifier);
@@ -46,12 +23,10 @@ function moveWidgetWindowSafely(x, y, identifier) {
   const originalSize = windowSizes.get(key);
   if (!win || !originalSize) return false;
 
-  // Honor draggable flag
   if (!win.isWidgetDraggable) return false;
 
-  // Enforce keep‑on‑screen if set
   if (win.keepOnScreen) {
-    // find display containing the desired rect
+
     const disp = screen.getDisplayMatching({
       x, y,
       width: originalSize.width,
@@ -72,7 +47,6 @@ function moveWidgetWindowSafely(x, y, identifier) {
 }
 
 ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
-  // only our safe mover
   moveWidgetWindowSafely(x, y, identifier);
 });
 
@@ -96,14 +70,12 @@ ipcMain.handle("widget-reset-size", (_e, identifier) => {
   return false;
 });
 
-// --- Draggable & KeepOnScreen bangs ---
 ipcMain.on("widget-set-draggable", (_e, rawVal, identifier) => {
   const key = resolveKey(widgetWindows, identifier);
   if (!key) return;
   const win = widgetWindows.get(key);
   if (!win) return;
   win.isWidgetDraggable = Number(rawVal) === 1;
-  // notify renderer so it can update dataset
   win.webContents.send("widget-draggable-changed", win.isWidgetDraggable);
 });
 
@@ -137,6 +109,53 @@ ipcMain.on("widget-set-clickthrough", (_e, rawVal, identifier) => {
   if (!win) return;
   const ct = Number(rawVal) === 1;
   win.setIgnoreMouseEvents(ct, { forward: true });
+  win.clickThrough = ct;
+});
+
+ipcMain.handle("widget-get-draggable", (_e, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  const win = key && widgetWindows.get(key);
+  return win ? Boolean(win.isWidgetDraggable) : false;
+});
+
+ipcMain.handle("widget-get-keep-on-screen", (_e, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  const win = key && widgetWindows.get(key);
+  return win ? Boolean(win.keepOnScreen) : false;
+});
+
+ipcMain.handle("widget-get-clickthrough", (_e, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  const win = key && widgetWindows.get(key);
+  return win ? Boolean(win.clickThrough) : false;
+});
+
+ipcMain.handle("widget-load-widget", (_e, sectionName) => {
+  // sectionName defaults to the data-section if you passed none
+  const win = loadWidget(sectionName);
+  return !!win;
+});
+
+ipcMain.handle("widget-unload-widget", (_e, sectionName) => {
+  unloadWidget(sectionName);
+  return true;
+});
+
+ipcMain.handle("widget-is-widget-loaded", (_e, sectionName) => {
+  // resolveKey returns the actual map key if it's loaded
+  const key = resolveKey(widgetWindows, sectionName);
+  return Boolean(key);
+});
+
+ipcMain.handle("widget-toggle-widget", (_e, sectionName) => {
+  const key = resolveKey(widgetWindows, sectionName);
+  if (key) {
+    unloadWidget(sectionName);
+    return false;  // now unloaded
+  } else {
+    loadWidget(sectionName);
+    return true;    // now loaded
+  }
 });
 
 function loadWidget(filePath) {
@@ -152,7 +171,7 @@ function loadWidget(filePath) {
   const snapEdges           = getWidgetSnapEdges(sectionName) || "";
   const transparencyPercent = safeInt(getWidgetTransparency(sectionName), 100);
   const onHover             = Number(getWidgetOnHover(sectionName)) || 0;
-  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(sectionName)) === 1; // ← init
+  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(sectionName)) === 1; 
 
   let sections;
   try {
@@ -162,7 +181,6 @@ function loadWidget(filePath) {
     return;
   }
 
-  // normalize cfg keys
   for (const cfg of Object.values(sections)) {
     ["x", "y", "w", "h", "style"].forEach(k => {
       const low = k.toLowerCase(), up = k.toUpperCase();
@@ -172,11 +190,9 @@ function loadWidget(filePath) {
     });
   }
 
-  // extract Variables
   const vars = sections.Variables || {};
   delete sections.Variables;
 
-  // style inheritance
   const usedStyles = new Set();
   for (const cfg of Object.values(sections)) {
     if (cfg.Style) {
@@ -195,7 +211,6 @@ function loadWidget(filePath) {
   }
   usedStyles.forEach(s => delete sections[s]);
 
-  // auto‐size images
   const baseDir = path.dirname(iniPath);
   for (const cfg of Object.values(sections)) {
     if ((cfg.Type||"").trim().toLowerCase() === "image") {
@@ -214,7 +229,6 @@ function loadWidget(filePath) {
     }
   }
 
-  // compute window size
   const { width: winW, height: winH } = calculateWindowSize(sections);
   const finalWidth  = Math.round(winW);
   const finalHeight = Math.round(winH);
@@ -227,7 +241,6 @@ function loadWidget(filePath) {
   widgetWindows.set(iniPath, win);
   windowSizes.set(iniPath, { width: finalWidth, height: finalHeight });
 
-  // enforce initial bounds & mode
   win.setBounds({ width: finalWidth, height: finalHeight });
   win.setMinimumSize(finalWidth, finalHeight);
   win.setMaximumSize(finalWidth, finalHeight);
@@ -242,8 +255,8 @@ function loadWidget(filePath) {
   win.setOpacity(transparencyPercent / 100);
   win.snapEdges          = snapEdges;
   win.onHoverBehavior    = onHover;
-  win.isWidgetDraggable  = draggable;       // ← init
-  win.keepOnScreen       = keepOnScreenVal; // ← init
+  win.isWidgetDraggable  = draggable;       
+  win.keepOnScreen       = keepOnScreenVal; 
 
   return win;
 }
@@ -347,7 +360,6 @@ function createWidgetsWindow(
     win.show();
   });
 
-  // keep size fixed
   const lockSize = () => {
     const s = windowSizes.get(name);
     if (s) win.setBounds({ width: s.width, height: s.height });
