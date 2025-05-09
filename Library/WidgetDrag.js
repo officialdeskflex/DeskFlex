@@ -1,69 +1,53 @@
-// WidgetDrag.js
 const { ipcRenderer } = require("electron");
 
-(function () {
-  const section     = document.body.dataset.section;
-  let dragging      = false,
-      startX        = 0,
-      startY        = 0,
-      origX         = 0,
-      origY         = 0;
+(() => {
+  const section = document.body.dataset.section;
+  let dragging = false, start = {}, orig = {};
 
-  function enforceSize() {
-    const w = document.body.dataset.width + "px";
-    const h = document.body.dataset.height + "px";
-    Object.assign(document.documentElement.style, { width: w, height: h });
-    Object.assign(document.body.style,         { width: w, height: h, maxWidth: w, maxHeight: h });
+  const enforceSize = () => {
+    const { width, height } = document.body.dataset;
+    [document.documentElement.style, document.body.style].forEach(s => {
+      Object.assign(s, { width: `${width}px`, height: `${height}px`, maxWidth: `${width}px`, maxHeight: `${height}px` });
+    });
     const c = document.getElementById("container");
-    if (c) Object.assign(c.style, { width: w, height: h });
+    if (c) Object.assign(c.style, { width: `${width}px`, height: `${height}px` });
     ipcRenderer.invoke("widget-reset-size", section);
-  }
+  };
+
+  const isDraggable = () => document.body.dataset.draggable === "1";
 
   enforceSize();
   setInterval(enforceSize, 100);
 
-  function isDraggable() {
-    return document.body.dataset.draggable === "1";
-  }
-
-  // update draggable at runtime
   ipcRenderer.on("widget-draggable-changed", (_e, val) => {
     document.body.dataset.draggable = val ? "1" : "0";
   });
 
-  document.addEventListener("mousedown", e => {
-    if (e.button !== 0 || !isDraggable()) return;
+  document.addEventListener("mousedown", async e => {
+    if (e.button || !isDraggable()) return;
     e.preventDefault();
     dragging = true;
-    startX   = e.screenX;
-    startY   = e.screenY;
-    ipcRenderer.invoke("widget-get-position", section).then(pos => {
-      origX = pos.x; origY = pos.y;
-      enforceSize();
-    });
+    start = { x: e.screenX, y: e.screenY };
+    const pos = await ipcRenderer.invoke("widget-get-position", section);
+    orig = { x: pos.x, y: pos.y };
+    enforceSize();
   });
 
   document.addEventListener("mousemove", e => {
     if (!dragging) return;
     e.preventDefault();
-    const dx = e.screenX - startX, dy = e.screenY - startY;
-    ipcRenderer.send("widget-move-window", origX + dx, origY + dy, section);
+    const dx = e.screenX - start.x;
+    const dy = e.screenY - start.y;
+    ipcRenderer.send("widget-move-window", orig.x + dx, orig.y + dy, section);
     enforceSize();
   });
 
-  ["mouseup","mouseleave"].forEach(evt =>
+  ["mouseup", "mouseleave", "keydown"].forEach(evt => {
     document.addEventListener(evt, e => {
-      if (dragging) {
-        dragging = false;
-        enforceSize();
-      }
-    })
-  );
-
-  document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && dragging) {
+      if (!dragging) return;
+      if (evt === "keydown" && e.key !== "Escape") return;
       dragging = false;
       enforceSize();
-    }
+    });
   });
 })();

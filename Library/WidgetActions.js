@@ -1,103 +1,81 @@
-// WidgetActions.js
 const { exec } = require("child_process");
 const { log, delay } = require("./WidgetBangs");
 const { ipcRenderer } = require("electron");
 
-const buttonMap = { 0: "left", 1: "middle", 2: "right", 3: "x1", 4: "x2" };
+const BTN = { 0: "left", 1: "middle", 2: "right", 3: "x1", 4: "x2" };
 
-async function runAction(el, keyName) {
-  const raw = el.dataset[keyName.toLowerCase()];
-  if (!raw) return;
-  let actions;
-  try {
-    actions = JSON.parse(raw);
-  } catch (e) {
-    console.error(`Invalid action JSON for ${keyName}:`, raw, e);
-    return;
+const handlers = {
+  delay: async (p) => {
+    const ms = parseInt(p, 10);
+    if (ms > 0) await delay(ms);
+  },
+  log: (p) => log(p),
+  execute: (p) => exec(p, (e) => e && console.error(`Exec \"${p}\" failed:`, e)),
+  move: ([x, y, section], defSec) => {
+    ipcRenderer.send("widget-move-window", x, y, section || defSec);
+  },
+  settransparency: ([percent, section], defSec) => {
+    ipcRenderer.send(
+      "widget-set-transparency",
+      String(percent).replace("%", ""),
+      section || defSec
+    );
+  },
+  draggable: ([val, section], defSec) => {
+    if (!["0", "1"].includes(String(val))) return console.warn("Invalid draggable:", val);
+    ipcRenderer.send("widget-set-draggable", val, section || defSec);
+  },
+  keeponscreen: ([val, section], defSec) => {
+    if (!["0", "1"].includes(String(val))) return console.warn("Invalid keepOnScreen:", val);
+    ipcRenderer.send("widget-set-keep-on-screen", val, section || defSec);
   }
+};
 
-  const defaultSection = document.body.dataset.section;
+const parseParam = (p) => {
+  if (Array.isArray(p)) return p;
+  return String(p)
+    .match(/"([^"]+)"|\S+/g)
+    .map((t) => t.replace(/^"|"$/g, ""));
+};
 
-  for (const act of actions) {
-    const type = (act.type || "execute").toLowerCase();
-    const p    = act.param;
+async function runAction(el, key) {
+  const raw = el.dataset[key.toLowerCase()];
+  if (!raw) return;
 
-    if (type === "delay") {
-      const ms = parseInt(p, 10);
-      if (Number.isFinite(ms) && ms > 0) await delay(ms);
-    }
-    else if (type === "log") {
-      log(p);
-    }
-    else if (type === "execute") {
-      exec(p, err => { if (err) console.error(`Exec "${p}" failed:`, err); });
-    }
-    else if (type === "move") {
-      // existing move logic...
-      let section, x, y;
-      // parse p into [x,y,section]...
-      // then call:
-      ipcRenderer.send("widget-move-window", x, y, section || defaultSection);
-    }
-    else if (type === "settransparency") {
-      // existing...
-      ipcRenderer.send("widget-set-transparency", paramVal, section);
-    }
-    else if (type === "draggable") {
-      // new bang: toggle draggable at runtime
-      let val, section;
-      if (Array.isArray(p)) [val, section] = p;
-      else {
-        const parts = p.match(/"([^"]+)"|\S+/g).map(t => t.replace(/^"|"$/g,""));
-        [val, section] = parts;
-      }
-      section = section || defaultSection;
-      if (["0","1"].includes(val.toString())) {
-        ipcRenderer.send("widget-set-draggable", val, section);
-      } else {
-        console.warn("Invalid draggable parameters:", p);
-      }
-    }
-    else if (type === "keeponscreen") {
-      // new bang: toggle keep‑on‑screen at runtime
-      let val, section;
-      if (Array.isArray(p)) [val, section] = p;
-      else {
-        const parts = p.match(/"([^"]+)"|\S+/g).map(t => t.replace(/^"|"$/g,""));
-        [val, section] = parts;
-      }
-      section = section || defaultSection;
-      if (["0","1"].includes(val.toString())) {
-        ipcRenderer.send("widget-set-keep-on-screen", val, section);
-      } else {
-        console.warn("Invalid keepOnScreen parameters:", p);
-      }
-    }
-    else {
-      console.warn(`Unknown action type "${type}"`, act);
+  let actions;
+  try { actions = JSON.parse(raw); } 
+  catch (e) { return console.error(`Invalid JSON for ${key}:`, raw, e); }
+
+  const defSec = document.body.dataset.section;
+
+  for (const { type = "execute", param } of actions) {
+    const t = type.toLowerCase();
+    if (t === "delay" || t === "log" || t === "execute") {
+      await handlers[t](param);
+    } else if (handlers[t]) {
+      const parts = parseParam(param);
+      handlers[t](parts.map((v) => (isNaN(v) ? v : parseInt(v, 10))), defSec);
+    } else {
+      console.warn(`Unknown action type \"${t}\"`, type);
     }
   }
 }
 
 function wireWidgetEvents() {
-  document.querySelectorAll(".widget").forEach(el => {
-    el.addEventListener("contextmenu", e => e.preventDefault());
-    ["down","up","doubleclick"].forEach(evt => {
-      el.addEventListener(
-        evt === "doubleclick" ? "dblclick" : `mouse${evt}`,
-        e => {
-          const btn = buttonMap[e.button];
-          if (btn) runAction(el, `${btn}mouse${evt}action`);
-        }
-      );
+  document.querySelectorAll(".widget").forEach((el) => {
+    el.oncontextmenu = (e) => e.preventDefault();
+    ["down", "up", "doubleclick"].forEach((evt) => {
+      const ev = evt === "doubleclick" ? "dblclick" : `mouse${evt}`;
+      el.addEventListener(ev, (e) => {
+        const btn = BTN[e.button];
+        btn && runAction(el, `${btn}mouse${evt}action`);
+      });
     });
-    el.addEventListener("mouseover",  () => runAction(el, "mouseoveraction"));
+    el.addEventListener("mouseover", () => runAction(el, "mouseoveraction"));
     el.addEventListener("mouseleave", () => runAction(el, "mouseleaveaction"));
-    el.addEventListener("wheel", e => {
-      if (e.deltaY > 0) runAction(el, "mousescrolldownaction");
-      if (e.deltaY < 0) runAction(el, "mousescrollupaction");
-      if (e.deltaX > 0) runAction(el, "mousescrollrightaction");
-      if (e.deltaX < 0) runAction(el, "mousescrollleftaction");
+    el.addEventListener("wheel", (e) => {
+      const dir = e.deltaY > 0 ? "down" : e.deltaY < 0 ? "up" : e.deltaX > 0 ? "right" : "left";
+      runAction(el, `mousescroll${dir}action`);
     });
   });
 }
