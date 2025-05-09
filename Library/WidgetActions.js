@@ -16,11 +16,9 @@ const handlers = {
     ipcRenderer.send("widget-move-window", x, y, section || defSec);
   },
   settransparency: ([percent, section], defSec) => {
-    ipcRenderer.send(
-      "widget-set-transparency",
-      String(percent).replace("%", ""),
-      section || defSec
-    );
+  const value = String(percent).replace("%", "");
+  const targetSection = section || defSec;
+  ipcRenderer.send("widget-set-transparency", value, targetSection);
   },
   draggable: ([val, section], defSec) => {
     if (!["0", "1"].includes(String(val)))
