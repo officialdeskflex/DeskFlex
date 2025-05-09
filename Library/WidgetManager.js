@@ -131,7 +131,6 @@ ipcMain.handle("widget-get-clickthrough", (_e, identifier) => {
 });
 
 ipcMain.handle("widget-load-widget", (_e, sectionName) => {
-  // sectionName defaults to the data-section if you passed none
   const win = loadWidget(sectionName);
   return !!win;
 });
@@ -142,7 +141,6 @@ ipcMain.handle("widget-unload-widget", (_e, sectionName) => {
 });
 
 ipcMain.handle("widget-is-widget-loaded", (_e, sectionName) => {
-  // resolveKey returns the actual map key if it's loaded
   const key = resolveKey(widgetWindows, sectionName);
   return Boolean(key);
 });
@@ -151,10 +149,10 @@ ipcMain.handle("widget-toggle-widget", (_e, sectionName) => {
   const key = resolveKey(widgetWindows, sectionName);
   if (key) {
     unloadWidget(sectionName);
-    return false;  // now unloaded
+    return false;  
   } else {
     loadWidget(sectionName);
-    return true;    // now loaded
+    return true;  
   }
 });
 
