@@ -36,18 +36,6 @@ const config = {
   folderStructure: getFolderStructure(),
 };
 
-/*if (config.debugging) {
-  console.log(`Debug Mode is Enabled.`);
-  console.log(`Logging is ${config.logging ? 'Enabled' : 'Disabled'}.`);
-  console.log(`Dark Mode is ${config.darkMode ? 'Enabled' : 'Disabled'}.`);
-  console.log('Settings File Path:', path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini"));
-  console.log('Active Widgets Found:', config.activeWidget);
-  console.log('Config Editor Found:', config.configEditor);
-  // console.log("Widgets Structure:", JSON.stringify(config.folderStructure, null, 2));
-}*/
-
-//console.log(`Widgets Path is: ${config.widgetsPath}`);
-
 /*
  * IPC Commands
  */
@@ -75,10 +63,6 @@ app.whenReady().then(() => {
     createLogsWindow();
   });
   runDeskFlexVersion();
-  // const iniFilePath = 'C:\\Users\\nstec\\OneDrive\\Documents\\DeskFlex\\Widgets\\Test\\Test.ini';
-  // loadWidget(iniFilePath);
-  // const iniFolder = path.join(process.env.APPDATA, 'DeskFlex', 'Widgets');
-  // loadWidgetsFromIniFolder(iniFolder);
 });
 
 app.on("window-all-closed", () => {

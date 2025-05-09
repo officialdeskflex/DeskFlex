@@ -28,7 +28,7 @@ btn.addEventListener("click", () => {
   window.deskflex.hideWindow();
 });
 
-// ceate the Logs Window
+// create the Logs Window
 function createLogsWindow() {
   window.deskflex.createLogsWindow();
 }
