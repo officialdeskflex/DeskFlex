@@ -129,6 +129,16 @@ ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
   }
 });
 
+ipcMain.on("widget-set-clickthrough", (_e, rawVal, identifier) => {
+  console.log(`Set clickthrough of ${identifier} to ${rawVal}`);
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return;
+  const win = widgetWindows.get(key);
+  if (!win) return;
+  const ct = Number(rawVal) === 1;
+  win.setIgnoreMouseEvents(ct, { forward: true });
+});
+
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
 
@@ -211,7 +221,7 @@ function loadWidget(filePath) {
 
   const win = createWidgetsWindow(
     iniPath, sectionName, sections, vars, baseDir,
-    finalWidth, finalHeight, draggable, keepOnScreenVal
+    finalWidth, finalHeight, draggable, keepOnScreenVal,clickVal
   );
 
   widgetWindows.set(iniPath, win);
@@ -226,7 +236,7 @@ function loadWidget(filePath) {
   }
   win.setMovable(false);
 
-  if (clickVal === 0) {
+  if (clickVal === 1) {
     win.setIgnoreMouseEvents(true, { forward: true });
   }
   win.setOpacity(transparencyPercent / 100);
@@ -261,7 +271,7 @@ function calculateWindowSize(secs) {
 
 function createWidgetsWindow(
   name, sectionName, secs, vars, baseDir,
-  width, height, draggable, keepOnScreen
+  width, height, draggable, keepOnScreen,clickVal
 ) {
   const win = new BrowserWindow({
     width, height,
@@ -300,6 +310,7 @@ function createWidgetsWindow(
     data-keep-on-screen="${keepOnScreen ? '1':'0'}"
     data-width="${width}"
     data-height="${height}"
+    data-clickthrough="${clickVal}"
   >
     <div id="container">
 `;

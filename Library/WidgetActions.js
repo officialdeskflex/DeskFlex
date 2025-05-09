@@ -28,7 +28,17 @@ const handlers = {
   keeponscreen: ([val, section], defSec) => {
     if (!["0", "1"].includes(String(val))) return console.warn("Invalid keepOnScreen:", val);
     ipcRenderer.send("widget-set-keep-on-screen", val, section || defSec);
-  }
+  },
+    clickthrough: ([val, section], defSec) => {
+    if (!["0", "1"].includes(String(val))) {
+      return console.warn("Invalid clickThrough:", val);
+    }
+    ipcRenderer.send(
+      "widget-set-clickthrough",
+      String(val),
+      section || defSec
+    );
+  },
 };
 
 const parseParam = (p) => {
