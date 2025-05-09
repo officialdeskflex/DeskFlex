@@ -1,5 +1,5 @@
 // WidgetManager.js
-const { BrowserWindow, app, ipcMain } = require("electron");
+const { BrowserWindow, app, ipcMain, screen } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
 const {
@@ -21,8 +21,12 @@ const {
   getWidgetTransparency,
   getWidgetOnHover,
   getWidgetsPath,
+  getWidgetKeepOnScreen,       // ← new import
 } = require("./ConfigFile");
-const { init: initWidgetBangs, moveWidgetWindow } = require("./WidgetBangs");
+const {
+  init: initWidgetBangs,
+  moveWidgetWindow,
+} = require("./WidgetBangs");
 
 const widgetWindows = new Map();
 const windowSizes   = new Map();
@@ -39,9 +43,24 @@ function moveWidgetWindowSafely(x, y, identifier) {
   const key = resolveKey(widgetWindows, identifier);
   if (!key) return false;
   const win = widgetWindows.get(key);
-  if (!win) return false;
   const originalSize = windowSizes.get(key);
-  if (!originalSize) return false;
+  if (!win || !originalSize) return false;
+
+  // Honor draggable flag
+  if (!win.isWidgetDraggable) return false;
+
+  // Enforce keep‑on‑screen if set
+  if (win.keepOnScreen) {
+    // find display containing the desired rect
+    const disp = screen.getDisplayMatching({
+      x, y,
+      width: originalSize.width,
+      height: originalSize.height,
+    });
+    const wa = disp.workArea;
+    x = Math.max(wa.x, Math.min(x, wa.x + wa.width  - originalSize.width));
+    y = Math.max(wa.y, Math.min(y, wa.y + wa.height - originalSize.height));
+  }
 
   win.setBounds({
     x: Math.round(x),
@@ -53,16 +72,14 @@ function moveWidgetWindowSafely(x, y, identifier) {
 }
 
 ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
-  if (!moveWidgetWindowSafely(x, y, identifier)) {
-    moveWidgetWindow(x, y, identifier);
-  }
+  // only our safe mover
+  moveWidgetWindowSafely(x, y, identifier);
 });
 
 ipcMain.handle("widget-get-position", (_e, identifier) => {
   const key = resolveKey(widgetWindows, identifier);
   if (!key) return { x: 0, y: 0 };
-  const win = widgetWindows.get(key);
-  const b = win.getBounds();
+  const b = widgetWindows.get(key).getBounds();
   return { x: b.x, y: b.y };
 });
 
@@ -79,13 +96,30 @@ ipcMain.handle("widget-reset-size", (_e, identifier) => {
   return false;
 });
 
-// --- New: handle transparency changes ---
+// --- Draggable & KeepOnScreen bangs ---
+ipcMain.on("widget-set-draggable", (_e, rawVal, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return;
+  const win = widgetWindows.get(key);
+  if (!win) return;
+  win.isWidgetDraggable = Number(rawVal) === 1;
+  // notify renderer so it can update dataset
+  win.webContents.send("widget-draggable-changed", win.isWidgetDraggable);
+});
+
+ipcMain.on("widget-set-keep-on-screen", (_e, rawVal, identifier) => {
+  const key = resolveKey(widgetWindows, identifier);
+  if (!key) return;
+  const win = widgetWindows.get(key);
+  if (!win) return;
+  win.keepOnScreen = Number(rawVal) === 1;
+});
+
 ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
   const key = resolveKey(widgetWindows, identifier);
   if (!key) return;
   const win = widgetWindows.get(key);
   if (!win) return;
-
   const pct = parseFloat(rawPercent);
   if (Number.isFinite(pct) && pct >= 0 && pct <= 100) {
     win.setOpacity(pct / 100);
@@ -97,7 +131,6 @@ ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
 
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
-  console.log("widgetManager: loading INI at", iniPath);
 
   const widgetsBase = getWidgetsPath();
   const sectionName = path.relative(widgetsBase, iniPath).replace(/\[/g, "\\");
@@ -109,6 +142,7 @@ function loadWidget(filePath) {
   const snapEdges           = getWidgetSnapEdges(sectionName) || "";
   const transparencyPercent = safeInt(getWidgetTransparency(sectionName), 100);
   const onHover             = Number(getWidgetOnHover(sectionName)) || 0;
+  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(sectionName)) === 1; // ← init
 
   let sections;
   try {
@@ -177,41 +211,35 @@ function loadWidget(filePath) {
 
   const win = createWidgetsWindow(
     iniPath, sectionName, sections, vars, baseDir,
-    finalWidth, finalHeight, draggable
+    finalWidth, finalHeight, draggable, keepOnScreenVal
   );
 
   widgetWindows.set(iniPath, win);
   windowSizes.set(iniPath, { width: finalWidth, height: finalHeight });
 
+  // enforce initial bounds & mode
   win.setBounds({ width: finalWidth, height: finalHeight });
   win.setMinimumSize(finalWidth, finalHeight);
   win.setMaximumSize(finalWidth, finalHeight);
-
   if (winX !== null && winY !== null) {
     win.setBounds({ x: winX, y: winY, width: finalWidth, height: finalHeight });
   }
-
   win.setMovable(false);
 
   if (clickVal === 0) {
     win.setIgnoreMouseEvents(true, { forward: true });
-    console.log(`widgetManager: click-through MODE for ${sectionName}`);
-  } else {
-    console.log(`widgetManager: interactive MODE for ${sectionName}`);
   }
-
   win.setOpacity(transparencyPercent / 100);
-  win.snapEdges       = snapEdges;
-  win.onHoverBehavior = onHover;
-  win.isWidgetDraggable = draggable;
+  win.snapEdges          = snapEdges;
+  win.onHoverBehavior    = onHover;
+  win.isWidgetDraggable  = draggable;       // ← init
+  win.keepOnScreen       = keepOnScreenVal; // ← init
 
-  console.log("widgetManager: stored window for", iniPath);
   return win;
 }
 
 function unloadWidget(identifier) {
   const key = resolveKey(widgetWindows, identifier);
-  console.log("widgetManager: unloading", identifier, "→", key);
   if (key) {
     app.isWidgetQuiting = true;
     const win = widgetWindows.get(key);
@@ -231,7 +259,10 @@ function calculateWindowSize(secs) {
   return { width: maxR + 10, height: maxB + 10 };
 }
 
-function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, height, draggable) {
+function createWidgetsWindow(
+  name, sectionName, secs, vars, baseDir,
+  width, height, draggable, keepOnScreen
+) {
   const win = new BrowserWindow({
     width, height,
     frame: false,
@@ -253,28 +284,20 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
   let html = `
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      html, body {
-        margin:0; padding:0;
-        background:transparent;
-        width:${width}px; height:${height}px;
-        overflow:hidden; position:relative;
-        -webkit-app-region:no-drag;
-        box-sizing:border-box;
-      }
-      #container {
-        position:fixed; top:0; left:0;
-        width:${width}px; height:${height}px;
-        overflow:hidden;
-      }
-      .widget { position:absolute; }
-    </style>
-  </head>
+  <head><meta charset="utf-8"><style>
+    html,body {margin:0;padding:0;
+      background:transparent;
+      width:${width}px;height:${height}px;
+      overflow:hidden;position:relative;
+      box-sizing:border-box;}
+    #container{position:fixed;top:0;left:0;
+      width:${width}px;height:${height}px;overflow:hidden;}
+    .widget{position:absolute;}
+  </style></head>
   <body
     data-section="${sectionName}"
-    data-draggable="${draggable ? '1' : '0'}"
+    data-draggable="${draggable ? '1':'0'}"
+    data-keep-on-screen="${keepOnScreen ? '1':'0'}"
     data-width="${width}"
     data-height="${height}"
   >
@@ -286,15 +309,10 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
     for (const [k, v] of Object.entries(raw)) {
       cfg[k] = typeof v === "string" ? substituteVariables(v, vars) : v;
     }
-    switch ((cfg.Type || "").trim()) {
-      case "Text":
-        html += renderTextWidget(cfg);
-        break;
-      case "Image":
-        html += renderImageWidget(cfg, baseDir);
-        break;
-      default:
-        console.warn(`Skipping unknown Type="${cfg.Type}"`);
+    switch ((cfg.Type||"").trim()) {
+      case "Text":  html += renderTextWidget(cfg); break;
+      case "Image": html += renderImageWidget(cfg, baseDir); break;
+      default: console.warn(`Skipping unknown Type="${cfg.Type}"`);
     }
   }
 
@@ -318,15 +336,13 @@ function createWidgetsWindow(name, sectionName, secs, vars, baseDir, width, heig
     win.show();
   });
 
-  // enforce fixed size
+  // keep size fixed
   const lockSize = () => {
     const s = windowSizes.get(name);
     if (s) win.setBounds({ width: s.width, height: s.height });
   };
-  win.on("resize", lockSize);
-  win.on("blur",   lockSize);
-  win.on("show",   lockSize);
-  win.on("close", (e) => {
+  ["resize","blur","show"].forEach(evt => win.on(evt, lockSize));
+  win.on("close", e => {
     if (!app.isWidgetQuiting) { e.preventDefault(); win.hide(); }
   });
 
