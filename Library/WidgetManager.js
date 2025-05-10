@@ -7,47 +7,28 @@ const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
 const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen } = require("./ConfigFile");
-const { init: initWidgetBangs, moveWidgetWindow } = require("./WidgetBangs");
 
 const widgetWindows = new Map();
 const windowSizes   = new Map();
 
-initWidgetBangs(widgetWindows);
-
 module.exports = { loadWidget, unloadWidget, widgetWindows };
 
-function moveWidgetWindowSafely(x, y, identifier) {
-  const key = resolveKey(widgetWindows, identifier);
+ipcMain.on("widget-move-window", (_e, x, y, id) => {
+  const key = resolveKey(widgetWindows, id);
   if (!key) return false;
   const win = widgetWindows.get(key);
-  const originalSize = windowSizes.get(key);
-  if (!win || !originalSize) return false;
-
-  if (!win.isWidgetDraggable) return false;
+  const size = windowSizes.get(key);
+  if (!win || !size || !win.isWidgetDraggable) return false;
 
   if (win.keepOnScreen) {
-
-    const disp = screen.getDisplayMatching({
-      x, y,
-      width: originalSize.width,
-      height: originalSize.height,
-    });
+    const disp = screen.getDisplayMatching({ x, y, width: size.width, height: size.height });
     const wa = disp.workArea;
-    x = Math.max(wa.x, Math.min(x, wa.x + wa.width  - originalSize.width));
-    y = Math.max(wa.y, Math.min(y, wa.y + wa.height - originalSize.height));
+    x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
+    y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
   }
 
-  win.setBounds({
-    x: Math.round(x),
-    y: Math.round(y),
-    width: originalSize.width,
-    height: originalSize.height,
-  });
+  win.setBounds({ x: Math.round(x), y: Math.round(y), width: size.width, height: size.height });
   return true;
-}
-
-ipcMain.on("widget-move-window", (_e, x, y, identifier) => {
-  moveWidgetWindowSafely(x, y, identifier);
 });
 
 ipcMain.handle("widget-get-position", (_e, identifier) => {
