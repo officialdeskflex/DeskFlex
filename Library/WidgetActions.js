@@ -1,19 +1,18 @@
 const { exec } = require("child_process");
-const { log, delay } = require("./WidgetBangs");
-const { ipcRenderer } = require("electron");
 
 const BTN = { 0: "left", 1: "middle", 2: "right", 3: "x1", 4: "x2" };
 
 const handlers = {
-  delay: async (p) => {
-    const ms = parseInt(p, 10);
-    if (ms > 0) await delay(ms);
+  delay: async (ms) => {
+    const parsedMs = parseInt(ms, 10);
+    if (parsedMs > 0) await new Promise(resolve => setTimeout(resolve, parsedMs));
   },
-  log: (p) => log(p),
-  execute: (p) =>
-    exec(p, (e) => e && console.error(`Exec \"${p}\" failed:`, e)),
-  move: ([x, y, section], defSec) => {
-    ipcRenderer.send("widget-move-window", x, y, section || defSec);
+  log: (msg) => console.log(msg),
+  execute: (cmd) => {
+    exec(cmd, (error) => error && console.error(`Exec "${cmd}" failed:`, error));
+  },
+  move: ([x, y, section], defaultSection) => {
+    ipcRenderer.send("widget-move-window", x, y, section || defaultSection);
   },
   settransparency: ([percent, section], defSec) => {
   const value = String(percent).replace("%", "");
@@ -72,12 +71,7 @@ const handlers = {
 
 const parseParam = (p) => {
   if (p == null) return [];
-  if (Array.isArray(p)) return p;
-  return (
-    String(p)
-      .match(/"([^"]+)"|\S+/g)
-      ?.map((t) => t.replace(/^"|"$/g, "")) || []
-  );
+  return Array.isArray(p) ? p : (String(p).match(/"([^"]+)"|\S+/g) || []).map(t => t.replace(/^"|"$/g, ""));
 };
 
 async function runAction(el, key) {
@@ -94,43 +88,46 @@ async function runAction(el, key) {
   const defSec = document.body.dataset.section;
 
   for (const { type = "execute", param } of actions) {
-    const t = type.toLowerCase();
-    if (t === "delay" || t === "log" || t === "execute") {
-      await handlers[t](param);
-    } else if (handlers[t]) {
+    const lowerType = type.toLowerCase();
+    if (["delay", "log", "execute"].includes(lowerType)) {
+      await widgetUtils[lowerType](param);
+    } else if (widgetUtils[lowerType]) {
       const parts = parseParam(param);
-      handlers[t](
-        parts.map((v) => (isNaN(v) ? v : parseInt(v, 10))),
-        defSec
-      );
+      widgetUtils[lowerType](parts.map(v => (isNaN(v) ? v : parseInt(v, 10))), defSec);
     } else {
-      console.warn(`Unknown action type \"${t}\"`, type);
+      console.warn(`Unknown action type "${lowerType}"`, type);
     }
   }
 }
 
 function wireWidgetEvents() {
-  document.querySelectorAll(".widget").forEach((el) => {
-    el.oncontextmenu = (e) => e.preventDefault();
+  document.querySelectorAll(".widget").forEach((widgetElement) => {
+    widgetElement.oncontextmenu = (event) => event.preventDefault();
+
     ["down", "up", "doubleclick"].forEach((evt) => {
-      const ev = evt === "doubleclick" ? "dblclick" : `mouse${evt}`;
-      el.addEventListener(ev, (e) => {
-        const btn = BTN[e.button];
-        btn && runAction(el, `${btn}mouse${evt}action`);
+      const mouseEvent = evt === "doubleclick" ? "dblclick" : `mouse${evt}`;
+      widgetElement.addEventListener(mouseEvent, (event) => {
+        const button = BTN[event.button];
+        if (button) {
+          runAction(widgetElement, `${button}mouse${evt}action`);
+        }
       });
     });
-    el.addEventListener("mouseover", () => runAction(el, "mouseoveraction"));
-    el.addEventListener("mouseleave", () => runAction(el, "mouseleaveaction"));
-    el.addEventListener("wheel", (e) => {
-      const dir =
-        e.deltaY > 0
-          ? "down"
-          : e.deltaY < 0
-          ? "up"
-          : e.deltaX > 0
-          ? "right"
-          : "left";
-      runAction(el, `mousescroll${dir}action`);
+
+    widgetElement.addEventListener("mouseover", () => runAction(widgetElement, "mouseoveraction"));
+    widgetElement.addEventListener("mouseleave", () => runAction(widgetElement, "mouseleaveaction"));
+    widgetElement.addEventListener("wheel", (event) => {
+      let direction;
+      if (event.deltaY > 0) {
+        direction = "down";
+      } else if (event.deltaY < 0) {
+        direction = "up";
+      } else if (event.deltaX > 0) {
+        direction = "right";
+      } else {
+        direction = "left";
+      }
+      runAction(widgetElement, `mousescroll${direction}action`);
     });
   });
 }
