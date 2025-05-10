@@ -1,8 +1,10 @@
+//WidgetActions.js
 const { exec } = require("child_process");
+const { ipcRenderer } = require("electron");
 
 const BTN = { 0: "left", 1: "middle", 2: "right", 3: "x1", 4: "x2" };
 
-const handlers = {
+const widgetUtils = {
   delay: async (ms) => {
     const parsedMs = parseInt(ms, 10);
     if (parsedMs > 0) await new Promise(resolve => setTimeout(resolve, parsedMs));
@@ -15,9 +17,9 @@ const handlers = {
     ipcRenderer.send("widget-move-window", x, y, section || defaultSection);
   },
   settransparency: ([percent, section], defSec) => {
-  const value = String(percent).replace("%", "");
-  const targetSection = section || defSec;
-  ipcRenderer.send("widget-set-transparency", value, targetSection);
+    const value = String(percent).replace("%", "");
+    const targetSection = section || defSec;
+    ipcRenderer.send("widget-set-transparency", value, targetSection);
   },
   draggable: ([val, section], defSec) => {
     if (!["0", "1"].includes(String(val)))
@@ -57,16 +59,14 @@ const handlers = {
     const sec = section && section.trim() ? section : defSec;
     await ipcRenderer.invoke("widget-load-widget", sec);
   },
-
   unloadwidget: async ([section], defSec) => {
     const sec = section && section.trim() ? section : defSec;
     await ipcRenderer.invoke("widget-unload-widget", sec);
   },
-
   togglewidget: async ([section], defSec) => {
     const sec = section && section.trim() ? section : defSec;
     await ipcRenderer.invoke("widget-toggle-widget", sec);
-  },
+  }
 };
 
 const parseParam = (p) => {

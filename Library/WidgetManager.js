@@ -1,141 +1,16 @@
 // WidgetManager.js
-const { BrowserWindow, app, ipcMain, screen } = require("electron");
+const { BrowserWindow, app } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
-const { substituteVariables, safeInt, escapeHtml, resolveIniPath, resolveKey } = require("./Utils");
+const { substituteVariables, safeInt, resolveIniPath } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
 const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen } = require("./ConfigFile");
+const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 
 const widgetWindows = new Map();
-const windowSizes   = new Map();
-
-module.exports = { loadWidget, unloadWidget, widgetWindows };
-
-ipcMain.on("widget-move-window", (_e, x, y, id) => {
-  const key = resolveKey(widgetWindows, id);
-  if (!key) return false;
-  const win = widgetWindows.get(key);
-  const size = windowSizes.get(key);
-  if (!win || !size || !win.isWidgetDraggable) return false;
-
-  if (win.keepOnScreen) {
-    const disp = screen.getDisplayMatching({ x, y, width: size.width, height: size.height });
-    const wa = disp.workArea;
-    x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
-    y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
-  }
-
-  win.setBounds({ x: Math.round(x), y: Math.round(y), width: size.width, height: size.height });
-  return true;
-});
-
-ipcMain.handle("widget-get-position", (_e, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  if (!key) return { x: 0, y: 0 };
-  const b = widgetWindows.get(key).getBounds();
-  return { x: b.x, y: b.y };
-});
-
-ipcMain.handle("widget-reset-size", (_e, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  if (!key) return false;
-  const win = widgetWindows.get(key);
-  const originalSize = windowSizes.get(key);
-  if (win && originalSize) {
-    const { x, y } = win.getBounds();
-    win.setBounds({ x, y, width: originalSize.width, height: originalSize.height });
-    return true;
-  }
-  return false;
-});
-
-ipcMain.on("widget-set-draggable", (_e, rawVal, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  if (!key) return;
-  const win = widgetWindows.get(key);
-  if (!win) return;
-  win.isWidgetDraggable = Number(rawVal) === 1;
-  win.webContents.send("widget-draggable-changed", win.isWidgetDraggable);
-});
-
-ipcMain.on("widget-set-keep-on-screen", (_e, rawVal, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  if (!key) return;
-  const win = widgetWindows.get(key);
-  if (!win) return;
-  win.keepOnScreen = Number(rawVal) === 1;
-});
-
-ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  if (!key) return;
-  const win = widgetWindows.get(key);
-  if (!win) return;
-  const pct = parseFloat(rawPercent);
-  if (Number.isFinite(pct) && pct >= 0 && pct <= 100) {
-    win.setOpacity(pct / 100);
-    console.log(`Set transparency of ${identifier} to ${pct}%`);
-  } else {
-    console.warn("Invalid transparency value:", rawPercent);
-  }
-});
-
-ipcMain.on("widget-set-clickthrough", (_e, rawVal, identifier) => {
-  console.log(`Set clickthrough of ${identifier} to ${rawVal}`);
-  const key = resolveKey(widgetWindows, identifier);
-  if (!key) return;
-  const win = widgetWindows.get(key);
-  if (!win) return;
-  const ct = Number(rawVal) === 1;
-  win.setIgnoreMouseEvents(ct, { forward: true });
-  win.clickThrough = ct;
-});
-
-ipcMain.handle("widget-get-draggable", (_e, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  const win = key && widgetWindows.get(key);
-  return win ? Boolean(win.isWidgetDraggable) : false;
-});
-
-ipcMain.handle("widget-get-keep-on-screen", (_e, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  const win = key && widgetWindows.get(key);
-  return win ? Boolean(win.keepOnScreen) : false;
-});
-
-ipcMain.handle("widget-get-clickthrough", (_e, identifier) => {
-  const key = resolveKey(widgetWindows, identifier);
-  const win = key && widgetWindows.get(key);
-  return win ? Boolean(win.clickThrough) : false;
-});
-
-ipcMain.handle("widget-load-widget", (_e, sectionName) => {
-  const win = loadWidget(sectionName);
-  return !!win;
-});
-
-ipcMain.handle("widget-unload-widget", (_e, sectionName) => {
-  unloadWidget(sectionName);
-  return true;
-});
-
-ipcMain.handle("widget-is-widget-loaded", (_e, sectionName) => {
-  const key = resolveKey(widgetWindows, sectionName);
-  return Boolean(key);
-});
-
-ipcMain.handle("widget-toggle-widget", (_e, sectionName) => {
-  const key = resolveKey(widgetWindows, sectionName);
-  if (key) {
-    unloadWidget(sectionName);
-    return false;  
-  } else {
-    loadWidget(sectionName);
-    return true;  
-  }
-});
+const windowSizes = new Map();
 
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
@@ -214,7 +89,7 @@ function loadWidget(filePath) {
 
   const win = createWidgetsWindow(
     iniPath, sectionName, sections, vars, baseDir,
-    finalWidth, finalHeight, draggable, keepOnScreenVal,clickVal
+    finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal
   );
 
   widgetWindows.set(iniPath, win);
@@ -263,7 +138,7 @@ function calculateWindowSize(secs) {
 
 function createWidgetsWindow(
   name, sectionName, secs, vars, baseDir,
-  width, height, draggable, keepOnScreen,clickVal
+  width, height, draggable, keepOnScreen, clickVal
 ) {
   const win = new BrowserWindow({
     width, height,
@@ -350,3 +225,8 @@ function createWidgetsWindow(
 
   return win;
 }
+
+const { resolveKey } = require("./Utils");
+registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget);
+
+module.exports = { loadWidget, unloadWidget, widgetWindows };

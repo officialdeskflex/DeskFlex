@@ -1,3 +1,4 @@
+//WidgetDrag.js
 const { ipcRenderer } = require("electron");
 
 (() => {
