@@ -16,16 +16,16 @@ function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
 
   const widgetsBase = getWidgetsPath();
-  const sectionName = path.relative(widgetsBase, iniPath).replace(/\[/g, "\\");
+  const widgetName = path.relative(widgetsBase, iniPath).replace(/\[/g, "\\");
 
-  const clickVal            = Number(getWidgetClickthrough(sectionName)) === 1 ? 1 : 0;
-  const winX                = safeInt(getWidgetWindowX(sectionName), null);
-  const winY                = safeInt(getWidgetWindowY(sectionName), null);
-  const draggable           = Number(getWidgetDraggable(sectionName)) === 1;
-  const snapEdges           = getWidgetSnapEdges(sectionName) || "";
-  const transparencyPercent = safeInt(getWidgetTransparency(sectionName), 100);
-  const onHover             = Number(getWidgetOnHover(sectionName)) || 0;
-  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(sectionName)) === 1; 
+  const clickVal            = Number(getWidgetClickthrough(widgetName)) === 1 ? 1 : 0;
+  const winX                = safeInt(getWidgetWindowX(widgetName), null);
+  const winY                = safeInt(getWidgetWindowY(widgetName), null);
+  const draggable           = Number(getWidgetDraggable(widgetName)) === 1;
+  const snapEdges           = getWidgetSnapEdges(widgetName) || "";
+  const transparencyPercent = safeInt(getWidgetTransparency(widgetName), 100);
+  const onHover             = Number(getWidgetOnHover(widgetName)) || 0;
+  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(widgetName)) === 1; 
 
   let sections;
   try {
@@ -88,7 +88,7 @@ function loadWidget(filePath) {
   const finalHeight = Math.round(winH);
 
   const win = createWidgetsWindow(
-    iniPath, sectionName, sections, vars, baseDir,
+    iniPath, widgetName, sections, vars, baseDir,
     finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal
   );
 
@@ -137,7 +137,7 @@ function calculateWindowSize(secs) {
 }
 
 function createWidgetsWindow(
-  name, sectionName, secs, vars, baseDir,
+  name, widgetName, secs, vars, baseDir,
   width, height, draggable, keepOnScreen, clickVal
 ) {
   const win = new BrowserWindow({
@@ -172,7 +172,7 @@ function createWidgetsWindow(
     .widget{position:absolute;}
   </style></head>
   <body
-    data-section="${sectionName}"
+    data-section="${widgetName}"
     data-draggable="${draggable ? '1':'0'}"
     data-keep-on-screen="${keepOnScreen ? '1':'0'}"
     data-width="${width}"
