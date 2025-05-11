@@ -3,11 +3,11 @@ const path = require("path");
 
 /**
  * Reads a value from an INI file based on section and key names.
- * @param {string} sectionName - The name of the section in the INI file.
+ * @param {string} widgetName - The name of the section in the INI file.
  * @param {string} keyName - The key name whose value you want to retrieve.
  * @returns {string|null} - The value of the key, or null if not found.
  */
-function getIniValue(sectionName, keyName) {
+function getIniValue(widgetName, keyName) {
   const filePath = path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini");
 
   if (!fs.existsSync(filePath)) return null;
@@ -33,7 +33,7 @@ function getIniValue(sectionName, keyName) {
     }
   });
 
-  return result[sectionName]?.[keyName] ?? null;
+  return result[widgetName]?.[keyName] ?? null;
 }
 
 // Reads the INI file and returns a JSON object of all sections that have Active=1.
@@ -62,7 +62,7 @@ function getActiveWidgets() {
   });
   const activeSections = Object.entries(result)
     .filter(([_, values]) => values.Active === "1")
-    .map(([sectionName]) => sectionName);
+    .map(([widgetName]) => widgetName);
 
   return activeSections;
 }
@@ -90,11 +90,11 @@ function getFolderStructure(folderPath = getWidgetsPath()) {
 /**
  * Updates a value in a specific section of the INI file.
  * If the section or key does not exist, they will be created.
- * @param {string} sectionName - The section to update.
+ * @param {string} widgetName - The section to update.
  * @param {string} keyName - The key to update.
  * @param {string} value - The new value to set.
  */
-function setIniValue(sectionName, keyName, value) {
+function setIniValue(widgetName, keyName, value) {
   const filePath = path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini");
 
   if (!fs.existsSync(filePath)) return false;
@@ -110,15 +110,15 @@ function setIniValue(sectionName, keyName, value) {
     let trimmed = line.trim();
 
     if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-      if (currentSection === sectionName && !keyUpdated) {
+      if (currentSection === widgetName && !keyUpdated) {
         output.push(`${keyName}=${value}`);
         keyUpdated = true;
       }
       currentSection = trimmed.slice(1, -1).trim();
       output.push(line);
-      sectionFound = sectionFound || currentSection === sectionName;
+      sectionFound = sectionFound || currentSection === widgetName;
     } else if (
-      currentSection === sectionName &&
+      currentSection === widgetName &&
       trimmed.startsWith(keyName + "=")
     ) {
       output.push(`${keyName}=${value}`);
@@ -130,11 +130,11 @@ function setIniValue(sectionName, keyName, value) {
 
   if (!sectionFound) {
     output.push("");
-    output.push(`[${sectionName}]`);
+    output.push(`[${widgetName}]`);
     output.push(`${keyName}=${value}`);
   } else if (!keyUpdated) {
     let indexToInsert = output.findIndex(
-      (line) => line.trim() === `[${sectionName}]`
+      (line) => line.trim() === `[${widgetName}]`
     );
     while (
       indexToInsert + 1 < output.length &&
@@ -149,8 +149,8 @@ function setIniValue(sectionName, keyName, value) {
   return true;
 }
 
-const setActiveValue = (sectionName, value) =>
-  setIniValue(sectionName, "Active", value);
+const setActiveValue = (widgetName, value) =>
+  setIniValue(widgetName, "Active", value);
 
 //DeskFlex Section Information.
 const getLogging = () => parseInt(getIniValue("DeskFlex", "Logging")) || 0;
@@ -161,68 +161,18 @@ const showStart = () => parseInt(getIniValue("DeskFlex", "ShowOnStart")) || 0;
 const getConfigEditorPath = () => getIniValue("DeskFlex", "ConfigEditor");
 
 // Flex Section Information Form Settings File.
-function getWidgetStatus(widgetSection) {
-  return getIniValue(widgetSection, "Active");
-}
-function getWidgetWindowX(widgetSection) {
-  return getIniValue(widgetSection, "WindowX");
-}
-function getWidgetWindowY(widgetSection) {
-  return getIniValue(widgetSection, "WindowY");
-}
-function getWidgetPosition(widgetSection) {
-  return getIniValue(widgetSection, "Position");
-}
-function getWidgetClickthrough(widgetSection) {
-  return getIniValue(widgetSection, "Clickthrough");
-}
-function getWidgetDraggable(widgetSection) {
-  return getIniValue(widgetSection, "Draggable");
-}
-function getWidgetSnapEdges(widgetSection) {
-  return getIniValue(widgetSection, "SnapEdges");
-}
-function getWidgetKeepOnScreen(widgetSection) {
-  return getIniValue(widgetSection, "KeepOnScreen");
-}
-function getWidgetOnHover(widgetSection) {
-  return getIniValue(widgetSection, "OnHover");
-}
-function getWidgetTransparency(widgetSection) {
-  return getIniValue(widgetSection, "Transparency");
-}
-function getWidgetFavorite(widgetSection) {
-  return getIniValue(widgetSection, "Favorite");
-}
-function getWidgetSavePosition(widgetSection) {
-  return getIniValue(widgetSection, "SavePosition");
-}
-function getWidgetLoadOrder(widgetSection) {
-  return getIniValue(widgetSection, "LoadOrder");
-}
+function getWidgetStatus(s) { return getIniValue(s, "Active"); }
+function getWidgetWindowX(s) { return getIniValue(s, "WindowX"); }
+function getWidgetWindowY(s) { return getIniValue(s, "WindowY"); }
+function getWidgetPosition(s) { return getIniValue(s, "Position"); }
+function getWidgetClickthrough(s) { return getIniValue(s, "Clickthrough"); }
+function getWidgetDraggable(s) { return getIniValue(s, "Draggable"); }
+function getWidgetSnapEdges(s) { return getIniValue(s, "SnapEdges"); }
+function getWidgetKeepOnScreen(s) { return getIniValue(s, "KeepOnScreen"); }
+function getWidgetOnHover(s) { return getIniValue(s, "OnHover"); }
+function getWidgetTransparency(s) { return getIniValue(s, "Transparency"); }
+function getWidgetFavorite(s) { return getIniValue(s, "Favorite"); }
+function getWidgetSavePosition(s) { return getIniValue(s, "SavePosition"); }
+function getWidgetLoadOrder(s) { return getIniValue(s, "LoadOrder"); }
 
-module.exports = {
-  showStart,
-  getConfigEditorPath,
-  getIniValue,
-  getActiveWidgets,
-  getLogging,
-  getDarkMode,
-  getWidgetsPath,
-  getDebugging,
-  getFolderStructure,
-  getWidgetStatus,
-  getWidgetWindowX,
-  getWidgetWindowY,
-  getWidgetPosition,
-  getWidgetClickthrough,
-  getWidgetDraggable,
-  getWidgetSnapEdges,
-  getWidgetKeepOnScreen,
-  getWidgetOnHover,
-  getWidgetTransparency,
-  getWidgetFavorite,
-  getWidgetSavePosition,
-  getWidgetLoadOrder,
-  setActiveValue,
-};
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveWidgets, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue };
