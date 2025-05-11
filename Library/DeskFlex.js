@@ -47,9 +47,9 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.handle("load-widget", async (_event, section) => {
+ipcMain.handle("load-widget", async (_event, widgetName) => {
   try {
-    const fullPath = path.join(config.widgetsPath, section);
+    const fullPath = path.join(config.widgetsPath, widgetName);
     loadWidget(fullPath);
     return { success: true };
   } catch (err) {
@@ -58,10 +58,10 @@ ipcMain.handle("load-widget", async (_event, section) => {
   }
 });
 
-ipcMain.handle("unload-widget", async (_event, section) => {
+ipcMain.handle("unload-widget", async (_event, widgetName) => {
   try {
-    const sectionName = path.basename(section, ".ini");
-    unloadWidget(sectionName);
+    const DFWidgetName = path.basename(widgetName, ".ini");
+    unloadWidget(DFWidgetName);
     return { success: true };
   } catch (err) {
     console.error("Error unloading widget:", err);
