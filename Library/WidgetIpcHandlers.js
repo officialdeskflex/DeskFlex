@@ -112,28 +112,28 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     return win ? Boolean(win.clickThrough) : false;
   });
 
-  ipcMain.handle("widget-load-widget", (_e, sectionName) => {
-    const win = loadWidgetRef(sectionName);
+  ipcMain.handle("widget-load-widget", (_e, widgetName) => {
+    const win = loadWidgetRef(widgetName);
     return !!win;
   });
 
-  ipcMain.handle("widget-unload-widget", (_e, sectionName) => {
-    unloadWidgetRef(sectionName);
+  ipcMain.handle("widget-unload-widget", (_e, widgetName) => {
+    unloadWidgetRef(widgetName);
     return true;
   });
 
-  ipcMain.handle("widget-is-widget-loaded", (_e, sectionName) => {
-    const key = resolveKey(widgetWindowsRef, sectionName);
+  ipcMain.handle("widget-is-widget-loaded", (_e, widgetName) => {
+    const key = resolveKey(widgetWindowsRef, widgetName);
     return Boolean(key);
   });
 
-  ipcMain.handle("widget-toggle-widget", (_e, sectionName) => {
-    const key = resolveKey(widgetWindowsRef, sectionName);
+  ipcMain.handle("widget-toggle-widget", (_e, widgetName) => {
+    const key = resolveKey(widgetWindowsRef, widgetName);
     if (key) {
-      unloadWidgetRef(sectionName);
+      unloadWidgetRef(widgetName);
       return false;  
     } else {
-      loadWidgetRef(sectionName);
+      loadWidgetRef(widgetName);
       return true;  
     }
   });
