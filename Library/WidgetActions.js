@@ -86,7 +86,7 @@ async function runAction(el, key) {
     return console.error(`Invalid JSON for ${key}:`, raw, e);
   }
 
-  const currentWidgetName = document.body.dataset.section;
+  const currentWidgetName = document.body.dataset.widgetName;
 
   for (const { type = "execute", param } of actions) {
     const lowerType = type.toLowerCase();

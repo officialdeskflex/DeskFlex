@@ -2,7 +2,7 @@
 const { ipcRenderer } = require("electron");
 
 (() => {
-  const widgetName = document.body.dataset.section;
+  const widgetName = document.body.dataset.widgetName;
   let dragging = false, start = {}, orig = {};
 
   const enforceSize = () => {

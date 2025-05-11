@@ -172,7 +172,7 @@ function createWidgetsWindow(
     .widget{position:absolute;}
   </style></head>
   <body
-    data-section="${widgetName}"
+    data-widget-name="${widgetName}"
     data-draggable="${draggable ? '1':'0'}"
     data-keep-on-screen="${keepOnScreen ? '1':'0'}"
     data-width="${width}"
