@@ -2,7 +2,7 @@
 const { ipcRenderer } = require("electron");
 
 (() => {
-  const section = document.body.dataset.section;
+  const widgetName = document.body.dataset.section;
   let dragging = false, start = {}, orig = {};
 
   const enforceSize = () => {
@@ -12,7 +12,7 @@ const { ipcRenderer } = require("electron");
     });
     const c = document.getElementById("container");
     if (c) Object.assign(c.style, { width: `${width}px`, height: `${height}px` });
-    ipcRenderer.invoke("widget-reset-size", section);
+    ipcRenderer.invoke("widget-reset-size", widgetName);
   };
 
   const isDraggable = () => document.body.dataset.draggable === "1";
@@ -29,7 +29,7 @@ const { ipcRenderer } = require("electron");
     e.preventDefault();
     dragging = true;
     start = { x: e.screenX, y: e.screenY };
-    const pos = await ipcRenderer.invoke("widget-get-position", section);
+    const pos = await ipcRenderer.invoke("widget-get-position", widgetName);
     orig = { x: pos.x, y: pos.y };
     enforceSize();
   });
@@ -39,7 +39,7 @@ const { ipcRenderer } = require("electron");
     e.preventDefault();
     const dx = e.screenX - start.x;
     const dy = e.screenY - start.y;
-    ipcRenderer.send("widget-move-window", orig.x + dx, orig.y + dy, section);
+    ipcRenderer.send("widget-move-window", orig.x + dx, orig.y + dy, widgetName);
     enforceSize();
   });
 
