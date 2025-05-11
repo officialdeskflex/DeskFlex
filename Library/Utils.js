@@ -2,9 +2,6 @@
 const path = require("path");
 const { getWidgetsPath } = require("./ConfigFile");
 
-/**
- * Normalize to integer or fallback.
- */
 function safeInt(v, fallback) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : fallback;
@@ -74,9 +71,6 @@ function buildActionAttributes(cfg) {
   return attrs;
 }
 
-/**
- * Turn a relative or bare filePath into an absolute .ini path.
- */
 function resolveIniPath(filePath) {
   const baseDir = getWidgetsPath();
   let abs = path.isAbsolute(filePath)
@@ -86,10 +80,6 @@ function resolveIniPath(filePath) {
   return path.normalize(path.resolve(abs));
 }
 
-/**
- * Given the widgetWindows Map and an identifier (either bare section name
- * or path), return the matching key.
- */
 function resolveKey(widgetWindowsMap, identifier) {
   const isBare =
     !identifier.includes(path.sep) && !path.extname(identifier);
@@ -105,13 +95,4 @@ function resolveKey(widgetWindowsMap, identifier) {
   return resolveIniPath(identifier);
 }
 
-module.exports = {
-  safeInt,
-  stripQuotes,
-  escapeHtml,
-  substituteVariables,
-  parseActionList,
-  buildActionAttributes,
-  resolveIniPath,
-  resolveKey,
-};
+module.exports = { safeInt, stripQuotes, escapeHtml, substituteVariables, parseActionList, buildActionAttributes, resolveIniPath, resolveKey };

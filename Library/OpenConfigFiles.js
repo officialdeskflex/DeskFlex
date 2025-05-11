@@ -2,10 +2,6 @@ const fs = require("fs");
 const { execFile } = require("child_process");
 const { getConfigEditorPath } = require("./ConfigFile");
 
-/**
- * Opens a specified file using the given editor application.
- */
-
 function openFileWithEditor(filePath) {
   let editorPath = getConfigEditorPath();
   if (!fs.existsSync(editorPath)) {

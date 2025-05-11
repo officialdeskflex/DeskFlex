@@ -1,6 +1,5 @@
 // widgetBangs.js
 const { ipcRenderer } = require("electron");
-const { safeInt, resolveKey } = require("./Utils");
 
 const { log, delay } = (() => {
   function log(msg,type,source) {
