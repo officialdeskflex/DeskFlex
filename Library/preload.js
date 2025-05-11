@@ -29,8 +29,8 @@ contextBridge.exposeInMainWorld('deskflex', {
     getWidgetSavePosition: (widgetName) => getWidgetSavePosition(widgetName),
     getWidgetLoadOrder: (widgetName) => getWidgetLoadOrder(widgetName),
 
-    loadWidget: (section) => {return ipcRenderer.invoke('load-widget', section);},
-    unloadWidget: (section) => {return ipcRenderer.invoke('unload-widget', section);},
+    loadWidget: (widgetName) => {return ipcRenderer.invoke('load-widget', widgetName);},
+    unloadWidget: (widgetName) => {return ipcRenderer.invoke('unload-widget', widgetName);},
 
     sendLog: (message, type, source = '') => ipcRenderer.send('log-message', message, type, source),
     getLogs: () => ipcRenderer.invoke('get-logs'),
