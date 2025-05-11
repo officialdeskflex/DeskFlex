@@ -17,55 +17,55 @@ const widgetUtils = {
   move: ([x, y, section], curWidgetName) => {
     ipcRenderer.send("widget-move-window", x, y, section || curWidgetName);
   },
-  settransparency: ([percent, section], defSec) => {
+  settransparency: ([percent, section], currentWidgetName) => {
     const value = String(percent).replace("%", "");
-    const targetSection = section || defSec;
+    const targetSection = section || currentWidgetName;
     ipcRenderer.send("widget-set-transparency", value, targetSection);
   },
-  draggable: ([val, section], defSec) => {
+  draggable: ([val, section], currentWidgetName) => {
     if (!["0", "1"].includes(String(val)))
       return console.warn("Invalid draggable:", val);
-    ipcRenderer.send("widget-set-draggable", val, section || defSec);
+    ipcRenderer.send("widget-set-draggable", val, section || currentWidgetName);
   },
-  keeponscreen: ([val, section], defSec) => {
+  keeponscreen: ([val, section], currentWidgetName) => {
     if (!["0", "1"].includes(String(val)))
       return console.warn("Invalid keepOnScreen:", val);
-    ipcRenderer.send("widget-set-keep-on-screen", val, section || defSec);
+    ipcRenderer.send("widget-set-keep-on-screen", val, section || currentWidgetName);
   },
-  clickthrough: ([val, section], defSec) => {
+  clickthrough: ([val, section], currentWidgetName) => {
     if (!["0", "1"].includes(String(val))) {
       return console.warn("Invalid clickThrough:", val);
     }
-    ipcRenderer.send("widget-set-clickthrough", String(val), section || defSec);
+    ipcRenderer.send("widget-set-clickthrough", String(val), section || currentWidgetName);
   },
-  toggledraggable: async ([section], defSec) => {
-    const sec = section && section.trim() ? section : defSec;
+  toggledraggable: async ([section], currentWidgetName) => {
+    const sec = section && section.trim() ? section : currentWidgetName;
     const current = await ipcRenderer.invoke("widget-get-draggable", sec);
     const newVal = current ? 0 : 1;
     ipcRenderer.send("widget-set-draggable", String(newVal), sec);
   },
-  togglekeeponscreen: async ([section], defSec) => {
-    const sec = section && section.trim() ? section : defSec;
+  togglekeeponscreen: async ([section], currentWidgetName) => {
+    const sec = section && section.trim() ? section : currentWidgetName;
     const current = await ipcRenderer.invoke("widget-get-keep-on-screen", sec);
     const newVal = current ? 0 : 1;
     ipcRenderer.send("widget-set-keep-on-screen", String(newVal), sec);
   },
-  toggleclickthrough: async ([section], defSec) => {
-    const sec = section && section.trim() ? section : defSec;
+  toggleclickthrough: async ([section], currentWidgetName) => {
+    const sec = section && section.trim() ? section : currentWidgetName;
     const current = await ipcRenderer.invoke("widget-get-clickthrough", sec);
     const newVal = current ? 0 : 1;
     ipcRenderer.send("widget-set-clickthrough", String(newVal), sec);
   },
-  loadwidget: async ([section], defSec) => {
-    const sec = section && section.trim() ? section : defSec;
+  loadwidget: async ([section], currentWidgetName) => {
+    const sec = section && section.trim() ? section : currentWidgetName;
     await ipcRenderer.invoke("widget-load-widget", sec);
   },
-  unloadwidget: async ([section], defSec) => {
-    const sec = section && section.trim() ? section : defSec;
+  unloadwidget: async ([section], currentWidgetName) => {
+    const sec = section && section.trim() ? section : currentWidgetName;
     await ipcRenderer.invoke("widget-unload-widget", sec);
   },
-  togglewidget: async ([section], defSec) => {
-    const sec = section && section.trim() ? section : defSec;
+  togglewidget: async ([section], currentWidgetName) => {
+    const sec = section && section.trim() ? section : currentWidgetName;
     await ipcRenderer.invoke("widget-toggle-widget", sec);
   }
 };
@@ -86,7 +86,7 @@ async function runAction(el, key) {
     return console.error(`Invalid JSON for ${key}:`, raw, e);
   }
 
-  const defSec = document.body.dataset.section;
+  const currentWidgetName = document.body.dataset.section;
 
   for (const { type = "execute", param } of actions) {
     const lowerType = type.toLowerCase();
@@ -94,7 +94,7 @@ async function runAction(el, key) {
       await widgetUtils[lowerType](param);
     } else if (widgetUtils[lowerType]) {
       const parts = parseParam(param);
-      widgetUtils[lowerType](parts.map(v => (isNaN(v) ? v : parseInt(v, 10))), defSec);
+      widgetUtils[lowerType](parts.map(v => (isNaN(v) ? v : parseInt(v, 10))), currentWidgetName);
     } else {
       console.warn(`Unknown action type "${lowerType}"`, type);
     }
