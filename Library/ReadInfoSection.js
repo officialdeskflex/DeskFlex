@@ -4,9 +4,6 @@ const ini = require('ini');
 const DEFAULT = { Name: null, Author: null, Version: null, License: null, Information: null };
 const keyMap  = Object.keys(DEFAULT).reduce((m,k)=>(m[k.toLowerCase()]=k,m), {});
 
-/**
- * @param {string} file - path to the .ini file
- */
 function getWidgetInfo(file) {
   if (!fs.existsSync(file)) return { ...DEFAULT };
   let cfg;
@@ -26,9 +23,6 @@ function getWidgetInfo(file) {
   return res;
 }
 
-/**
- * @param {string} file - path to the .ini file
- */
 function hasWidgetInfoSection(file) {
   if (!fs.existsSync(file)) return false;
   try {
