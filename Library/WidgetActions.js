@@ -14,8 +14,8 @@ const widgetUtils = {
   execute: (cmd) => {
     exec(cmd, (error) => error && console.error(`Exec "${cmd}" failed:`, error));
   },
-  move: ([x, y, section], defaultSection) => {
-    ipcRenderer.send("widget-move-window", x, y, section || defaultSection);
+  move: ([x, y, section], curWidgetName) => {
+    ipcRenderer.send("widget-move-window", x, y, section || curWidgetName);
   },
   settransparency: ([percent, section], defSec) => {
     const value = String(percent).replace("%", "");
