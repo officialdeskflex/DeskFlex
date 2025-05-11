@@ -27,15 +27,15 @@ function loadWidget(filePath) {
   const onHover             = Number(getWidgetOnHover(widgetName)) || 0;
   const keepOnScreenVal     = Number(getWidgetKeepOnScreen(widgetName)) === 1; 
 
-  let sections;
+  let widgetNames;
   try {
-    sections = parseIni(iniPath);
+    widgetNames = parseIni(iniPath);
   } catch (err) {
     console.error(`Failed to parse ${path.basename(iniPath)}:`, err);
     return;
   }
 
-  for (const cfg of Object.values(sections)) {
+  for (const cfg of Object.values(widgetNames)) {
     ["x", "y", "w", "h", "style"].forEach(k => {
       const low = k.toLowerCase(), up = k.toUpperCase();
       if (cfg[low] !== undefined && cfg[up] === undefined) {
@@ -44,14 +44,14 @@ function loadWidget(filePath) {
     });
   }
 
-  const vars = sections.Variables || {};
-  delete sections.Variables;
+  const vars = widgetNames.Variables || {};
+  delete widgetNames.Variables;
 
   const usedStyles = new Set();
-  for (const cfg of Object.values(sections)) {
+  for (const cfg of Object.values(widgetNames)) {
     if (cfg.Style) {
       usedStyles.add(cfg.Style);
-      const base = sections[cfg.Style];
+      const base = widgetNames[cfg.Style];
       if (base) {
         ["X","Y","W","H","Width","Height"].forEach(k => {
           if (base[k] !== undefined && cfg[k] === undefined) {
@@ -63,10 +63,10 @@ function loadWidget(filePath) {
       }
     }
   }
-  usedStyles.forEach(s => delete sections[s]);
+  usedStyles.forEach(s => delete widgetNames[s]);
 
   const baseDir = path.dirname(iniPath);
-  for (const cfg of Object.values(sections)) {
+  for (const cfg of Object.values(widgetNames)) {
     if ((cfg.Type||"").trim().toLowerCase() === "image") {
       let img = (cfg.ImageName||"").replace(/"/g,"");
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
@@ -83,12 +83,12 @@ function loadWidget(filePath) {
     }
   }
 
-  const { width: winW, height: winH } = calculateWindowSize(sections);
+  const { width: winW, height: winH } = calculateWindowSize(widgetNames);
   const finalWidth  = Math.round(winW);
   const finalHeight = Math.round(winH);
 
   const win = createWidgetsWindow(
-    iniPath, widgetName, sections, vars, baseDir,
+    iniPath, widgetName, widgetNames, vars, baseDir,
     finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal
   );
 
