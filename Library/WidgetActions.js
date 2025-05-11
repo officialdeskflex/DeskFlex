@@ -1,15 +1,16 @@
 //WidgetActions.js
 const { exec } = require("child_process");
 const { ipcRenderer } = require("electron");
+const { log, delay } = require("./WidgetBangs");
 
 const BTN = { 0: "left", 1: "middle", 2: "right", 3: "x1", 4: "x2" };
 
 const widgetUtils = {
   delay: async (ms) => {
-    const parsedMs = parseInt(ms, 10);
-    if (parsedMs > 0) await new Promise(resolve => setTimeout(resolve, parsedMs));
+  const parsedMs = parseInt(ms, 10);
+  if (parsedMs > 0) await delay(parsedMs);
   },
-  log: (msg) => console.log(msg),
+  log: (msg) => log(msg),
   execute: (cmd) => {
     exec(cmd, (error) => error && console.error(`Exec "${cmd}" failed:`, error));
   },

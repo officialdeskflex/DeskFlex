@@ -4,7 +4,7 @@ const { getLogging } = require("./ConfigFile");
 
 const logsList = [];
 
-function logs(message = "", type = "log", source = "") {
+function logs(message = "", type = "info", source = "") {
   const now = new Date();
   const time =
     now.toTimeString().split(" ")[0] +
@@ -63,9 +63,4 @@ function clearAllLogs() {
   }
 }
 
-module.exports = {
-  logs,
-  getLogs,
-  saveToFileLog,
-  clearAllLogs,
-};
+module.exports = { logs, getLogs, saveToFileLog, clearAllLogs };
