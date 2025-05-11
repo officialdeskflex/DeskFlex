@@ -14,58 +14,58 @@ const widgetUtils = {
   execute: (cmd) => {
     exec(cmd, (error) => error && console.error(`Exec "${cmd}" failed:`, error));
   },
-  move: ([x, y, section], curWidgetName) => {
-    ipcRenderer.send("widget-move-window", x, y, section || curWidgetName);
+  move: ([x, y, widgetName], curWidgetName) => {
+    ipcRenderer.send("widget-move-window", x, y, widgetName || curWidgetName);
   },
-  settransparency: ([percent, section], currentWidgetName) => {
+  settransparency: ([percent, widgetName], currentWidgetName) => {
     const value = String(percent).replace("%", "");
-    const targetSection = section || currentWidgetName;
-    ipcRenderer.send("widget-set-transparency", value, targetSection);
+    const targetwidgetName = widgetName || currentWidgetName;
+    ipcRenderer.send("widget-set-transparency", value, targetwidgetName);
   },
-  draggable: ([val, section], currentWidgetName) => {
+  draggable: ([val, widgetName], currentWidgetName) => {
     if (!["0", "1"].includes(String(val)))
       return console.warn("Invalid draggable:", val);
-    ipcRenderer.send("widget-set-draggable", val, section || currentWidgetName);
+    ipcRenderer.send("widget-set-draggable", val, widgetName || currentWidgetName);
   },
-  keeponscreen: ([val, section], currentWidgetName) => {
+  keeponscreen: ([val, widgetName], currentWidgetName) => {
     if (!["0", "1"].includes(String(val)))
       return console.warn("Invalid keepOnScreen:", val);
-    ipcRenderer.send("widget-set-keep-on-screen", val, section || currentWidgetName);
+    ipcRenderer.send("widget-set-keep-on-screen", val, widgetName || currentWidgetName);
   },
-  clickthrough: ([val, section], currentWidgetName) => {
+  clickthrough: ([val, widgetName], currentWidgetName) => {
     if (!["0", "1"].includes(String(val))) {
       return console.warn("Invalid clickThrough:", val);
     }
-    ipcRenderer.send("widget-set-clickthrough", String(val), section || currentWidgetName);
+    ipcRenderer.send("widget-set-clickthrough", String(val), widgetName || currentWidgetName);
   },
-  toggledraggable: async ([section], currentWidgetName) => {
-    const sec = section && section.trim() ? section : currentWidgetName;
+  toggledraggable: async ([widgetName], currentWidgetName) => {
+    const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;
     const current = await ipcRenderer.invoke("widget-get-draggable", sec);
     const newVal = current ? 0 : 1;
     ipcRenderer.send("widget-set-draggable", String(newVal), sec);
   },
-  togglekeeponscreen: async ([section], currentWidgetName) => {
-    const sec = section && section.trim() ? section : currentWidgetName;
+  togglekeeponscreen: async ([widgetName], currentWidgetName) => {
+    const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;
     const current = await ipcRenderer.invoke("widget-get-keep-on-screen", sec);
     const newVal = current ? 0 : 1;
     ipcRenderer.send("widget-set-keep-on-screen", String(newVal), sec);
   },
-  toggleclickthrough: async ([section], currentWidgetName) => {
-    const sec = section && section.trim() ? section : currentWidgetName;
+  toggleclickthrough: async ([widgetName], currentWidgetName) => {
+    const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;
     const current = await ipcRenderer.invoke("widget-get-clickthrough", sec);
     const newVal = current ? 0 : 1;
     ipcRenderer.send("widget-set-clickthrough", String(newVal), sec);
   },
-  loadwidget: async ([section], currentWidgetName) => {
-    const sec = section && section.trim() ? section : currentWidgetName;
+  loadwidget: async ([widgetName], currentWidgetName) => {
+    const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;
     await ipcRenderer.invoke("widget-load-widget", sec);
   },
-  unloadwidget: async ([section], currentWidgetName) => {
-    const sec = section && section.trim() ? section : currentWidgetName;
+  unloadwidget: async ([widgetName], currentWidgetName) => {
+    const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;
     await ipcRenderer.invoke("widget-unload-widget", sec);
   },
-  togglewidget: async ([section], currentWidgetName) => {
-    const sec = section && section.trim() ? section : currentWidgetName;
+  togglewidget: async ([widgetName], currentWidgetName) => {
+    const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;
     await ipcRenderer.invoke("widget-toggle-widget", sec);
   }
 };
