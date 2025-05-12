@@ -149,8 +149,7 @@ function setIniValue(widgetName, keyName, value) {
   return true;
 }
 
-const setActiveValue = (widgetName, value) =>
-  setIniValue(widgetName, "Active", value);
+const setActiveValue = (widgetName, value) =>setIniValue(widgetName, "Active", value);
 
 //DeskFlex Section Information.
 const getLogging = () => parseInt(getIniValue("DeskFlex", "Logging")) || 0;

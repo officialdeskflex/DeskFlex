@@ -10,7 +10,7 @@ function createLogsWindow() {
     icon: path.join(__dirname, '..', 'assets', 'DeskFlex.png'),
     webPreferences: {
       contextIsolation: true,   
-      nodeIntegration: false,     
+      nodeIntegration: true,     
       sandbox: false,             
       preload: path.join(__dirname, 'preload.js'), 
     }

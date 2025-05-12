@@ -2,12 +2,13 @@
 const { BrowserWindow, app } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
-const { substituteVariables, safeInt, resolveIniPath } = require("./Utils");
+const { substituteVariables, safeInt, resolveIniPath,getRelativeWidgetPath } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
-const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen } = require("./ConfigFile");
+const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen,setActiveValue } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
+const { logs } = require("./Logs");
 
 const widgetWindows = new Map();
 const windowSizes = new Map();
@@ -112,6 +113,9 @@ function loadWidget(filePath) {
   win.isWidgetDraggable  = draggable;       
   win.keepOnScreen       = keepOnScreenVal; 
 
+  setActiveValue(getRelativeWidgetPath(filePath), "1");
+  logs(`Loaded widget: ${getRelativeWidgetPath(filePath)}`, "info", "DeskFlex");
+
   return win;
 }
 
@@ -123,6 +127,8 @@ function unloadWidget(identifier) {
     if (win) win.close();
     widgetWindows.delete(key);
   }
+  setActiveValue(getRelativeWidgetPath(identifier), "0");
+  logs(`Unloaded widget: ${getRelativeWidgetPath(key)}`, "info", "DeskFlex");
 }
 
 function calculateWindowSize(secs) {

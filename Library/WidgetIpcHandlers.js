@@ -1,7 +1,8 @@
 // WidgetIpcHandlers.js
 const { ipcMain, screen } = require("electron");
 const path = require("path");
-const { resolveKey } = require("./Utils");
+const { resolveKey,resolveIniPath } = require("./Utils");
+const { getWidgetsPath,getWidgetStatus } = require("./ConfigFile");
 
 let widgetWindowsRef;
 let windowSizesRef;
@@ -128,15 +129,19 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
   });
 
   ipcMain.handle("widget-toggle-widget", (_e, widgetName) => {
-    const key = resolveKey(widgetWindowsRef, widgetName);
-    if (key) {
-      unloadWidgetRef(widgetName);
-      return false;  
-    } else {
-      loadWidgetRef(widgetName);
-      return true;  
-    }
-  });
+  const L_WidgetName = resolveIniPath(path.join(getWidgetsPath(), widgetName));
+  const UL_WidgetName = resolveKey(widgetWindowsRef, widgetName);
+  const widgetStatus = getWidgetStatus(widgetName);
+
+  if(widgetStatus==1){
+    unloadWidgetRef(UL_WidgetName);
+    return false;
+
+  }else{
+    loadWidgetRef(L_WidgetName);
+    return true;
+  }
+});
 }
 
 module.exports = { registerIpcHandlers };

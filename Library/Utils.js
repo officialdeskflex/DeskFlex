@@ -95,4 +95,10 @@ function resolveKey(widgetWindowsMap, identifier) {
   return resolveIniPath(identifier);
 }
 
-module.exports = { safeInt, stripQuotes, escapeHtml, substituteVariables, parseActionList, buildActionAttributes, resolveIniPath, resolveKey };
+function getRelativeWidgetPath(fullPath) {
+  const base = path.resolve(getWidgetsPath());
+  const target = path.resolve(fullPath);
+  if (!target.startsWith(base)) return fullPath;
+  return target.slice(base.length + 1); 
+}
+module.exports = { safeInt, stripQuotes, escapeHtml, substituteVariables, parseActionList, buildActionAttributes, resolveIniPath, resolveKey,getRelativeWidgetPath };
