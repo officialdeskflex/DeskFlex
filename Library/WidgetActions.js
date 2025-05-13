@@ -23,20 +23,25 @@ const widgetUtils = {
     ipcRenderer.send("widget-set-transparency", value, targetwidgetName);
   },
   draggable: ([val, widgetName], currentWidgetName) => {
-    if (!["0", "1"].includes(String(val)))
-      return console.warn("Invalid draggable:", val);
+  if (!["0", "1"].includes(String(val))) {
+    log(`Invalid draggable value: ${val}. Expected "0" or "1".`, "error", currentWidgetName || currentWidgetName);
+  } else {
     ipcRenderer.send("widget-set-draggable", val, widgetName || currentWidgetName);
+  }
   },
   keeponscreen: ([val, widgetName], currentWidgetName) => {
-    if (!["0", "1"].includes(String(val)))
-      return console.warn("Invalid keepOnScreen:", val);
+  if (!["0", "1"].includes(String(val))) {
+    log(`Invalid keepOnScreen value: ${val}. Expected "0" or "1".`, "error", widgetName || currentWidgetName);
+  } else {
     ipcRenderer.send("widget-set-keep-on-screen", val, widgetName || currentWidgetName);
+  }
   },
   clickthrough: ([val, widgetName], currentWidgetName) => {
-    if (!["0", "1"].includes(String(val))) {
-      return console.warn("Invalid clickThrough:", val);
-    }
+  if (!["0", "1"].includes(String(val))) {
+    log(`Invalid clickThrough value: ${val}. Expected "0" or "1".`, "error", widgetName || currentWidgetName);
+  } else {
     ipcRenderer.send("widget-set-clickthrough", String(val), widgetName || currentWidgetName);
+  }
   },
   toggledraggable: async ([widgetName], currentWidgetName) => {
     const sec = widgetName && widgetName.trim() ? widgetName : currentWidgetName;

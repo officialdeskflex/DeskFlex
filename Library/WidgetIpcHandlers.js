@@ -2,7 +2,9 @@
 const { ipcMain, screen } = require("electron");
 const path = require("path");
 const { resolveKey,resolveIniPath } = require("./Utils");
-const { getWidgetsPath,getWidgetStatus } = require("./ConfigFile");
+const { getWidgetsPath,getWidgetStatus,setIniValue } = require("./ConfigFile");
+const { logs } = require("./Logs");
+const { log } = require("console");
 
 let widgetWindowsRef;
 let windowSizesRef;
@@ -60,6 +62,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     if (!win) return;
     win.isWidgetDraggable = Number(rawVal) === 1;
     win.webContents.send("widget-draggable-changed", win.isWidgetDraggable);
+    setIniValue(identifier, "Draggable", rawVal);
   });
 
   ipcMain.on("widget-set-keep-on-screen", (_e, rawVal, identifier) => {

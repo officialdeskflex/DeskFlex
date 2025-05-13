@@ -174,4 +174,4 @@ function getWidgetFavorite(s) { return getIniValue(s, "Favorite"); }
 function getWidgetSavePosition(s) { return getIniValue(s, "SavePosition"); }
 function getWidgetLoadOrder(s) { return getIniValue(s, "LoadOrder"); }
 
-module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveWidgets, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue };
+module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveWidgets, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue,setIniValue };

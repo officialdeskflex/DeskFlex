@@ -157,7 +157,6 @@ function onLoadUnload() {
   const action = isLoadMode ? "loadWidget" : "unloadWidget";
 
   window.deskflex[action](sec)
-    .then(() => window.deskflex.setActiveValue(sec, isLoadMode ? 1 : 0))
     .then(() => {
       if (isLoadMode) {
         // Snapshot original settings
@@ -179,7 +178,7 @@ function onLoadUnload() {
           applySettings(originalSettings[sec]);
         }
 
-        // ✅ Call resetPlaceholders() here
+        // Reset placeholders
         resetPlaceholders();
       }
     })
@@ -187,7 +186,6 @@ function onLoadUnload() {
       console.error(`Failed to ${isLoadMode ? "load" : "unload"} widget:`, err)
     );
 }
-
 // Handle selection from Active-Widget dropdown
 function handleActiveWidgetSelection(sec) {
   const base = (
