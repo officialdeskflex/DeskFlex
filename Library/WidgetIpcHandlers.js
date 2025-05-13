@@ -3,8 +3,6 @@ const { ipcMain, screen } = require("electron");
 const path = require("path");
 const { resolveKey,resolveIniPath } = require("./Utils");
 const { getWidgetsPath,getWidgetStatus,setIniValue } = require("./ConfigFile");
-const { logs } = require("./Logs");
-const { log } = require("console");
 
 let widgetWindowsRef;
 let windowSizesRef;
@@ -71,6 +69,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     const win = widgetWindowsRef.get(key);
     if (!win) return;
     win.keepOnScreen = Number(rawVal) === 1;
+    setIniValue(identifier, "KeepOnScreen", rawVal);
   });
 
   ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
@@ -96,6 +95,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     const ct = Number(rawVal) === 1;
     win.setIgnoreMouseEvents(ct, { forward: true });
     win.clickThrough = ct;
+    setIniValue(identifier, "ClickThrough", rawVal);
   });
 
   ipcMain.handle("widget-get-draggable", (_e, identifier) => {

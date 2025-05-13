@@ -21,6 +21,7 @@ function createTray(win) {
       click: () => {
         app.isQuiting = true;
         clearAllLogs();
+        tray.destroy(); 
         app.quit();
       }
     }
