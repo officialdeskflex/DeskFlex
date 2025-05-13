@@ -30,6 +30,8 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     }
 
     win.setBounds({ x: Math.round(x), y: Math.round(y), width: size.width, height: size.height });
+    setIniValue(id, "WindowX", `${x}`);
+    setIniValue(id, "WindowY", `${y}`);
     return true;
   });
 

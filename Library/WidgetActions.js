@@ -15,6 +15,10 @@ const widgetUtils = {
     exec(cmd, (error) => error && console.error(`Exec "${cmd}" failed:`, error));
   },
   move: ([x, y, widgetName], curWidgetName) => {
+    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+    log(`Invalid coordinates: x=${x}, y=${y}`, "error", widgetName || curWidgetName);
+    return;
+  }
     ipcRenderer.send("widget-move-window", x, y, widgetName || curWidgetName);
   },
   settransparency: ([percent, widgetName], currentWidgetName) => {
