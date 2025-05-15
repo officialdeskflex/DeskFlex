@@ -2,11 +2,11 @@
 const { BrowserWindow, app } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
-const { substituteVariables, safeInt, resolveIniPath,getRelativeWidgetPath } = require("./Utils");
+const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
-const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen,setActiveValue } = require("./ConfigFile");
+const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
 
@@ -88,10 +88,7 @@ function loadWidget(filePath) {
   const finalWidth  = Math.round(winW);
   const finalHeight = Math.round(winH);
 
-  const win = createWidgetsWindow(
-    iniPath, widgetName, widgetNames, vars, baseDir,
-    finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal
-  );
+  const win = createWidgetsWindow(iniPath, widgetName, widgetNames, vars, baseDir,finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal, transparencyPercent, onHover);
 
   widgetWindows.set(iniPath, win);
   windowSizes.set(iniPath, { width: finalWidth, height: finalHeight });
@@ -142,10 +139,7 @@ function calculateWindowSize(secs) {
   return { width: maxR + 10, height: maxB + 10 };
 }
 
-function createWidgetsWindow(
-  name, widgetName, secs, vars, baseDir,
-  width, height, draggable, keepOnScreen, clickVal
-) {
+function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height, draggable, keepOnScreen, clickVal, transparencyPercent, onHover) {
   const win = new BrowserWindow({
     width, height,
     frame: false,
@@ -200,12 +194,22 @@ function createWidgetsWindow(
     }
   }
 
-  const dragPath    = path.join(__dirname, "WidgetDrag.js").replace(/\\/g, "/");
+  const dragPath = path.join(__dirname, "WidgetDrag.js").replace(/\\/g, "/");
   const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g, "/");
+  const hoverHelperPath = path.join(__dirname, "Helper/HoverHelper.js").replace(/\\/g, "/");
 
   html += `</div>
-    <script>require("${dragPath}")</script>
-    <script>require("${actionsPath}")</script>
+<script>
+  const container = document.getElementById("container");
+  const hoverType = ${onHover};
+  const transparencyPercent = ${transparencyPercent};
+  
+  // Import and use the HoverHelper
+  const { initializeHoverBehavior } = require("${hoverHelperPath}");
+  initializeHoverBehavior(container, hoverType, transparencyPercent);
+</script>
+<script>require("${dragPath}")</script>
+<script>require("${actionsPath}")</script>
   </body>
 </html>
 `;
