@@ -112,6 +112,7 @@ function loadWidget(filePath) {
 
   setActiveValue(getRelativeWidgetPath(filePath), "1");
   logs(`Loaded widget: ${getRelativeWidgetPath(filePath)}`, "info", "DeskFlex");
+  console.log(`Loaded widget: ${getRelativeWidgetPath(filePath)}`);
 
   return win;
 }
@@ -124,7 +125,7 @@ function unloadWidget(identifier) {
     if (win) win.close();
     widgetWindows.delete(key);
   }
-  setActiveValue(getRelativeWidgetPath(identifier), "0");
+  setActiveValue(getRelativeWidgetPath(key), "0");
   logs(`Unloaded widget: ${getRelativeWidgetPath(key)}`, "info", "DeskFlex");
 }
 

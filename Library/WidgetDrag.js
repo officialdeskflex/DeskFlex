@@ -39,16 +39,19 @@ const { ipcRenderer } = require("electron");
     e.preventDefault();
     const dx = e.screenX - start.x;
     const dy = e.screenY - start.y;
-    ipcRenderer.send("widget-move-window", orig.x + dx, orig.y + dy, widgetName);
+    ipcRenderer.send("widget-move-window-drag", orig.x + dx, orig.y + dy, widgetName);
     enforceSize();
   });
 
-  ["mouseup", "mouseleave", "keydown"].forEach(evt => {
-    document.addEventListener(evt, e => {
-      if (!dragging) return;
-      if (evt === "keydown" && e.key !== "Escape") return;
-      dragging = false;
-      enforceSize();
-    });
-  });
+ ["mouseup", "mouseleave", "keydown"].forEach(evt => {
+   document.addEventListener(evt, async e => {
+     if (!dragging) return;
+     if (evt === "keydown" && e.key !== "Escape") return;
+     dragging = false;
+     enforceSize();
+
+     // --- now persist final x/y in INI:
+     ipcRenderer.send("widget-save-window-position", widgetName);
+   });
+});
 })();

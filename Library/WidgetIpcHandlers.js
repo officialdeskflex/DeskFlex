@@ -35,6 +35,35 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     return true;
   });
 
+    ipcMain.on("widget-move-window-drag", (_e, x, y, id) => {
+    const key = resolveKey(widgetWindowsRef, id);
+    if (!key) return false;
+    const win = widgetWindowsRef.get(key);
+    const size = windowSizesRef.get(key);
+    if (!win || !size || !win.isWidgetDraggable) return false;
+
+    if (win.keepOnScreen) {
+      const disp = screen.getDisplayMatching({ x, y, width: size.width, height: size.height });
+      const wa = disp.workArea;
+      x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
+      y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
+    }
+
+    win.setBounds({ x: Math.round(x), y: Math.round(y), width: size.width, height: size.height });
+    return true;
+  });
+
+  ipcMain.on("widget-save-window-position", (_e, identifier) => {
+  const key = resolveKey(widgetWindowsRef, identifier);
+  if (!key) return false;
+  const win = widgetWindowsRef.get(key);
+  if (!win) return false;
+  const { x, y } = win.getBounds();
+  setIniValue(identifier, "WindowX", `${x}`);
+  setIniValue(identifier, "WindowY", `${y}`);
+  return true;
+});
+
   ipcMain.handle("widget-get-position", (_e, identifier) => {
     const key = resolveKey(widgetWindowsRef, identifier);
     if (!key) return { x: 0, y: 0 };
