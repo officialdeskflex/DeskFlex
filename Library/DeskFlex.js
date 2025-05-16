@@ -48,6 +48,7 @@ app.on("window-all-closed", () => {
 });
 
 ipcMain.handle("load-widget", async (_event, widgetName) => {
+  console.log("Loading widget (DeskFlex):", widgetName);
   try {
     const fullPath = path.join(config.widgetsPath, widgetName);
     loadWidget(fullPath);
@@ -59,15 +60,16 @@ ipcMain.handle("load-widget", async (_event, widgetName) => {
 });
 
 ipcMain.handle("unload-widget", async (_event, widgetName) => {
+  console.log("Unloading widget (DeskFlex):", widgetName);
   try {
-    const DFWidgetName = path.basename(widgetName, ".ini");
-    unloadWidget(DFWidgetName);
+    unloadWidget(widgetName);        // e.g. "Test\\Test.ini"
     return { success: true };
   } catch (err) {
     console.error("Error unloading widget:", err);
     return { success: false, message: err.message };
   }
 });
+
 
 ipcMain.on("log-message", (_event, message, type, source) => {
   logs(message, type, source);

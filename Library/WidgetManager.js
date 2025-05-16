@@ -9,6 +9,7 @@ const getImageSize = require("./Helper/ImageSize");
 const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
+const { log } = require("console");
 const widgetWindows = new Map();
 const windowSizes = new Map();
 
@@ -116,17 +117,36 @@ function loadWidget(filePath) {
   return win;
 }
 
-function unloadWidget(identifier) {
-  const key = resolveKey(widgetWindows, identifier);
-  if (key) {
-    app.isWidgetQuiting = true;
-    const win = widgetWindows.get(key);
-    if (win) win.close();
-    widgetWindows.delete(key);
+function unloadWidget(widgetName) {
+  console.log(`Unloading widget: ${widgetName}`);
+  // Find the full iniPath key whose relative path matches widgetName
+  let matchedKey = null;
+  for (const iniPath of widgetWindows.keys()) {
+    if (getRelativeWidgetPath(iniPath) === widgetName) {
+      matchedKey = iniPath;
+      break;
+    }
   }
-  setActiveValue(getRelativeWidgetPath(key), "0");
-  logs(`Unloaded widget: ${getRelativeWidgetPath(key)}`, "info", "DeskFlex");
+
+  if (!matchedKey) {
+    console.warn(`Widget not active or not found: ${widgetName}`);
+    logs(`Widget is not active: ${widgetName}`, "error", "DeskFlex");
+    return;
+  }
+
+  console.log(`Unloading widget: ${widgetName}`);
+  app.isWidgetQuiting = true;
+
+  const win = widgetWindows.get(matchedKey);
+  if (win) win.close();
+
+  widgetWindows.delete(matchedKey);
+  windowSizes.delete(matchedKey);
+  setActiveValue(widgetName, "0");
+
+  logs(`Unloaded widget: ${widgetName}`, "info", "DeskFlex");
 }
+
 
 function calculateWindowSize(secs) {
   let maxR = 0, maxB = 0;
