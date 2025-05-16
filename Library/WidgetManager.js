@@ -1,17 +1,28 @@
 // WidgetManager.js
-const { BrowserWindow, app } = require("electron");
+const { BrowserWindow, app, ipcMain, screen } = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
-const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath } = require("./Utils");
+const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath, resolveKey } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
 const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
-
 const widgetWindows = new Map();
 const windowSizes = new Map();
+
+ipcMain.on('widget-set-opacity', (event, opacity) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.setOpacity(opacity);
+});
+ipcMain.on('widget-set-ignore-mouse', (event, ignore) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.setIgnoreMouseEvents(ignore, { forward: true });
+});
+ipcMain.handle('get-cursor-pos', () => {
+  return screen.getCursorScreenPoint();
+});
 
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
@@ -204,10 +215,11 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
   const container = document.getElementById("container");
   const hoverType = ${onHover};
   const transparencyPercent = ${transparencyPercent};
-  
+  const widgetPath = "${name}";
+
   // Import and use the HoverHelper
   const { initializeHoverBehavior } = require("${hoverHelperPath}");
-  initializeHoverBehavior(container, hoverType, transparencyPercent);
+  initializeHoverBehavior(container, hoverType, transparencyPercent, widgetPath);
 </script>
 <script>require("${dragPath}")</script>
 <script>require("${actionsPath}")</script>
@@ -233,11 +245,10 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
   win.on("close", e => {
     if (!app.isWidgetQuiting) { e.preventDefault(); win.hide(); }
   });
-
   return win;
 }
 
-const { resolveKey } = require("./Utils");
+
 registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget);
 
 module.exports = { loadWidget, unloadWidget, widgetWindows };
