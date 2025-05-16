@@ -6,22 +6,21 @@ async function initializeHoverBehavior(container, hoverType, transparencyPercent
   container.style.transition = 'opacity 0.5s';
 
   function setOpacity(op) {
-    const ignore = (op === 0);
     ipcRenderer.send('widget-set-opacity', op);
-    ipcRenderer.send('widget-set-ignore-mouse', ignore);
+    ipcRenderer.send('widget-set-ignore-mouse', op === 0);
     container.style.opacity = op;
   }
 
   setOpacity(baseOpacity);
 
-  if (hoverType === 0) return; 
+  if (hoverType === 0) return;
 
   if (hoverType === 1) {
     let bounds;
     try {
       const g = await getWindowGeometry(widgetPath);
       bounds = { left: g.x, top: g.y, right: g.x + g.width, bottom: g.y + g.height };
-    } catch (e) {
+    } catch {
       return;
     }
     let hidden = false;
@@ -43,7 +42,7 @@ async function initializeHoverBehavior(container, hoverType, transparencyPercent
     container.addEventListener('mouseleave', () => setOpacity(baseOpacity));
 
   } else if (hoverType === 3) {
-    container.addEventListener('mouseenter', () => setOpacity(0.1));
+    container.addEventListener('mouseenter', () => setOpacity(1.0));
     container.addEventListener('mouseleave', () => setOpacity(baseOpacity));
   }
 }

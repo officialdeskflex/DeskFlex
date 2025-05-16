@@ -1,5 +1,5 @@
 // WidgetManager.js
-const { BrowserWindow, app, ipcMain, screen } = require("electron");
+const { BrowserWindow, app} = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
 const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath, resolveKey } = require("./Utils");
@@ -11,18 +11,6 @@ const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
 const widgetWindows = new Map();
 const windowSizes = new Map();
-
-ipcMain.on('widget-set-opacity', (event, opacity) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win) win.setOpacity(opacity);
-});
-ipcMain.on('widget-set-ignore-mouse', (event, ignore) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win) win.setIgnoreMouseEvents(ignore, { forward: true });
-});
-ipcMain.handle('get-cursor-pos', () => {
-  return screen.getCursorScreenPoint();
-});
 
 function loadWidget(filePath) {
   const iniPath = resolveIniPath(filePath);
@@ -209,15 +197,15 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
   const dragPath = path.join(__dirname, "WidgetDrag.js").replace(/\\/g, "/");
   const actionsPath = path.join(__dirname, "WidgetActions.js").replace(/\\/g, "/");
   const hoverHelperPath = path.join(__dirname, "Helper/HoverHelper.js").replace(/\\/g, "/");
+  const widgetPath = name.replace(/\\/g, "\\\\");
+
 
   html += `</div>
 <script>
   const container = document.getElementById("container");
   const hoverType = ${onHover};
   const transparencyPercent = ${transparencyPercent};
-  const widgetPath = "${name}";
-
-  // Import and use the HoverHelper
+  const widgetPath = "${widgetPath}";
   const { initializeHoverBehavior } = require("${hoverHelperPath}");
   initializeHoverBehavior(container, hoverType, transparencyPercent, widgetPath);
 </script>
@@ -247,7 +235,6 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
   });
   return win;
 }
-
 
 registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget);
 

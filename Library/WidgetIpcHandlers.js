@@ -1,5 +1,5 @@
 // WidgetIpcHandlers.js
-const { ipcMain, screen } = require("electron");
+const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey,resolveIniPath } = require("./Utils");
 const { getWidgetsPath,getWidgetStatus,setIniValue } = require("./ConfigFile");
@@ -14,6 +14,19 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
   windowSizesRef = windowSizes;
   loadWidgetRef = loadWidget;
   unloadWidgetRef = unloadWidget;
+
+  ipcMain.on('widget-set-opacity', (event, opacity) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.setOpacity(opacity);
+});
+ipcMain.on('widget-set-ignore-mouse', (event, ignore) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.setIgnoreMouseEvents(ignore, { forward: true });
+});
+ipcMain.handle('get-cursor-pos', () => {
+  return screen.getCursorScreenPoint();
+});
+
 
   ipcMain.on("widget-move-window", (_e, x, y, id) => {
     const key = resolveKey(widgetWindowsRef, id);
