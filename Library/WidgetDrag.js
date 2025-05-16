@@ -49,8 +49,6 @@ const { ipcRenderer } = require("electron");
      if (evt === "keydown" && e.key !== "Escape") return;
      dragging = false;
      enforceSize();
-
-     // --- now persist final x/y in INI:
      ipcRenderer.send("widget-save-window-position", widgetName);
    });
 });
