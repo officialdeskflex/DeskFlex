@@ -59,6 +59,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if (openBtn) {
     openBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      populateDropdown();
       toggleDropdown();
     });
   }
@@ -230,7 +231,12 @@ function handleActiveWidgetSelection(sec) {
   }
 }
 
-// Tree item click handler
+toggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  populateDropdown();
+  toggleDropdown();
+});
+
 function selectItem(item) {
   if (selectedItem) selectedItem.classList.remove("selected");
   item.classList.add("selected");
@@ -412,33 +418,32 @@ function getFullPath(item) {
 
 // Populate & wire Active-Widget dropdown
 function populateDropdown() {
-  const dropdown = document.getElementById("myDropdown");
-  dropdown.innerHTML = "";
-  if (
-    Array.isArray(window.deskflex.activeWidget) &&
-    window.deskflex.activeWidget.length
-  ) {
-    window.deskflex.activeWidget.forEach((sec) => {
-      const option = document.createElement("a");
-      option.href = "#";
+  const dropdown = document.getElementById('myDropdown');
+  dropdown.innerHTML = '';
+
+  const widgets = window.deskflex.activeWidget() || [];
+
+  if (widgets.length) {
+    widgets.forEach(sec => {
+      const option = document.createElement('a');
+      option.href = '#';
       option.textContent = sec;
-      option.addEventListener("click", (e) => {
+      option.addEventListener('click', e => {
         e.preventDefault();
         handleActiveWidgetSelection(sec);
       });
       dropdown.appendChild(option);
     });
   } else {
-    const noItem = document.createElement("a");
-    noItem.href = "#";
-    noItem.textContent = "No Active Widget";
-    noItem.style.pointerEvents = "none";
-    noItem.style.opacity = "0.6";
+    const noItem = document.createElement('a');
+    noItem.href = '#';
+    noItem.textContent = 'No Active Widget';
+    noItem.style.pointerEvents = 'none';
+    noItem.style.opacity = '0.6';
     dropdown.appendChild(noItem);
   }
 }
 
-// Toggle the Active-Widget dropdown
 function toggleDropdown() {
   const dropdown = document.getElementById("myDropdown");
   const rectangle = document.querySelector(".rectangleActiveList");

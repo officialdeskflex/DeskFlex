@@ -6,7 +6,7 @@ const { getWidgetInfo, hasWidgetInfoSection, } = require('./ReadInfoSection');
 contextBridge.exposeInMainWorld('deskflex', {
     darkMode: getDarkMode(),
     folderStructure: getFolderStructure(),
-    activeWidget: getActiveWidgets(),
+    activeWidget: () => getActiveWidgets(),
     widgetPath: getWidgetsPath(),
     settingsFile: path.join(process.env.APPDATA, "DeskFlex", "DeskFlex.ini"),
     openConfigSettings: (filePath) => { ipcRenderer.send('open-config-settings', filePath) },
