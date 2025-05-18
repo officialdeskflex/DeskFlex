@@ -2,7 +2,11 @@
 const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey, resolveIniPath } = require("./Utils");
-const { getWidgetsPath, getWidgetStatus, setIniValue } = require("./ConfigFile");
+const {
+  getWidgetsPath,
+  getWidgetStatus,
+  setIniValue,
+} = require("./ConfigFile");
 
 let widgetWindowsRef;
 let windowSizesRef;
@@ -11,7 +15,13 @@ let unloadWidgetRef;
 let mainWindowRef;
 let handlersRegistered = false;
 
-function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget, mainWindow) {
+function registerIpcHandlers(
+  widgetWindows,
+  windowSizes,
+  loadWidget,
+  unloadWidget,
+  mainWindow
+) {
   // Only register once, and only if we have a real mainWindow
   if (handlersRegistered) return;
   if (!mainWindow) {
@@ -22,16 +32,16 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
   // Now it's safe to bind handlers
   handlersRegistered = true;
   widgetWindowsRef = widgetWindows;
-  windowSizesRef   = windowSizes;
-  loadWidgetRef    = loadWidget;
-  unloadWidgetRef  = unloadWidget;
-  mainWindowRef    = mainWindow;
+  windowSizesRef = windowSizes;
+  loadWidgetRef = loadWidget;
+  unloadWidgetRef = unloadWidget;
+  mainWindowRef = mainWindow;
 
   // ------------------------------
   // Appearance & Mouse Behavior
   // ------------------------------
 
-  ipcMain.on('widget-set-opacity', (event, opacity) => {
+  ipcMain.on("widget-set-opacity", (event, opacity) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
       win.setOpacity(opacity);
@@ -39,13 +49,13 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
       if (mainWindowRef?.webContents) {
         mainWindowRef.webContents.send("widget-opacity-changed", {
           id: win.widgetId,
-          value: opacity
+          value: opacity,
         });
       }
     }
   });
 
-  ipcMain.on('widget-set-ignore-mouse', (event, ignore) => {
+  ipcMain.on("widget-set-ignore-mouse", (event, ignore) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
       win.setIgnoreMouseEvents(ignore, { forward: true });
@@ -53,7 +63,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
       if (mainWindowRef?.webContents) {
         mainWindowRef.webContents.send("widget-clickthrough-changed", {
           id: win.widgetId,
-          value: Boolean(ignore)
+          value: Boolean(ignore),
         });
       }
     }
@@ -63,43 +73,85 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
   // Position & Size
   // ------------------------------
 
-  ipcMain.handle('get-cursor-pos', () => {
+  ipcMain.handle("get-cursor-pos", () => {
     return screen.getCursorScreenPoint();
   });
 
-  function doMove(x, y, id, persist) {
+  // In WidgetIpcHandlers.js
+
+  // 1) widget-move-window: moves AND saves position
+  ipcMain.on("widget-move-window", (_e, x, y, id) => {
+    console.log("Moved Window Called");
+
     const key = resolveKey(widgetWindowsRef, id);
     if (!key) return false;
-    const win  = widgetWindowsRef.get(key);
+
+    const win = widgetWindowsRef.get(key);
     const size = windowSizesRef.get(key);
     if (!win || !size || !win.isWidgetDraggable) return false;
 
     if (win.keepOnScreen) {
-      const disp = screen.getDisplayMatching({ x, y, width: size.width, height: size.height });
-      const wa   = disp.workArea;
+      const disp = screen.getDisplayMatching({
+        x,
+        y,
+        width: size.width,
+        height: size.height,
+      });
+      const wa = disp.workArea;
       x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
       y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
     }
 
-    win.setBounds({ x: Math.round(x), y: Math.round(y), width: size.width, height: size.height });
-    if (persist) {
-      setIniValue(id, "WindowX", `${x}`);
-      setIniValue(id, "WindowY", `${y}`);
-    }
+    win.setBounds({
+      x: Math.round(x),
+      y: Math.round(y),
+      width: size.width,
+      height: size.height,
+    });
 
-    // Notify main window of new position
-    if (mainWindowRef?.webContents) {
+    // *** Persist to INI ***
+    setIniValue(id, "WindowX", `${x}`);
+    setIniValue(id, "WindowY", `${y}`);
+
+    // *** Notify main window (optional) ***
+    if (mainWindowRef && mainWindowRef.webContents) {
       mainWindowRef.webContents.send("widget-position-changed", { id, x, y });
     }
-    return true;
-  }
 
-  ipcMain.on("widget-move-window", (_e, x, y, id) => {
-    doMove(x, y, id, true);
+    return true;
   });
+
+  // 2) widget-move-window-drag: moves ONLY, no save
   ipcMain.on("widget-move-window-drag", (_e, x, y, id) => {
-    doMove(x, y, id, false);
+    const key = resolveKey(widgetWindowsRef, id);
+    if (!key) return false;
+
+    const win = widgetWindowsRef.get(key);
+    const size = windowSizesRef.get(key);
+    if (!win || !size || !win.isWidgetDraggable) return false;
+
+    if (win.keepOnScreen) {
+      const disp = screen.getDisplayMatching({
+        x,
+        y,
+        width: size.width,
+        height: size.height,
+      });
+      const wa = disp.workArea;
+      x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
+      y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
+    }
+
+    win.setBounds({
+      x: Math.round(x),
+      y: Math.round(y),
+      width: size.width,
+      height: size.height,
+    });
+
+    return true;
   });
+
   ipcMain.on("widget-save-window-position", (_e, identifier) => {
     const key = resolveKey(widgetWindowsRef, identifier);
     const win = key && widgetWindowsRef.get(key);
@@ -108,7 +160,11 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     setIniValue(identifier, "WindowX", `${x}`);
     setIniValue(identifier, "WindowY", `${y}`);
     if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-position-saved", { id: identifier, x, y });
+      mainWindowRef.webContents.send("widget-position-saved", {
+        id: identifier,
+        x,
+        y,
+      });
     }
     return true;
   });
@@ -126,9 +182,17 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     const originalSize = key && windowSizesRef.get(key);
     if (win && originalSize) {
       const { x, y } = win.getBounds();
-      win.setBounds({ x, y, width: originalSize.width, height: originalSize.height });
+      win.setBounds({
+        x,
+        y,
+        width: originalSize.width,
+        height: originalSize.height,
+      });
       if (mainWindowRef?.webContents) {
-        mainWindowRef.webContents.send("widget-size-reset", { id: identifier, size: originalSize });
+        mainWindowRef.webContents.send("widget-size-reset", {
+          id: identifier,
+          size: originalSize,
+        });
       }
       return true;
     }
@@ -153,7 +217,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     if (mainWindowRef?.webContents) {
       mainWindowRef.webContents.send("widget-draggable-changed", {
         id: identifier,
-        value: draggable
+        value: draggable,
       });
     }
   });
@@ -170,7 +234,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     if (mainWindowRef?.webContents) {
       mainWindowRef.webContents.send("widget-keep-on-screen-changed", {
         id: identifier,
-        value: keepOnScreen
+        value: keepOnScreen,
       });
     }
   });
@@ -191,7 +255,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     if (mainWindowRef?.webContents) {
       mainWindowRef.webContents.send("widget-transparency-changed", {
         id: identifier,
-        value: pct
+        value: pct,
       });
     }
   });
@@ -209,7 +273,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     if (mainWindowRef?.webContents) {
       mainWindowRef.webContents.send("widget-clickthrough-changed", {
         id: identifier,
-        value: clickThrough
+        value: clickThrough,
       });
     }
   });
@@ -256,7 +320,7 @@ function registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidge
     if (mainWindowRef?.webContents) {
       mainWindowRef.webContents.send("widget-toggled", {
         name: widgetName,
-        value: newState
+        value: newState,
       });
     }
     return newState;
