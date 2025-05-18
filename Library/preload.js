@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const { getDarkMode, getFolderStructure, getActiveWidgets, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition ,getWidgetLoadOrder,setActiveValue} = require('./ConfigFile');
+const { getDarkMode, getFolderStructure, getActiveWidgets, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition ,getWidgetLoadOrder,setActiveValue,setIniValue} = require('./ConfigFile');
 const { getWidgetInfo, hasWidgetInfoSection, } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('deskflex', {
     getWidgetInfo: (filePath) => getWidgetInfo(filePath),
     hasWidgetInfoSection: (filePath) => hasWidgetInfoSection(filePath),
     setActiveValue: (widgetName, value) => setActiveValue(widgetName, value),
+    setIniValue: (widgetName, key, value) =>setIniValue(widgetName, key, value),
     
     getWidgetStatus: (widgetName) => getWidgetStatus(widgetName),
     getWidgetWindowX: (widgetName) => getWidgetWindowX(widgetName),

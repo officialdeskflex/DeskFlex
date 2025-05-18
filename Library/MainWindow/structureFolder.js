@@ -4,10 +4,8 @@ let selectedItem = null;
 let detailsPanel, actionButtons, loadButton, refreshButton, editButton;
 let windowSettings, checkboxContainer, addWidgetLink;
 
-// Store original settings per section for restore on unload
 const originalSettings = {};
 
-// Maps for dropdown labels
 const posMap = {
   2: "Stay topmost",
   1: "Topmost",
@@ -15,6 +13,16 @@ const posMap = {
   "-1": "Bottom",
   "-2": "On Desktop",
 };
+
+const iniOptionMap = {
+  "Click Through": { iniKey: "ClickThrough", getter: window.deskflex.getWidgetClickthrough },
+  "Draggable":       { iniKey: "Draggable",   getter: window.deskflex.getWidgetDraggable    },
+  "Snap Edges":      { iniKey: "SnapEdges",     getter: window.deskflex.getWidgetSnapEdges      },
+  "Keep On Screen":  { iniKey: "KeepOnScreen", getter: window.deskflex.getWidgetKeepOnScreen  },
+  "Save Position":   { iniKey: "SavePosition", getter: window.deskflex.getWidgetSavePosition  },
+  "Favorite":        { iniKey: "Favorite",    getter: window.deskflex.getWidgetFavorite      },
+};
+
 const hoverMap = { 0: "Do Nothing", 1: "Hide", 2: "Fade in", 3: "Fade out" };
 
 window.currentWidgetSection = "";
@@ -31,24 +39,20 @@ window.addEventListener("DOMContentLoaded", () => {
   checkboxContainer = document.querySelector(".checkbox-container");
   addWidgetLink = document.querySelector(".add-widget-info");
 
-  // Initial UI state
   addWidgetLink.classList.add("hidden");
   windowSettings.style.opacity = "0.5";
   checkboxContainer.style.opacity = "0.5";
   hideDetails();
   disableAll();
 
-  // Build folder tree and wire INI clicks
   renderTree(
     document.getElementById("folderTree"),
     window.deskflex.folderStructure
   );
   initIniClickListener();
 
-  // Load / Unload button
   loadButton.addEventListener("click", onLoadUnload);
 
-  // Edit button opens the .ini in config settings
   editButton.addEventListener("click", () => {
     if (window.currentFlexFilePath) {
       window.deskflex.openConfigSettings(window.currentFlexFilePath);
@@ -63,7 +67,6 @@ window.addEventListener("DOMContentLoaded", () => {
     );
   });
 
-  // Populate Active-Widget list once at load
   populateDropdown();
   window.deskflex.onWidgetStatusChanged((section) => {
     populateDropdown();
@@ -71,10 +74,45 @@ window.addEventListener("DOMContentLoaded", () => {
       handleActiveWidgetSelection(section);
     }
   });
+
+  checkboxContainer.addEventListener("click", async (e) => {
+    const option = e.target.closest(".option");
+    if (!option) return;
+    if (option.classList.contains("disabled")) {
+      console.log("Option disabled—ignoring click");
+      return;
+    }
+    const label = option.querySelector("label").textContent.trim();
+    const mapping = iniOptionMap[label];
+    const sec = window.currentWidgetSection;
+    if (!mapping || !sec) {
+      console.warn("No mapping or widget selected for", label, sec);
+      return;
+    }
+
+    const oldVal = Number(mapping.getter(sec));
+    const newVal = oldVal === 1 ? 0 : 1;
+    console.log(`Toggling ${label} for ${sec}:`, oldVal, "→", newVal);
+
+    try {
+      const res = await window.deskflex.setIniValue(sec, mapping.iniKey, newVal);
+      console.log("setIniValue result:", res);
+      if (res && res.success !== false) {
+        option.classList.toggle("checked", newVal === 1);
+      } else {
+        console.error("setIniValue failed:", res.message);
+      }
+    } catch (err) {
+      console.error("IPC error setting", label, err);
+    }
+  });
 });
 
-// Capture current settings from deskflex for a given section
 function captureSettings(sec) {
+const opts = {};
+  for (const [label, mapping] of Object.entries(iniOptionMap)) {
+    opts[label] = mapping.getter(sec);
+  }
   return {
     x: window.deskflex.getWidgetWindowX(sec) || "",
     y: window.deskflex.getWidgetWindowY(sec) || "",
@@ -82,18 +120,10 @@ function captureSettings(sec) {
     position: String(window.deskflex.getWidgetPosition(sec)),
     transparency: String(window.deskflex.getWidgetTransparency(sec)),
     hover: String(window.deskflex.getWidgetOnHover(sec)),
-    options: {
-      "Click Through": window.deskflex.getWidgetClickthrough(sec),
-      Draggable: window.deskflex.getWidgetDraggable(sec),
-      "Snap Edges": window.deskflex.getWidgetSnapEdges(sec),
-      "Keep On Screen": window.deskflex.getWidgetKeepOnScreen(sec),
-      "Save Position": window.deskflex.getWidgetSavePosition(sec),
-      Favorite: window.deskflex.getWidgetFavorite(sec),
-    },
+    options: opts,
   };
 }
 
-// Apply a settings snapshot back into the UI
 function applySettings(settings) {
   document.querySelector(".coords-input-x").value = settings.x;
   document.querySelector(".coords-input-y").value = settings.y;
@@ -125,7 +155,6 @@ function applySettings(settings) {
   );
 }
 
-// Load / Unload widget handler
 function onLoadUnload() {
   const sec = window.currentWidgetSection;
   const filePath = window.currentFlexFilePath;
@@ -143,9 +172,7 @@ function onLoadUnload() {
           return;
         }
 
-        // Only toggle UI state on success
         if (isLoadMode) {
-          // Snapshot original settings
           originalSettings[sec] = captureSettings(sec);
 
           loadButton.textContent = "Unload";
@@ -156,7 +183,6 @@ function onLoadUnload() {
           resetOptions();
           updateSettingsPanel(sec);
         } else {
-          // Revert UI to load state
           enableLoadEdit();
           windowSettings.style.opacity = "0.5";
           checkboxContainer.style.opacity = "0.5";
@@ -173,7 +199,7 @@ function onLoadUnload() {
         )
       );
 }
-// Handle selection from Active-Widget dropdown
+
 function handleActiveWidgetSelection(sec) {
   const base = (window.deskflex.widgetPath || "").replace(/[\/\\]+$/, "");
   const fullPath = buildPath(base, sec);
@@ -203,7 +229,6 @@ function handleActiveWidgetSelection(sec) {
     checkboxContainer.style.opacity = "0.5";
   }
 
-  // ALWAYS pass full file path here
   if (!window.deskflex.hasWidgetInfoSection(fullPath)) {
     addWidgetLink.classList.remove("hidden");
     console.log("No WidgetInfo section found for", fullPath);
@@ -258,7 +283,6 @@ function selectItem(item) {
   }
 }
 
-// Recursively render folder/INI tree
 function renderTree(container, obj, path = "") {
   Object.entries(obj).forEach(([name, subtree]) => {
     const item = document.createElement("div");
@@ -299,7 +323,6 @@ function renderTree(container, obj, path = "") {
   });
 }
 
-// Listen for clicks deeper in the tree (no-op here, kept for future)
 function initIniClickListener() {
   document.getElementById("folderTree").addEventListener(
     "click",
@@ -354,7 +377,6 @@ function resetOptions() {
   });
 }
 
-// Display metadata from the INI and set currentWidgetSection based on path
 function displayWidgetInfo(filePath) {
   const widgetinfo = window.deskflex.getWidgetInfo(filePath) || {};
   document.getElementById("name").textContent = widgetinfo.Name || "-";
@@ -374,7 +396,6 @@ function displayWidgetInfo(filePath) {
   document.getElementById("widget").textContent = widgetArr.join("\\") || "-";
 }
 
-// Compute full path from tree item
 function getFullPath(item) {
   const segs = [];
   let node = item;
@@ -388,7 +409,6 @@ function getFullPath(item) {
   return buildPath(base, ...segs);
 }
 
-// Populate & wire Active-Widget dropdown
 function populateDropdown() {
   const dropdown = document.getElementById('myDropdown');
   dropdown.innerHTML = '';
@@ -423,7 +443,6 @@ function toggleDropdown() {
   rectangle.classList.toggle("open");
 }
 
-// Close it when clicking elsewhere
 function closeDropdownOnClickOutside(event) {
   const dropdown = document.getElementById("myDropdown");
   const rectangle = document.querySelector(".rectangleActiveList");
@@ -433,27 +452,15 @@ function closeDropdownOnClickOutside(event) {
   }
 }
 
-// Updated Settings Panel
 function updateSettingsPanel(sec) {
-  const checks = [
-    ["Click Through", window.deskflex.getWidgetClickthrough],
-    ["Draggable", window.deskflex.getWidgetDraggable],
-    ["Snap Edges", window.deskflex.getWidgetSnapEdges],
-    ["Keep On Screen", window.deskflex.getWidgetKeepOnScreen],
-    ["Save Position", window.deskflex.getWidgetSavePosition],
-    ["Favorite", window.deskflex.getWidgetFavorite],
-  ];
-
-  checks.forEach(([label, getter]) => {
+  Object.entries(iniOptionMap).forEach(([label, { getter }]) => {
     const val = getter(sec);
     const option = Array.from(
       checkboxContainer.querySelectorAll(".option")
     ).find((o) => o.querySelector("label").textContent.trim() === label);
     if (!option) return;
 
-    // Enable for both 0 and 1
-    const supported = isSupportedOption(val);
-    if (supported) {
+    if (isSupportedOption(val)) {
       option.classList.remove("disabled");
       option.style.opacity = "1";
     } else {
@@ -461,7 +468,6 @@ function updateSettingsPanel(sec) {
       option.style.opacity = "";
     }
 
-    // Only check when val === 1
     option.classList.toggle("checked", isOptionChecked(val));
   });
 
@@ -487,7 +493,10 @@ function updateSettingsPanel(sec) {
       parseInt(window.deskflex.getWidgetTransparency(sec), 10)
     )
   );
-  setDropdown("hover", hoverMap[String(window.deskflex.getWidgetOnHover(sec))]);
+  setDropdown(
+    "hover",
+    hoverMap[String(window.deskflex.getWidgetOnHover(sec))]
+  );
 }
 
 // Helper to set dropdown UI

@@ -164,7 +164,7 @@ function getWidgetStatus(s) { return getIniValue(s, "Active"); }
 function getWidgetWindowX(s) { return getIniValue(s, "WindowX"); }
 function getWidgetWindowY(s) { return getIniValue(s, "WindowY"); }
 function getWidgetPosition(s) { return getIniValue(s, "Position"); }
-function getWidgetClickthrough(s) { return getIniValue(s, "Clickthrough"); }
+function getWidgetClickthrough(s) { return getIniValue(s, "ClickThrough"); }
 function getWidgetDraggable(s) { return getIniValue(s, "Draggable"); }
 function getWidgetSnapEdges(s) { return getIniValue(s, "SnapEdges"); }
 function getWidgetKeepOnScreen(s) { return getIniValue(s, "KeepOnScreen"); }
