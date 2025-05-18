@@ -72,7 +72,6 @@ ipcMain.handle("unload-widget", async (_event, widgetName) => {
   }
 });
 
-
 ipcMain.on("log-message", (_event, message, type, source) => {
   logs(message, type, source);
 });

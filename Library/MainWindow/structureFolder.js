@@ -133,36 +133,45 @@ function onLoadUnload() {
 
   const isLoadMode = loadButton.textContent.trim().toLowerCase() === "load";
   const action = isLoadMode ? "loadWidget" : "unloadWidget";
-
   window.deskflex[action](sec)
-    .then(() => {
-      if (isLoadMode) {
-        // Snapshot original settings
-        originalSettings[sec] = captureSettings(sec);
-
-        loadButton.textContent = "Unload";
-        refreshButton.disabled = false;
-        refreshButton.classList.remove("disabled");
-        windowSettings.style.opacity = "1";
-        checkboxContainer.style.opacity = "1";
-        resetOptions();
-        updateSettingsPanel(sec);
-      } else {
-        // Unload mode
-        enableLoadEdit();
-        windowSettings.style.opacity = "0.5";
-        checkboxContainer.style.opacity = "0.5";
-        if (originalSettings[sec]) {
-          applySettings(originalSettings[sec]);
+      .then((result) => {
+        if (!result.success) {
+          console.error(
+            `Failed to ${isLoadMode ? "load" : "unload"} widget:`,
+            result.message
+          );
+          return;
         }
 
-        // Reset placeholders
-        resetPlaceholders();
-      }
-    })
-    .catch((err) =>
-      console.error(`Failed to ${isLoadMode ? "load" : "unload"} widget:`, err)
-    );
+        // Only toggle UI state on success
+        if (isLoadMode) {
+          // Snapshot original settings
+          originalSettings[sec] = captureSettings(sec);
+
+          loadButton.textContent = "Unload";
+          refreshButton.disabled = false;
+          refreshButton.classList.remove("disabled");
+          windowSettings.style.opacity = "1";
+          checkboxContainer.style.opacity = "1";
+          resetOptions();
+          updateSettingsPanel(sec);
+        } else {
+          // Revert UI to load state
+          enableLoadEdit();
+          windowSettings.style.opacity = "0.5";
+          checkboxContainer.style.opacity = "0.5";
+          if (originalSettings[sec]) {
+            applySettings(originalSettings[sec]);
+          }
+          resetPlaceholders();
+        }
+      })
+      .catch((err) =>
+        console.error(
+          `IPC error on ${isLoadMode ? "load" : "unload"} widget:`,
+          err
+        )
+      );
 }
 // Handle selection from Active-Widget dropdown
 function handleActiveWidgetSelection(sec) {
