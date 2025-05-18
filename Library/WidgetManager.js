@@ -2,14 +2,13 @@
 const { BrowserWindow, app} = require("electron");
 const path = require("path");
 const { parseIni } = require("./IniLoader");
-const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath, resolveKey } = require("./Utils");
+const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath } = require("./Utils");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
 const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
-const { log } = require("console");
 const widgetWindows = new Map();
 const windowSizes = new Map();
 
@@ -258,4 +257,4 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
 
 registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget);
 
-module.exports = { loadWidget, unloadWidget, widgetWindows };
+module.exports = { loadWidget, unloadWidget, widgetWindows,windowSizes };

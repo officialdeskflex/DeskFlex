@@ -30,7 +30,6 @@ function createMainWindow(config) {
       win.hide();
     }
   });
-
   return win;
 }
 

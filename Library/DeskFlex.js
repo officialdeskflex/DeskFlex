@@ -4,16 +4,15 @@ const { createMainWindow } = require("./CreateMainWindow");
 const { showStart, getConfigEditorPath, getLogging, getDarkMode, getWidgetsPath, getActiveWidgets, getDebugging, getFolderStructure } = require("./ConfigFile");
 const { openFileWithEditor } = require("./OpenConfigFiles");
 const { createTray } = require("./TrayIcon");
-const { loadWidget, unloadWidget } = require("./WidgetManager");
+const { loadWidget, unloadWidget, widgetWindows, windowSizes } = require("./WidgetManager");
+const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { createLogsWindow } = require("./CreateLogsWindow");
 const { logs, getLogs,clearAllLogs } = require("./Logs");
 const { runDeskFlexVersion } = require("./InitialLogs");
-const { console } = require("inspector");
+const config = { showStart: showStart(), configEditor: getConfigEditorPath(), logging: getLogging(), debugging: getDebugging(), darkMode: getDarkMode(), activeWidget: getActiveWidgets(), widgetsPath: getWidgetsPath(), folderStructure: getFolderStructure() };
 
 let mainWindow;
 app.isQuiting = false;
-
-const config = { showStart: showStart(), configEditor: getConfigEditorPath(), logging: getLogging(), debugging: getDebugging(), darkMode: getDarkMode(), activeWidget: getActiveWidgets(), widgetsPath: getWidgetsPath(), folderStructure: getFolderStructure() };
 
 ipcMain.on("open-config-settings", (_event, filePath) => {
   openFileWithEditor(filePath);
@@ -27,7 +26,7 @@ ipcMain.on("hide-window", () => {
 
 app.whenReady().then(() => {
   mainWindow = createMainWindow(config);
-  createTray(mainWindow);
+  registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget, mainWindow);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

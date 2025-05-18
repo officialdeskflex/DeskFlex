@@ -590,3 +590,16 @@ function isOptionChecked(val) {
 function buildPath(...segments) {
   return segments.join("\\").replace(/\\\\+/g, "\\");
 }
+
+// In your renderer process
+// structureFolder.js (or wherever you’re adding the handler)
+window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("Refresh All");
+  if (!btn) {
+    console.warn("Could not find #RefreshAll in the DOM");
+    return;
+  }
+  btn.addEventListener("click", () => {
+    window.deskflex.moveWidget(50, 50, "Test2\\Test.ini");
+  });
+});
