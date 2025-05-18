@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('deskflex', {
 
     loadWidget: (widgetName) => {return ipcRenderer.invoke('load-widget', widgetName);},
     unloadWidget: (widgetName) => {return ipcRenderer.invoke('unload-widget', widgetName);},
+    onWidgetStatusChanged: (callback) => {ipcRenderer.on('widget-status-changed', (event, section) => {callback(section);});},
 
     sendLog: (message, type, source = '') => ipcRenderer.send('log-message', message, type, source),
     getLogs: () => ipcRenderer.invoke('get-logs'),

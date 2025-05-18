@@ -51,7 +51,8 @@ ipcMain.handle("load-widget", async (_event, widgetName) => {
   console.log("Loading widget (DeskFlex):", widgetName);
   try {
     const fullPath = path.join(config.widgetsPath, widgetName);
-    loadWidget(fullPath);
+    await loadWidget(fullPath);
+    mainWindow.webContents.send("widget-status-changed", widgetName);
     return { success: true };
   } catch (err) {
     console.error("Error loading widget:", err);
@@ -62,7 +63,8 @@ ipcMain.handle("load-widget", async (_event, widgetName) => {
 ipcMain.handle("unload-widget", async (_event, widgetName) => {
   console.log("Unloading widget (DeskFlex):", widgetName);
   try {
-    unloadWidget(widgetName);        // e.g. "Test\\Test.ini"
+    await unloadWidget(widgetName);
+    mainWindow.webContents.send("widget-status-changed", widgetName);
     return { success: true };
   } catch (err) {
     console.error("Error unloading widget:", err);

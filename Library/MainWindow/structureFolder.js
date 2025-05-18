@@ -1,3 +1,4 @@
+//StructureFolder.js
 // Globals and mappings
 let selectedItem = null;
 let detailsPanel, actionButtons, loadButton, refreshButton, editButton;
@@ -54,45 +55,21 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Active-Widget dropdown toggle
-  const openBtn = document.getElementById("toggle-Dropdown");
-  if (openBtn) {
-    openBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      populateDropdown();
-      toggleDropdown();
-    });
-  }
+  attachDropdownBehavior("#toggle-Dropdown", "myDropdown");
+  document.querySelectorAll("[data-target]").forEach(box => {
+    attachDropdownBehavior(
+      `[data-target="${box.dataset.target}"]`,
+      box.dataset.target
+    );
+  });
 
-  // Close dropdown on outside click
-  window.addEventListener("click", closeDropdownOnClickOutside);
-
-  // Populate Active-Widget list
+  // Populate Active-Widget list once at load
   populateDropdown();
-
-  // Wire any custom dropdowns (data-target)
-  document.querySelectorAll("[data-target]").forEach((box) => {
-    const menu = document.getElementById(box.dataset.target);
-    box.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = menu.classList.toggle("show");
-      box.classList.toggle("open", isOpen);
-      if (isOpen) {
-        requestAnimationFrame(() => {
-          const rect = menu.getBoundingClientRect();
-          menu.classList.toggle("dropup", rect.bottom > window.innerHeight);
-        });
-      } else {
-        menu.classList.remove("dropup");
-      }
-    });
-    document.addEventListener("click", (e) => {
-      if (!box.contains(e.target) && menu.classList.contains("show")) {
-        menu.classList.remove("show");
-        box.classList.remove("open");
-        menu.classList.remove("dropup");
-      }
-    });
+  window.deskflex.onWidgetStatusChanged((section) => {
+    populateDropdown();
+    if (window.currentWidgetSection === section) {
+      handleActiveWidgetSelection(section);
+    }
   });
 });
 
@@ -134,8 +111,8 @@ function applySettings(settings) {
   Array.from(checkboxContainer.querySelectorAll(".option")).forEach(
     (option) => {
       const label = option.querySelector("label").textContent.trim();
-      const val = settings.options[label] ?? false;
-      const supported = val === 1 || val === "1" || val === 0 || val === "0";
+      const val = settings.options[label];
+      const supported = isSupportedOption(val);
       if (supported) {
         option.classList.remove("disabled");
         option.style.opacity = "1";
@@ -143,7 +120,7 @@ function applySettings(settings) {
         option.classList.add("disabled");
         option.style.opacity = "";
       }
-      option.classList.toggle("checked", val === 1 || val === "1");
+      option.classList.toggle("checked", isOptionChecked(val));
     }
   );
 }
@@ -190,7 +167,7 @@ function onLoadUnload() {
 // Handle selection from Active-Widget dropdown
 function handleActiveWidgetSelection(sec) {
   const base = (window.deskflex.widgetPath || "").replace(/[\/\\]+$/, "");
-  const fullPath = `${base}\\${sec}`;
+  const fullPath = buildPath(base, sec);
 
   window.currentWidgetSection = sec;
   window.currentFlexFilePath = fullPath;
@@ -200,7 +177,7 @@ function handleActiveWidgetSelection(sec) {
   enableLoadEdit();
 
   const statusVal = window.deskflex.getWidgetStatus(sec);
-  const isActive = statusVal === 1 || statusVal === "1";
+  const isActive = isWidgetActive(window.deskflex.getWidgetStatus(sec));
   if (isActive) {
     loadButton.textContent = "Unload";
     refreshButton.disabled = false;
@@ -243,7 +220,7 @@ function selectItem(item) {
 
     const sec = window.currentWidgetSection;
     const statusVal = window.deskflex.getWidgetStatus(sec);
-    const isActive = statusVal === 1 || statusVal === "1";
+    const isActive = isWidgetActive(window.deskflex.getWidgetStatus(sec));
     if (isActive) {
       loadButton.textContent = "Unload";
       refreshButton.disabled = false;
@@ -398,8 +375,8 @@ function getFullPath(item) {
       .closest(".children")
       ?.parentElement.querySelector(":scope > .tree-node");
   }
-  const base = (window.deskflex.widgetPath  ||"").replace(/[\/\\]+$/, "");
-  return `${base}\\${segs.join("\\")}`;
+  const base = (window.deskflex.widgetPath  || "").replace(/[\/\\]+$/, "");
+  return buildPath(base, ...segs);
 }
 
 // Populate & wire Active-Widget dropdown
@@ -466,7 +443,7 @@ function updateSettingsPanel(sec) {
     if (!option) return;
 
     // Enable for both 0 and 1
-    const supported = val === 1 || val === "1" || val === 0 || val === "0";
+    const supported = isSupportedOption(val);
     if (supported) {
       option.classList.remove("disabled");
       option.style.opacity = "1";
@@ -476,7 +453,7 @@ function updateSettingsPanel(sec) {
     }
 
     // Only check when val === 1
-    option.classList.toggle("checked", val === 1 || val === "1");
+    option.classList.toggle("checked", isOptionChecked(val));
   });
 
   windowSettings.classList.remove("disabled");
@@ -552,4 +529,46 @@ function resetPlaceholders() {
   document.querySelectorAll(".option.checked").forEach((option) => {
     option.classList.remove("checked");
   });
+}
+
+function attachDropdownBehavior(triggerSelector, menuId) {
+  const trigger = document.querySelector(triggerSelector);
+  const menu   = document.getElementById(menuId);
+  if (!trigger || !menu) return;
+
+  trigger.addEventListener("click", e => {
+    e.stopPropagation();
+    const isOpen = menu.classList.toggle("show");
+    trigger.classList.toggle("open", isOpen);
+    if (isOpen) {
+      requestAnimationFrame(() => {
+        const rect = menu.getBoundingClientRect();
+        menu.classList.toggle("dropup", rect.bottom > window.innerHeight);
+      });
+    } else {
+      menu.classList.remove("dropup");
+    }
+  });
+
+  document.addEventListener("click", e => {
+    if (!trigger.contains(e.target) && menu.classList.contains("show")) {
+      menu.classList.remove("show");
+      trigger.classList.remove("open");
+      menu.classList.remove("dropup");
+    }
+  });
+}
+
+function isWidgetActive(val) {
+  return String(val) === "1";
+}
+function isSupportedOption(val) {
+  const s = String(val);
+  return s === "0" || s === "1";
+}
+function isOptionChecked(val) {
+  return String(val) === "1";
+}
+function buildPath(...segments) {
+  return segments.join("\\").replace(/\\\\+/g, "\\");
 }
