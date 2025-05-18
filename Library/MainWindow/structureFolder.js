@@ -134,7 +134,7 @@ function applySettings(settings) {
   Array.from(checkboxContainer.querySelectorAll(".option")).forEach(
     (option) => {
       const label = option.querySelector("label").textContent.trim();
-      const val = settings.options[label];
+      const val = settings.options[label] ?? false;
       const supported = val === 1 || val === "1" || val === 0 || val === "0";
       if (supported) {
         option.classList.remove("disabled");
@@ -189,11 +189,7 @@ function onLoadUnload() {
 }
 // Handle selection from Active-Widget dropdown
 function handleActiveWidgetSelection(sec) {
-  const base = (
-    window.deskflex.widgetPath ||
-    window.deskflex.widgetPath ||
-    ""
-  ).replace(/[\/\\]+$/, "");
+  const base = (window.deskflex.widgetPath ||window.deskflex.widgetPath ||"").replace(/[\/\\]+$/, "");
   const fullPath = `${base}\\${sec}`;
 
   window.currentWidgetSection = sec;
@@ -230,12 +226,6 @@ function handleActiveWidgetSelection(sec) {
     console.log("WidgetInfo section found for", fullPath);
   }
 }
-
-toggleBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  populateDropdown();
-  toggleDropdown();
-});
 
 function selectItem(item) {
   if (selectedItem) selectedItem.classList.remove("selected");
@@ -408,11 +398,7 @@ function getFullPath(item) {
       .closest(".children")
       ?.parentElement.querySelector(":scope > .tree-node");
   }
-  const base = (
-    window.deskflex.widgetPath ||
-    window.deskflex.widgetPath ||
-    ""
-  ).replace(/[\/\\]+$/, "");
+  const base = (window.deskflex.widgetPath ||window.deskflex.widgetPath ||"").replace(/[\/\\]+$/, "");
   return `${base}\\${segs.join("\\")}`;
 }
 
