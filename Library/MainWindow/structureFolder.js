@@ -189,7 +189,7 @@ function onLoadUnload() {
 }
 // Handle selection from Active-Widget dropdown
 function handleActiveWidgetSelection(sec) {
-  const base = (window.deskflex.widgetPath ||window.deskflex.widgetPath ||"").replace(/[\/\\]+$/, "");
+  const base = (window.deskflex.widgetPath || "").replace(/[\/\\]+$/, "");
   const fullPath = `${base}\\${sec}`;
 
   window.currentWidgetSection = sec;
@@ -398,7 +398,7 @@ function getFullPath(item) {
       .closest(".children")
       ?.parentElement.querySelector(":scope > .tree-node");
   }
-  const base = (window.deskflex.widgetPath ||window.deskflex.widgetPath ||"").replace(/[\/\\]+$/, "");
+  const base = (window.deskflex.widgetPath  ||"").replace(/[\/\\]+$/, "");
   return `${base}\\${segs.join("\\")}`;
 }
 
