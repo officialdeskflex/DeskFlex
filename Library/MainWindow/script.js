@@ -36,9 +36,3 @@ function createLogsWindow() {
 function addlog() {
   window.deskflex.sendLog("DeskFlex Main Window Loaded", "warning", "");
 }
-
-  window.deskflex.onDraggableChange(({ id, value }) => {
-    console.log(`Widget ${id} draggable lol: ${value}`);
-
-  });
-

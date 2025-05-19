@@ -23,6 +23,15 @@ const iniOptionMap = {
   "Favorite":        { iniKey: "Favorite",    getter: window.deskflex.getWidgetFavorite      },
 };
 
+const iniSetterMap = {
+  "Click Through":   window.deskflex.clickThroughWidget,
+  "Draggable":       window.deskflex.draggableWidget,
+  "Snap Edges":      window.deskflex.snapEdgesWidget,
+  "Keep On Screen":  window.deskflex.keepOnScreen,
+  "Save Position":   window.deskflex.savePositionWidget,
+  "Favorite":        window.deskflex.favoriteWidget,
+};
+
 const hoverMap = { 0: "Do Nothing", 1: "Hide", 2: "Fade in", 3: "Fade out" };
 
 window.currentWidgetSection = "";
@@ -50,15 +59,12 @@ window.addEventListener("DOMContentLoaded", () => {
     window.deskflex.folderStructure
   );
   initIniClickListener();
-
   loadButton.addEventListener("click", onLoadUnload);
-
   editButton.addEventListener("click", () => {
     if (window.currentFlexFilePath) {
       window.deskflex.openConfigSettings(window.currentFlexFilePath);
     }
   });
-
   attachDropdownBehavior("#toggle-Dropdown", "myDropdown");
   document.querySelectorAll("[data-target]").forEach(box => {
     attachDropdownBehavior(
@@ -66,7 +72,6 @@ window.addEventListener("DOMContentLoaded", () => {
       box.dataset.target
     );
   });
-
   populateDropdown();
   window.deskflex.onWidgetStatusChanged((section) => {
     populateDropdown();
@@ -74,39 +79,29 @@ window.addEventListener("DOMContentLoaded", () => {
       handleActiveWidgetSelection(section);
     }
   });
-
-  checkboxContainer.addEventListener("click", async (e) => {
-    const option = e.target.closest(".option");
-    if (!option) return;
-    if (option.classList.contains("disabled")) {
-      console.log("Option disabled—ignoring click");
-      return;
-    }
-    const label = option.querySelector("label").textContent.trim();
-    const mapping = iniOptionMap[label];
-    const sec = window.currentWidgetSection;
-    if (!mapping || !sec) {
-      console.warn("No mapping or widget selected for", label, sec);
-      return;
-    }
-
-    const oldVal = Number(mapping.getter(sec));
-    const newVal = oldVal === 1 ? 0 : 1;
-    console.log(`Toggling ${label} for ${sec}:`, oldVal, "→", newVal);
-
-    try {
-      const res = await window.deskflex.setIniValue(sec, mapping.iniKey, newVal);
-      console.log("setIniValue result:", res);
-      if (res && res.success !== false) {
-        option.classList.toggle("checked", newVal === 1);
-      } else {
-        console.error("setIniValue failed:", res.message);
-      }
-    } catch (err) {
-      console.error("IPC error setting", label, err);
-    }
-  });
+  checkboxContainer.addEventListener('click', async e => {
+  const option = e.target.closest('.option');
+  if (!option || option.classList.contains('disabled')) return;
+  const label    = option.querySelector('label').textContent.trim();
+  const mapping  = iniOptionMap[label];
+  const setter   = iniSetterMap[label];
+  const sec      = window.currentWidgetSection;
+  if (!mapping || !sec || typeof setter !== 'function') return;
+  const oldVal = Number(mapping.getter(sec));
+  const newVal = oldVal === 1 ? 0 : 1;
+  option.classList.toggle("checked", newVal === 1);
+  setter(newVal, sec);
+  console.log(`Sent ${label}=${newVal} for widget ${sec}`);
 });
+});
+
+function updateOptionUI(label, widgetId, newVal) {
+  if (widgetId !== window.currentWidgetSection) return;
+  const option = Array.from(checkboxContainer.querySelectorAll(".option"))
+    .find(o => o.querySelector("label").textContent.trim() === label);
+  if (!option || option.classList.contains("disabled")) return;
+  option.classList.toggle("checked", Boolean(newVal));
+}
 
 function captureSettings(sec) {
 const opts = {};
@@ -499,7 +494,6 @@ function updateSettingsPanel(sec) {
   );
 }
 
-// Helper to set dropdown UI
 function setDropdown(type, label) {
   const box = document.querySelector(`.${type}-box`);
   const menu = document.getElementById(
@@ -602,4 +596,16 @@ window.addEventListener("DOMContentLoaded", () => {
   btn.addEventListener("click", () => {
     window.deskflex.moveWidget(50, 50, "Test2\\Test.ini");
   });
+});
+
+
+window.deskflex.onDraggableChange(({ id, value }) => {
+  console.log(`ID and Value:${id}||${value}`)
+  updateOptionUI("Draggable",       id, value);
+});
+window.deskflex.onKeepOnScreenChange(({ id, value }) => {
+  updateOptionUI("Keep On Screen",  id, value);
+});
+window.deskflex.onClickthroughChange(({ id, value }) => {
+  updateOptionUI("Click Through",   id, value);
 });
