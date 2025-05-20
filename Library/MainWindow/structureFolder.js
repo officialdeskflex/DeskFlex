@@ -80,7 +80,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     
     const xInput = document.querySelector('.coords-input-x');
-const yInput = document.querySelector('.coords-input-y');
+    const yInput = document.querySelector('.coords-input-y');
 
 [xInput, yInput].forEach(input => {
   input.addEventListener('keydown', e => {
@@ -105,6 +105,26 @@ document.querySelectorAll('#transparencyMenu a')
       });
     });
 
+  });
+
+  const reverseHoverMap = Object.fromEntries(
+  Object.entries(hoverMap).map(([k, v]) => [v, parseInt(k, 10)])
+  );
+
+
+document.querySelectorAll('#hoverMenu a')
+  .forEach(option => {
+    option.addEventListener('click', e => {
+      e.preventDefault();
+      const label = option.textContent.trim();
+      const code = reverseHoverMap[label];
+      if (code === undefined) return;
+      // send IPC to set hover type
+      window.deskflex.setHoverType(code, window.currentWidgetSection);
+      // update the UI label
+      console.log("Called the IPC")
+      setDropdown('hover', label);
+    });
   });
 
   checkboxContainer.addEventListener('click', async e => {

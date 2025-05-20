@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   setFavorite: (enabled, widgetName) => ipcRenderer.send("widget-set-favourite", enabled ? 1 : 0 , widgetName),
 
   setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),
+  setHoverType: (value, widgetId) => ipcRenderer.send("widget-set-hoverType", value, widgetId),
 
   onDraggableChange: cb => ipcRenderer.on('widget-draggable-changed', (_e, data) => cb(data)),
   onKeepOnScreenChange: cb => ipcRenderer.on('widget-keep-on-screen-changed', (_e, data) => cb(data)),
@@ -48,6 +49,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   onFavoriteChange: cb => ipcRenderer.on('widget-favorite-changed', (_e, data) => cb(data)),
 
   onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
+  onHoverTypeChanged: cb => ipcRenderer.on('widget-hoverType-changed', (_e, data) => cb(data)),
 
   moveWidgetWindow: (x, y, id) => ipcRenderer.send('widget-move-window', x, y, id),
   

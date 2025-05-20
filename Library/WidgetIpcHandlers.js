@@ -123,6 +123,22 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     return true;
   });
 
+  ipcMain.on("widget-set-hoverType", (_e, rawVal, widgetId) => {
+  console.log(`Called ${rawVal} ${widgetId}`)
+  const key = resolveKey(widgetWindowsRef, widgetId);
+  const win = key && widgetWindowsRef.get(key);
+  if (!win) return;
+  const newType = Number(rawVal);
+  // persist in INI
+  setIniValue(widgetId, "OnHover", rawVal);
+  // update our internal flag
+  win.onHoverBehavior = newType;
+  // push to the renderer
+  win.webContents.send("widget-set-hoverType", newType);
+  // notify the main UI
+  mainWindowRef?.webContents?.send("widget-hoverType-changed", { id: widgetId, value: newType });
+});
+
   ipcMain.on("widget-save-window-position", (_e, identifier) => {
     const key = resolveKey(widgetWindowsRef, identifier);
     const win = key && widgetWindowsRef.get(key);
