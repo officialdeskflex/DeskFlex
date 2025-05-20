@@ -2,11 +2,7 @@
 const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey, resolveIniPath } = require("./Utils");
-const {
-  getWidgetsPath,
-  getWidgetStatus,
-  setIniValue,
-} = require("./ConfigFile");
+const {getWidgetsPath,getWidgetStatus,setIniValue} = require("./ConfigFile");
 
 let widgetWindowsRef;
 let windowSizesRef;
@@ -15,16 +11,12 @@ let unloadWidgetRef;
 let mainWindowRef;
 let handlersRegistered = false;
 
-function registerIpcHandlers(
-  widgetWindows,
-  windowSizes,
-  loadWidget,
-  unloadWidget,
-  mainWindow
-) {
+const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidget, mainWindow) => {
+
   if (handlersRegistered) return;
+
   if (!mainWindow) {
-    console.warn("Skipping handler registration: mainWindow is undefined");
+    //console.warn("Skipping handler registration: mainWindow is undefined");
     return;
   }
 
@@ -35,21 +27,11 @@ function registerIpcHandlers(
   unloadWidgetRef = unloadWidget;
   mainWindowRef = mainWindow;
 
-  // ------------------------------
-  // Appearance & Mouse Behavior
-  // ------------------------------
-
   ipcMain.on("widget-set-opacity", (event, opacity) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
       win.setOpacity(opacity);
-      // Notify main window
-      if (mainWindowRef?.webContents) {
-        mainWindowRef.webContents.send("widget-opacity-changed", {
-          id: win.widgetId,
-          value: opacity,
-        });
-      }
+      mainWindowRef?.webContents?.send("widget-opacity-changed", { id: win.widgetId, value: opacity });
     }
   });
 
@@ -59,65 +41,55 @@ function registerIpcHandlers(
       win.setIgnoreMouseEvents(ignore, {
         forward: true,
       });
-      if (mainWindowRef?.webContents) {
-        mainWindowRef.webContents.send("widget-clickthrough-changed", {
-          id: win.widgetId,
-          value: Boolean(ignore),
-        });
-      }
+      mainWindowRef?.webContents?.send("widget-clickthrough-changed", { id: win.widgetId, value: Boolean(ignore) });
     }
   });
-
-  // ------------------------------
-  // Position & Size
-  // ------------------------------
 
   ipcMain.handle("get-cursor-pos", () => {
     return screen.getCursorScreenPoint();
   });
 
-  ipcMain.on("widget-move-window", (_e, x, y, id) => {
-    console.log("Moved Window Called");
+  ipcMain.on("widget-move-window", (_e, initialX, initialY, id) => {
+  //console.log(`Moved Window Called - Initial: X=${initialX}, Y=${initialY}, ID=${id}`);
 
-    const key = resolveKey(widgetWindowsRef, id);
-    if (!key) return false;
+  const key = resolveKey(widgetWindowsRef, id);
+  if (!key) return false;
 
-    const win = widgetWindowsRef.get(key);
-    const size = windowSizesRef.get(key);
-    if (!win || !size || !win.isWidgetDraggable) return false;
+  const win = widgetWindowsRef.get(key);
+  const size = windowSizesRef.get(key);
+  if (!win || !size || !win.isWidgetDraggable) return false;
 
-    if (win.keepOnScreen) {
-      const disp = screen.getDisplayMatching({
-        x,
-        y,
-        width: size.width,
-        height: size.height,
-      });
-      const wa = disp.workArea;
-      x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
-      y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
-    }
+  let adjustedX = initialX;
+  let adjustedY = initialY;
 
-    win.setBounds({
-      x: Math.round(x),
-      y: Math.round(y),
+  if (win.keepOnScreen) {
+    const disp = screen.getDisplayMatching({
+      x: initialX,
+      y: initialY,
       width: size.width,
       height: size.height,
     });
+    const wa = disp.workArea;
+    adjustedX = Math.max(wa.x, Math.min(initialX, wa.x + wa.width - size.width));
+    adjustedY = Math.max(wa.y, Math.min(initialY, wa.y + wa.height - size.height));
+  }
 
-    setIniValue(id, "WindowX", `${x}`);
-    setIniValue(id, "WindowY", `${y}`);
-
-    if (mainWindowRef && mainWindowRef.webContents) {
-      mainWindowRef.webContents.send("widget-position-changed", {
-        id,
-        x,
-        y,
-      });
-    }
-
-    return true;
+  win.setBounds({
+    x: Math.round(adjustedX),
+    y: Math.round(adjustedY),
+    width: size.width,
+    height: size.height,
   });
+
+  setIniValue(id, "WindowX", `${adjustedX}`);
+  setIniValue(id, "WindowY", `${adjustedY}`);
+
+  mainWindowRef?.webContents?.send("widget-position-changed", { id, x: adjustedX, y: adjustedY });
+
+  ///console.log(`Moved Window - Adjusted: X=${adjustedX}, Y=${adjustedY}, ID=${id}`);
+
+  return true;
+});
 
   ipcMain.on("widget-move-window-drag", (_e, x, y, id) => {
     const key = resolveKey(widgetWindowsRef, id);
@@ -146,6 +118,8 @@ function registerIpcHandlers(
       height: size.height,
     });
 
+    mainWindowRef?.webContents?.send("widget-position-changed", { id, x, y });
+
     return true;
   });
 
@@ -156,14 +130,7 @@ function registerIpcHandlers(
     const { x, y } = win.getBounds();
     setIniValue(identifier, "WindowX", `${x}`);
     setIniValue(identifier, "WindowY", `${y}`);
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-position-saved", {
-        id: identifier,
-        x,
-        y,
-      });
-    }
-    console.Consolelo
+    mainWindowRef?.webContents?.send("widget-position-saved", { id: identifier, x, y });
     return true;
   });
 
@@ -185,41 +152,26 @@ function registerIpcHandlers(
   const key = resolveKey(widgetWindowsRef, identifier);
   const win = key && widgetWindowsRef.get(key);
   const originalSize = key && windowSizesRef.get(key);
-  if (win && originalSize) {
-    const { x, y } = win.getBounds();
-    win.setBounds({
-      x,
-      y,
-      width: originalSize.width,
-      height: originalSize.height,
-    });
-    return true;
-  }
+  if (win && originalSize) { const { x, y } = win.getBounds(); win.setBounds({ x, y, width: originalSize.width, height: originalSize.height }); return true; }
   return false;
 });
 
-  // ------------------------------
-  // Behavior Toggles
-  // ------------------------------
+
+    ipcMain.on("widget-set-favourite", (_e,value, widgetName) => {
+      setIniValue(widgetName, "Favorite", value);
+      const favValue = Boolean(Number(value));
+      mainWindowRef?.webContents?.send("widget-draggable-changed", { id: widgetName, value: favValue });
+  });
 
   ipcMain.on("widget-set-draggable", (_e, rawVal, identifier) => {
-    console.log(`IpC Called:${rawVal} || ${identifier}`)
     const key = resolveKey(widgetWindowsRef, identifier);
     const win = key && widgetWindowsRef.get(key);
     if (!win) return;
     const draggable = Boolean(Number(rawVal));
-    console.log(`Boolean:${draggable}`)
     win.isWidgetDraggable = draggable;
-
     setIniValue(identifier, "Draggable", rawVal);
-
     win.webContents.send("widget-draggable-changed", draggable);
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-draggable-changed", {
-        id: identifier,
-        value: draggable,
-      });
-    }
+    mainWindowRef?.webContents?.send("widget-draggable-changed", { id: identifier, value: draggable });
   });
 
   ipcMain.on("widget-set-keep-on-screen", (_e, rawVal, identifier) => {
@@ -229,14 +181,7 @@ function registerIpcHandlers(
     const keepOnScreen = Boolean(Number(rawVal));
     win.keepOnScreen = keepOnScreen;
     setIniValue(identifier, "KeepOnScreen", rawVal);
-
-    // Notify main window
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-keep-on-screen-changed", {
-        id: identifier,
-        value: keepOnScreen,
-      });
-    }
+    mainWindowRef?.webContents?.send("widget-keep-on-screen-changed", { id: identifier, value: keepOnScreen });
   });
 
   ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
@@ -251,12 +196,7 @@ function registerIpcHandlers(
     win.setOpacity(pct / 100);
     setIniValue(identifier, "Transparency", rawPercent);
 
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-transparency-changed", {
-        id: identifier,
-        value: pct,
-      });
-    }
+    mainWindowRef?.webContents?.send("widget-transparency-changed", { id: identifier, value: pct });
   });
 
   ipcMain.on("widget-set-clickthrough", (_e, rawVal, identifier) => {
@@ -270,36 +210,18 @@ function registerIpcHandlers(
     win.clickThrough = clickThrough;
     setIniValue(identifier, "ClickThrough", rawVal);
 
-    // Notify main window
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-clickthrough-changed", {
-        id: identifier,
-        value: clickThrough,
-      });
-    }
+    mainWindowRef?.webContents?.send("widget-clickthrough-changed", { id: identifier, value: clickThrough });
   });
-
-  // ------------------------------
-  // Load / Unload / Toggle
-  // ------------------------------
 
   ipcMain.handle("widget-load-widget", (_e, widgetName) => {
     const win = loadWidgetRef(widgetName);
-    if (win && mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-loaded", {
-        name: widgetName,
-      });
-    }
+    win && mainWindowRef?.webContents?.send("widget-loaded", { name: widgetName });
     return !!win;
   });
 
   ipcMain.handle("widget-unload-widget", (_e, widgetName) => {
     unloadWidgetRef(widgetName);
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-unloaded", {
-        name: widgetName,
-      });
-    }
+    mainWindowRef?.webContents?.send("widget-unloaded", { name: widgetName });
     return true;
   });
 
@@ -321,17 +243,9 @@ function registerIpcHandlers(
       loadWidgetRef(iniPath);
       newState = true;
     }
-
-    if (mainWindowRef?.webContents) {
-      mainWindowRef.webContents.send("widget-toggled", {
-        name: widgetName,
-        value: newState,
-      });
-    }
+    mainWindowRef?.webContents?.send("widget-toggled", { name: widgetName, value: newState });
     return newState;
   });
 }
 
-module.exports = {
-  registerIpcHandlers,
-};
+module.exports = {registerIpcHandlers,};

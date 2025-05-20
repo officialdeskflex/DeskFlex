@@ -1,14 +1,7 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const {
-  getDarkMode, getFolderStructure, getActiveWidgets,
-  getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY,
-  getWidgetPosition, getWidgetClickthrough, getWidgetDraggable,
-  getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover,
-  getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition,
-  getWidgetLoadOrder, setActiveValue, setIniValue
-} = require('./ConfigFile');
+const { getDarkMode, getFolderStructure, getActiveWidgets, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue, setIniValue } = require('./ConfigFile');
 const { getWidgetInfo, hasWidgetInfoSection } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
@@ -41,20 +34,23 @@ contextBridge.exposeInMainWorld('deskflex', {
   getWidgetSavePosition: name => getWidgetSavePosition(name),
   getWidgetLoadOrder: name => getWidgetLoadOrder(name),
 
-  draggableWidget: (val, widgetId) => ipcRenderer.send("widget-set-draggable", val, widgetId),
-  clickThroughWidget:(val, widgetId) => ipcRenderer.send("widget-set-clickthrough", val, widgetId),
-  savePositionWidget:(val, widgetId) => ipcRenderer.send("widget-move-window", val, widgetId),
-  keepOnScreen:(val, widgetId) => ipcRenderer.send("widget-move-window", val, widgetId),
+  setOpacity: (opacity, widgetId) => ipcRenderer.send("widget-set-opacity", opacity, widgetId),
+  setDraggable: (enabled, widgetId) => ipcRenderer.send("widget-set-draggable", enabled ? 1 : 0, widgetId),
+  setKeepOnScreen: (enabled, widgetId) => ipcRenderer.send("widget-set-keep-on-screen", enabled ? 1 : 0, widgetId),
+  setClickthrough: (enabled, widgetId) => ipcRenderer.send("widget-set-clickthrough", enabled ? 1 : 0, widgetId),
+  setFavorite: (enabled, widgetName) => ipcRenderer.send("widget-set-favourite", enabled ? 1 : 0 , widgetName),
+
+  setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),
 
   onDraggableChange: cb => ipcRenderer.on('widget-draggable-changed', (_e, data) => cb(data)),
   onKeepOnScreenChange: cb => ipcRenderer.on('widget-keep-on-screen-changed', (_e, data) => cb(data)),
   onClickthroughChange: cb => ipcRenderer.on('widget-clickthrough-changed', (_e, data) => cb(data)),
+  onFavoriteChange: cb => ipcRenderer.on('widget-favorite-changed', (_e, data) => cb(data)),
 
-  setOpacity: (opacity, widgetId) => ipcRenderer.send("widget-set-opacity", opacity, widgetId),
-  setDraggable: (enabled, widgetId) => ipcRenderer.send("widget-set-draggable", enabled ? 1 : 0, widgetId),
-  setKeepOnScreen: (enabled, widgetId) => ipcRenderer.send("widget-set-keep-on-screen", enabled ? 1 : 0, widgetId),
-  setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),
-  setClickthrough: (enabled, widgetId) => ipcRenderer.send("widget-set-clickthrough", enabled ? 1 : 0, widgetId),
+  onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
+
+  moveWidgetWindow: (x, y, id) => ipcRenderer.send('widget-move-window', x, y, id),
+  
 
   loadWidget: name => ipcRenderer.invoke('load-widget', name),
   unloadWidget: name => ipcRenderer.invoke('unload-widget', name),
@@ -67,7 +63,6 @@ contextBridge.exposeInMainWorld('deskflex', {
   createLogsWindow: () => ipcRenderer.invoke('deskflex:createLogsWindow'),
 
   onWidgetStatusChanged: cb => ipcRenderer.on('widget-status-changed', (_e, id) => cb(id)),
-  onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
   onPositionSaved: cb => ipcRenderer.on('widget-position-saved', (_e, data) => cb(data)),
   onTransparencyChange: cb => ipcRenderer.on('widget-transparency-changed', (_e, data) => cb(data)),
   onWidgetLoaded: cb => ipcRenderer.on('widget-loaded', (_e, data) => cb(data)),

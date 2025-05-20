@@ -24,12 +24,12 @@ const iniOptionMap = {
 };
 
 const iniSetterMap = {
-  "Click Through":   window.deskflex.clickThroughWidget,
-  "Draggable":       window.deskflex.draggableWidget,
-  "Snap Edges":      window.deskflex.snapEdgesWidget,
-  "Keep On Screen":  window.deskflex.keepOnScreen,
-  "Save Position":   window.deskflex.savePositionWidget,
-  "Favorite":        window.deskflex.favoriteWidget,
+  "Click Through":   window.deskflex.setClickThrough,
+  "Draggable":       window.deskflex.setDraggable,
+  "Snap Edges":      window.deskflex.setSnapEdges,
+  "Keep On Screen":  window.deskflex.setKeepOnScreen,
+  "Save Position":   window.deskflex.setSavePosition,
+  "Favorite":        window.deskflex.setFavorite,
 };
 
 const hoverMap = { 0: "Do Nothing", 1: "Hide", 2: "Fade in", 3: "Fade out" };
@@ -78,7 +78,35 @@ window.addEventListener("DOMContentLoaded", () => {
     if (window.currentWidgetSection === section) {
       handleActiveWidgetSelection(section);
     }
+    
+    const xInput = document.querySelector('.coords-input-x');
+const yInput = document.querySelector('.coords-input-y');
+
+[xInput, yInput].forEach(input => {
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      // parse both coords (fallback to zero)
+      const x = parseInt(xInput.value, 10) || 0;
+      const y = parseInt(yInput.value, 10) || 0;
+      // send the IPC call
+      window.deskflex.moveWidgetWindow(x, y, window.currentWidgetSection);
+    }
   });
+});
+
+document.querySelectorAll('#transparencyMenu a')
+    .forEach(option => {
+      option.addEventListener('click', e => {
+        e.preventDefault();
+        const text = option.textContent.trim();
+        const percent = parseInt(text.replace('%',''), 10);
+        window.deskflex.setTransparency(percent, window.currentWidgetSection);
+        setDropdown('transparency', text);
+      });
+    });
+
+  });
+
   checkboxContainer.addEventListener('click', async e => {
   const option = e.target.closest('.option');
   if (!option || option.classList.contains('disabled')) return;
@@ -292,7 +320,7 @@ function renderTree(container, obj, path = "") {
     item.append(header);
 
     if (subtree && typeof subtree === "object") {
-      icon.textContent = "\ue643"; // closed folder
+      icon.textContent = "\ue643"; 
       icon.classList.add("folder-icon");
       header.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -307,7 +335,7 @@ function renderTree(container, obj, path = "") {
       item.append(children);
       renderTree(children, subtree, path ? `${path}\\${name}` : name);
     } else {
-      icon.textContent = "\ue269"; // file icon
+      icon.textContent = "\ue269";
       icon.classList.add("file-icon");
       header.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -585,20 +613,6 @@ function buildPath(...segments) {
   return segments.join("\\").replace(/\\\\+/g, "\\");
 }
 
-// In your renderer process
-// structureFolder.js (or wherever you’re adding the handler)
-window.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("Refresh All");
-  if (!btn) {
-    console.warn("Could not find #RefreshAll in the DOM");
-    return;
-  }
-  btn.addEventListener("click", () => {
-    window.deskflex.moveWidget(50, 50, "Test2\\Test.ini");
-  });
-});
-
-
 window.deskflex.onDraggableChange(({ id, value }) => {
   console.log(`ID and Value:${id}||${value}`)
   updateOptionUI("Draggable",       id, value);
@@ -608,4 +622,12 @@ window.deskflex.onKeepOnScreenChange(({ id, value }) => {
 });
 window.deskflex.onClickthroughChange(({ id, value }) => {
   updateOptionUI("Click Through",   id, value);
+});
+
+window.deskflex.onPositionChanged(({ id, x, y }) => {
+  if (id !== window.currentWidgetSection) return;
+  const xInput = document.querySelector('.coords-input-x');
+  const yInput = document.querySelector('.coords-input-y');
+  xInput.value = x;
+  yInput.value = y;
 });
