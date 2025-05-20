@@ -11,8 +11,13 @@ let unloadWidgetRef;
 let mainWindowRef;
 let handlersRegistered = false;
 
-const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidget, mainWindow) => {
-
+const registerIpcHandlers = (
+  widgetWindows,
+  windowSizes,
+  loadWidget,
+  unloadWidget,
+  mainWindow
+) => {
   if (handlersRegistered) return;
 
   if (!mainWindow) {
@@ -31,7 +36,10 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
       win.setOpacity(opacity);
-      mainWindowRef?.webContents?.send("widget-opacity-changed", { id: win.widgetId, value: opacity });
+      mainWindowRef?.webContents?.send("widget-opacity-changed", {
+        id: win.widgetId,
+        value: opacity,
+      });
     }
   });
 
@@ -41,7 +49,10 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
       win.setIgnoreMouseEvents(ignore, {
         forward: true,
       });
-      mainWindowRef?.webContents?.send("widget-clickthrough-changed", { id: win.widgetId, value: Boolean(ignore) });
+      mainWindowRef?.webContents?.send("widget-clickthrough-changed", {
+        id: win.widgetId,
+        value: Boolean(ignore),
+      });
     }
   });
 
@@ -50,46 +61,56 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
   });
 
   ipcMain.on("widget-move-window", (_e, initialX, initialY, id) => {
-  //console.log(`Moved Window Called - Initial: X=${initialX}, Y=${initialY}, ID=${id}`);
+    //console.log(`Moved Window Called - Initial: X=${initialX}, Y=${initialY}, ID=${id}`);
 
-  const key = resolveKey(widgetWindowsRef, id);
-  if (!key) return false;
+    const key = resolveKey(widgetWindowsRef, id);
+    if (!key) return false;
 
-  const win = widgetWindowsRef.get(key);
-  const size = windowSizesRef.get(key);
-  if (!win || !size || !win.isWidgetDraggable) return false;
+    const win = widgetWindowsRef.get(key);
+    const size = windowSizesRef.get(key);
+    if (!win || !size || !win.isWidgetDraggable) return false;
 
-  let adjustedX = initialX;
-  let adjustedY = initialY;
+    let adjustedX = initialX;
+    let adjustedY = initialY;
 
-  if (win.keepOnScreen) {
-    const disp = screen.getDisplayMatching({
-      x: initialX,
-      y: initialY,
+    if (win.keepOnScreen) {
+      const disp = screen.getDisplayMatching({
+        x: initialX,
+        y: initialY,
+        width: size.width,
+        height: size.height,
+      });
+      const wa = disp.workArea;
+      adjustedX = Math.max(
+        wa.x,
+        Math.min(initialX, wa.x + wa.width - size.width)
+      );
+      adjustedY = Math.max(
+        wa.y,
+        Math.min(initialY, wa.y + wa.height - size.height)
+      );
+    }
+
+    win.setBounds({
+      x: Math.round(adjustedX),
+      y: Math.round(adjustedY),
       width: size.width,
       height: size.height,
     });
-    const wa = disp.workArea;
-    adjustedX = Math.max(wa.x, Math.min(initialX, wa.x + wa.width - size.width));
-    adjustedY = Math.max(wa.y, Math.min(initialY, wa.y + wa.height - size.height));
-  }
 
-  win.setBounds({
-    x: Math.round(adjustedX),
-    y: Math.round(adjustedY),
-    width: size.width,
-    height: size.height,
+    setIniValue(id, "WindowX", `${adjustedX}`);
+    setIniValue(id, "WindowY", `${adjustedY}`);
+
+    mainWindowRef?.webContents?.send("widget-position-changed", {
+      id,
+      x: adjustedX,
+      y: adjustedY,
+    });
+
+    ///console.log(`Moved Window - Adjusted: X=${adjustedX}, Y=${adjustedY}, ID=${id}`);
+
+    return true;
   });
-
-  setIniValue(id, "WindowX", `${adjustedX}`);
-  setIniValue(id, "WindowY", `${adjustedY}`);
-
-  mainWindowRef?.webContents?.send("widget-position-changed", { id, x: adjustedX, y: adjustedY });
-
-  ///console.log(`Moved Window - Adjusted: X=${adjustedX}, Y=${adjustedY}, ID=${id}`);
-
-  return true;
-});
 
   ipcMain.on("widget-move-window-drag", (_e, x, y, id) => {
     const key = resolveKey(widgetWindowsRef, id);
@@ -124,20 +145,23 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
   });
 
   ipcMain.on("widget-set-hoverType", (_e, rawVal, widgetId) => {
-  console.log(`Called ${rawVal} ${widgetId}`)
-  const key = resolveKey(widgetWindowsRef, widgetId);
-  const win = key && widgetWindowsRef.get(key);
-  if (!win) return;
-  const newType = Number(rawVal);
-  // persist in INI
-  setIniValue(widgetId, "OnHover", rawVal);
-  // update our internal flag
-  win.onHoverBehavior = newType;
-  // push to the renderer
-  win.webContents.send("widget-set-hoverType", newType);
-  // notify the main UI
-  mainWindowRef?.webContents?.send("widget-hoverType-changed", { id: widgetId, value: newType });
-});
+    console.log(`Called ${rawVal} ${widgetId}`);
+    const key = resolveKey(widgetWindowsRef, widgetId);
+    const win = key && widgetWindowsRef.get(key);
+    if (!win) return;
+    const newType = Number(rawVal);
+    // persist in INI
+    setIniValue(widgetId, "OnHover", rawVal);
+    // update our internal flag
+    win.onHoverBehavior = newType;
+    // push to the renderer
+    win.webContents.send("widget-set-hoverType", newType);
+    // notify the main UI
+    mainWindowRef?.webContents?.send("widget-hoverType-changed", {
+      id: widgetId,
+      value: newType,
+    });
+  });
 
   ipcMain.on("widget-save-window-position", (_e, identifier) => {
     const key = resolveKey(widgetWindowsRef, identifier);
@@ -146,7 +170,11 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     const { x, y } = win.getBounds();
     setIniValue(identifier, "WindowX", `${x}`);
     setIniValue(identifier, "WindowY", `${y}`);
-    mainWindowRef?.webContents?.send("widget-position-saved", { id: identifier, x, y });
+    mainWindowRef?.webContents?.send("widget-position-saved", {
+      id: identifier,
+      x,
+      y,
+    });
     return true;
   });
 
@@ -165,18 +193,29 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
   });
 
   ipcMain.handle("widget-reset-size", (_e, identifier) => {
-  const key = resolveKey(widgetWindowsRef, identifier);
-  const win = key && widgetWindowsRef.get(key);
-  const originalSize = key && windowSizesRef.get(key);
-  if (win && originalSize) { const { x, y } = win.getBounds(); win.setBounds({ x, y, width: originalSize.width, height: originalSize.height }); return true; }
-  return false;
-});
+    const key = resolveKey(widgetWindowsRef, identifier);
+    const win = key && widgetWindowsRef.get(key);
+    const originalSize = key && windowSizesRef.get(key);
+    if (win && originalSize) {
+      const { x, y } = win.getBounds();
+      win.setBounds({
+        x,
+        y,
+        width: originalSize.width,
+        height: originalSize.height,
+      });
+      return true;
+    }
+    return false;
+  });
 
-
-    ipcMain.on("widget-set-favourite", (_e,value, widgetName) => {
-      setIniValue(widgetName, "Favorite", value);
-      const favValue = Boolean(Number(value));
-      mainWindowRef?.webContents?.send("widget-draggable-changed", { id: widgetName, value: favValue });
+  ipcMain.on("widget-set-favourite", (_e, value, widgetName) => {
+    setIniValue(widgetName, "Favorite", value);
+    const favValue = Boolean(Number(value));
+    mainWindowRef?.webContents?.send("widget-draggable-changed", {
+      id: widgetName,
+      value: favValue,
+    });
   });
 
   ipcMain.on("widget-set-draggable", (_e, rawVal, identifier) => {
@@ -187,7 +226,10 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     win.isWidgetDraggable = draggable;
     setIniValue(identifier, "Draggable", rawVal);
     win.webContents.send("widget-draggable-changed", draggable);
-    mainWindowRef?.webContents?.send("widget-draggable-changed", { id: identifier, value: draggable });
+    mainWindowRef?.webContents?.send("widget-draggable-changed", {
+      id: identifier,
+      value: draggable,
+    });
   });
 
   ipcMain.on("widget-set-keep-on-screen", (_e, rawVal, identifier) => {
@@ -197,7 +239,10 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     const keepOnScreen = Boolean(Number(rawVal));
     win.keepOnScreen = keepOnScreen;
     setIniValue(identifier, "KeepOnScreen", rawVal);
-    mainWindowRef?.webContents?.send("widget-keep-on-screen-changed", { id: identifier, value: keepOnScreen });
+    mainWindowRef?.webContents?.send("widget-keep-on-screen-changed", {
+      id: identifier,
+      value: keepOnScreen,
+    });
   });
 
   ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
@@ -212,7 +257,10 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     win.setOpacity(pct / 100);
     setIniValue(identifier, "Transparency", rawPercent);
 
-    mainWindowRef?.webContents?.send("widget-transparency-changed", { id: identifier, value: pct });
+    mainWindowRef?.webContents?.send("widget-transparency-changed", {
+      id: identifier,
+      value: pct,
+    });
   });
 
   ipcMain.on("widget-set-clickthrough", (_e, rawVal, identifier) => {
@@ -226,12 +274,16 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
     win.clickThrough = clickThrough;
     setIniValue(identifier, "ClickThrough", rawVal);
 
-    mainWindowRef?.webContents?.send("widget-clickthrough-changed", { id: identifier, value: clickThrough });
+    mainWindowRef?.webContents?.send("widget-clickthrough-changed", {
+      id: identifier,
+      value: clickThrough,
+    });
   });
 
   ipcMain.handle("widget-load-widget", (_e, widgetName) => {
     const win = loadWidgetRef(widgetName);
-    win && mainWindowRef?.webContents?.send("widget-loaded", { name: widgetName });
+    win &&
+      mainWindowRef?.webContents?.send("widget-loaded", { name: widgetName });
     return !!win;
   });
 
@@ -259,9 +311,12 @@ const registerIpcHandlers = (widgetWindows, windowSizes, loadWidget, unloadWidge
       loadWidgetRef(iniPath);
       newState = true;
     }
-    mainWindowRef?.webContents?.send("widget-toggled", { name: widgetName, value: newState });
+    mainWindowRef?.webContents?.send("widget-toggled", {
+      name: widgetName,
+      value: newState,
+    });
     return newState;
   });
-}
+};
 
 module.exports = {registerIpcHandlers,};

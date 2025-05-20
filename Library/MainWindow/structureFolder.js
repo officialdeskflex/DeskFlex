@@ -66,7 +66,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
   attachDropdownBehavior("#toggle-Dropdown", "myDropdown");
-  document.querySelectorAll("[data-target]").forEach(box => {
+  document.querySelectorAll("[data-target]").forEach((box) => {
     attachDropdownBehavior(
       `[data-target="${box.dataset.target}"]`,
       box.dataset.target
@@ -78,43 +78,39 @@ window.addEventListener("DOMContentLoaded", () => {
     if (window.currentWidgetSection === section) {
       handleActiveWidgetSelection(section);
     }
-    
-    const xInput = document.querySelector('.coords-input-x');
-    const yInput = document.querySelector('.coords-input-y');
 
-[xInput, yInput].forEach(input => {
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      // parse both coords (fallback to zero)
-      const x = parseInt(xInput.value, 10) || 0;
-      const y = parseInt(yInput.value, 10) || 0;
-      // send the IPC call
-      window.deskflex.moveWidgetWindow(x, y, window.currentWidgetSection);
-    }
-  });
-});
+    const xInput = document.querySelector(".coords-input-x");
+    const yInput = document.querySelector(".coords-input-y");
 
-document.querySelectorAll('#transparencyMenu a')
-    .forEach(option => {
-      option.addEventListener('click', e => {
-        e.preventDefault();
-        const text = option.textContent.trim();
-        const percent = parseInt(text.replace('%',''), 10);
-        window.deskflex.setTransparency(percent, window.currentWidgetSection);
-        setDropdown('transparency', text);
+    [xInput, yInput].forEach((input) => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          // parse both coords (fallback to zero)
+          const x = parseInt(xInput.value, 10) || 0;
+          const y = parseInt(yInput.value, 10) || 0;
+          // send the IPC call
+          window.deskflex.moveWidgetWindow(x, y, window.currentWidgetSection);
+        }
       });
     });
 
+    document.querySelectorAll("#transparencyMenu a").forEach((option) => {
+      option.addEventListener("click", (e) => {
+        e.preventDefault();
+        const text = option.textContent.trim();
+        const percent = parseInt(text.replace("%", ""), 10);
+        window.deskflex.setTransparency(percent, window.currentWidgetSection);
+        setDropdown("transparency", text);
+      });
+    });
   });
 
   const reverseHoverMap = Object.fromEntries(
-  Object.entries(hoverMap).map(([k, v]) => [v, parseInt(k, 10)])
+    Object.entries(hoverMap).map(([k, v]) => [v, parseInt(k, 10)])
   );
 
-
-document.querySelectorAll('#hoverMenu a')
-  .forEach(option => {
-    option.addEventListener('click', e => {
+  document.querySelectorAll("#hoverMenu a").forEach((option) => {
+    option.addEventListener("click", (e) => {
       e.preventDefault();
       const label = option.textContent.trim();
       const code = reverseHoverMap[label];
@@ -122,25 +118,25 @@ document.querySelectorAll('#hoverMenu a')
       // send IPC to set hover type
       window.deskflex.setHoverType(code, window.currentWidgetSection);
       // update the UI label
-      console.log("Called the IPC")
-      setDropdown('hover', label);
+      console.log("Called the IPC");
+      setDropdown("hover", label);
     });
   });
 
-  checkboxContainer.addEventListener('click', async e => {
-  const option = e.target.closest('.option');
-  if (!option || option.classList.contains('disabled')) return;
-  const label    = option.querySelector('label').textContent.trim();
-  const mapping  = iniOptionMap[label];
-  const setter   = iniSetterMap[label];
-  const sec      = window.currentWidgetSection;
-  if (!mapping || !sec || typeof setter !== 'function') return;
-  const oldVal = Number(mapping.getter(sec));
-  const newVal = oldVal === 1 ? 0 : 1;
-  option.classList.toggle("checked", newVal === 1);
-  setter(newVal, sec);
-  console.log(`Sent ${label}=${newVal} for widget ${sec}`);
-});
+  checkboxContainer.addEventListener("click", async (e) => {
+    const option = e.target.closest(".option");
+    if (!option || option.classList.contains("disabled")) return;
+    const label = option.querySelector("label").textContent.trim();
+    const mapping = iniOptionMap[label];
+    const setter = iniSetterMap[label];
+    const sec = window.currentWidgetSection;
+    if (!mapping || !sec || typeof setter !== "function") return;
+    const oldVal = Number(mapping.getter(sec));
+    const newVal = oldVal === 1 ? 0 : 1;
+    option.classList.toggle("checked", newVal === 1);
+    setter(newVal, sec);
+    console.log(`Sent ${label}=${newVal} for widget ${sec}`);
+  });
 });
 
 function updateOptionUI(label, widgetId, newVal) {
