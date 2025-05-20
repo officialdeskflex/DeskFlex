@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('deskflex', {
 
   setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),
   setHoverType: (value, widgetId) => ipcRenderer.send("widget-set-hoverType", value, widgetId),
+  moveWidgetWindow: (x, y, id) => ipcRenderer.send('widget-move-window', x, y, id),
 
   onDraggableChange: cb => ipcRenderer.on('widget-draggable-changed', (_e, data) => cb(data)),
   onKeepOnScreenChange: cb => ipcRenderer.on('widget-keep-on-screen-changed', (_e, data) => cb(data)),
@@ -50,9 +51,7 @@ contextBridge.exposeInMainWorld('deskflex', {
 
   onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
   onHoverTypeChanged: cb => ipcRenderer.on('widget-hoverType-changed', (_e, data) => cb(data)),
-
-  moveWidgetWindow: (x, y, id) => ipcRenderer.send('widget-move-window', x, y, id),
-  
+  onTransparencyChange: cb => ipcRenderer.on('widget-transparency-changed', (_e, data) => cb(data)),
 
   loadWidget: name => ipcRenderer.invoke('load-widget', name),
   unloadWidget: name => ipcRenderer.invoke('unload-widget', name),
@@ -66,7 +65,6 @@ contextBridge.exposeInMainWorld('deskflex', {
 
   onWidgetStatusChanged: cb => ipcRenderer.on('widget-status-changed', (_e, id) => cb(id)),
   onPositionSaved: cb => ipcRenderer.on('widget-position-saved', (_e, data) => cb(data)),
-  onTransparencyChange: cb => ipcRenderer.on('widget-transparency-changed', (_e, data) => cb(data)),
   onWidgetLoaded: cb => ipcRenderer.on('widget-loaded', (_e, data) => cb(data)),
   onWidgetUnloaded: cb => ipcRenderer.on('widget-unloaded', (_e, data) => cb(data)),
   onWidgetToggled: cb => ipcRenderer.on('widget-toggled', (_e, data) => cb(data)),
