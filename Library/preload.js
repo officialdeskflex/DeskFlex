@@ -69,7 +69,6 @@ contextBridge.exposeInMainWorld('deskflex', {
   onWidgetStatusChanged: cb => ipcRenderer.on('widget-status-changed', (_e, id) => cb(id)),
   onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
   onPositionSaved: cb => ipcRenderer.on('widget-position-saved', (_e, data) => cb(data)),
-  onSizeReset: cb => ipcRenderer.on('widget-size-reset', (_e, data) => cb(data)),
   onTransparencyChange: cb => ipcRenderer.on('widget-transparency-changed', (_e, data) => cb(data)),
   onWidgetLoaded: cb => ipcRenderer.on('widget-loaded', (_e, data) => cb(data)),
   onWidgetUnloaded: cb => ipcRenderer.on('widget-unloaded', (_e, data) => cb(data)),

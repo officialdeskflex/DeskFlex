@@ -163,6 +163,7 @@ function registerIpcHandlers(
         y,
       });
     }
+    console.Consolelo
     return true;
   });
 
@@ -181,27 +182,21 @@ function registerIpcHandlers(
   });
 
   ipcMain.handle("widget-reset-size", (_e, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
-    const win = key && widgetWindowsRef.get(key);
-    const originalSize = key && windowSizesRef.get(key);
-    if (win && originalSize) {
-      const { x, y } = win.getBounds();
-      win.setBounds({
-        x,
-        y,
-        width: originalSize.width,
-        height: originalSize.height,
-      });
-      if (mainWindowRef?.webContents) {
-        mainWindowRef.webContents.send("widget-size-reset", {
-          id: identifier,
-          size: originalSize,
-        });
-      }
-      return true;
-    }
-    return false;
-  });
+  const key = resolveKey(widgetWindowsRef, identifier);
+  const win = key && widgetWindowsRef.get(key);
+  const originalSize = key && windowSizesRef.get(key);
+  if (win && originalSize) {
+    const { x, y } = win.getBounds();
+    win.setBounds({
+      x,
+      y,
+      width: originalSize.width,
+      height: originalSize.height,
+    });
+    return true;
+  }
+  return false;
+});
 
   // ------------------------------
   // Behavior Toggles
