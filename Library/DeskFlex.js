@@ -37,6 +37,7 @@ app.whenReady().then(() => {
   ipcMain.handle("deskflex:createLogsWindow", () => {
     createLogsWindow();
   });
+  createTray(mainWindow);
   runDeskFlexVersion();
 });
 
