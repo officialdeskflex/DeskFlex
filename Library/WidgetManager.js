@@ -6,9 +6,10 @@ const { substituteVariables, safeInt, resolveIniPath, getRelativeWidgetPath } = 
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
 const getImageSize = require("./Helper/ImageSize");
-const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue } = require("./ConfigFile");
+const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue,getWidgetPosition } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
+const { attachPositionHandlers } = require('./Helper/PositionHandler');
 const widgetWindows = new Map();
 const windowSizes = new Map();
 
@@ -25,7 +26,8 @@ function loadWidget(filePath) {
   const snapEdges           = getWidgetSnapEdges(widgetName) || "";
   const transparencyPercent = safeInt(getWidgetTransparency(widgetName), 100);
   const onHover             = Number(getWidgetOnHover(widgetName)) || 0;
-  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(widgetName)) === 1; 
+  const keepOnScreenVal     = Number(getWidgetKeepOnScreen(widgetName)) === 1;
+  const position            = safeInt(getWidgetPosition(widgetName), 0); 
 
   let widgetNames;
   try {
@@ -87,7 +89,7 @@ function loadWidget(filePath) {
   const finalWidth  = Math.round(winW);
   const finalHeight = Math.round(winH);
 
-  const win = createWidgetsWindow(iniPath, widgetName, widgetNames, vars, baseDir,finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal, transparencyPercent, onHover);
+  const win = createWidgetsWindow(iniPath, widgetName, widgetNames, vars, baseDir,finalWidth, finalHeight, draggable, keepOnScreenVal, clickVal, transparencyPercent, onHover,position);
 
   widgetWindows.set(iniPath, win);
   windowSizes.set(iniPath, { width: finalWidth, height: finalHeight });
@@ -158,7 +160,7 @@ function calculateWindowSize(secs) {
   return { width: maxR + 10, height: maxB + 10 };
 }
 
-function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height, draggable, keepOnScreen, clickVal, transparencyPercent, onHover) {
+function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height, draggable, keepOnScreen, clickVal, transparencyPercent, onHover,position) {
   const win = new BrowserWindow({
     width, height,
     frame: false,
@@ -252,6 +254,7 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
   win.on("close", e => {
     if (!app.isWidgetQuiting) { e.preventDefault(); win.hide(); }
   });
+  attachPositionHandlers(win, name, position);
   return win;
 }
 
