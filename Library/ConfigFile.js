@@ -78,9 +78,9 @@ function getFolderStructure(folderPath = getWidgetsPath()) {
   items.forEach((item) => {
     const itemPath = path.join(folderPath, item);
     const stats = fs.statSync(itemPath);
-    if (stats.isDirectory()) {
+    if (widgetNametats.isDirectory()) {
       result[item] = getFolderStructure(itemPath);
-    } else if (stats.isFile() && item.endsWith(".ini")) {
+    } else if (widgetNametats.isFile() && item.endsWith(".ini")) {
       result[item] = null;
     }
   });
@@ -160,18 +160,18 @@ const showStart = () => parseInt(getIniValue("DeskFlex", "ShowOnStart")) || 0;
 const getConfigEditorPath = () => getIniValue("DeskFlex", "ConfigEditor");
 
 // Flex Section Information Form Settings File.
-function getWidgetStatus(s) { return getIniValue(s, "Active"); }
-function getWidgetWindowX(s) { return getIniValue(s, "WindowX"); }
-function getWidgetWindowY(s) { return getIniValue(s, "WindowY"); }
-function getWidgetPosition(s) { return getIniValue(s, "Position"); }
-function getWidgetClickthrough(s) { return getIniValue(s, "ClickThrough"); }
-function getWidgetDraggable(s) { return getIniValue(s, "Draggable"); }
-function getWidgetSnapEdges(s) { return getIniValue(s, "SnapEdges"); }
-function getWidgetKeepOnScreen(s) { return getIniValue(s, "KeepOnScreen"); }
-function getWidgetOnHover(s) { return getIniValue(s, "OnHover"); }
-function getWidgetTransparency(s) { return getIniValue(s, "Transparency"); }
-function getWidgetFavorite(s) { return getIniValue(s, "Favorite"); }
-function getWidgetSavePosition(s) { return getIniValue(s, "SavePosition"); }
-function getWidgetLoadOrder(s) { return getIniValue(s, "LoadOrder"); }
+function getWidgetStatus(widgetName) { return getIniValue(widgetName, "Active"); }
+function getWidgetWindowX(widgetName) { return getIniValue(widgetName, "WindowX"); }
+function getWidgetWindowY(widgetName) { return getIniValue(widgetName, "WindowY"); }
+function getWidgetPosition(widgetName) { return getIniValue(widgetName, "Position"); }
+function getWidgetClickthrough(widgetName) { return getIniValue(widgetName, "ClickThrough"); }
+function getWidgetDraggable(widgetName) { return getIniValue(widgetName, "Draggable"); }
+function getWidgetSnapEdges(widgetName) { return getIniValue(widgetName, "SnapEdges"); }
+function getWidgetKeepOnScreen(widgetName) { return getIniValue(widgetName, "KeepOnScreen"); }
+function getWidgetOnHover(widgetName) { return getIniValue(widgetName, "OnHover"); }
+function getWidgetTransparency(widgetName) { return getIniValue(widgetName, "Transparency"); }
+function getWidgetFavorite(widgetName) { return getIniValue(widgetName, "Favorite"); }
+function getWidgetSavePosition(widgetName) { return getIniValue(widgetName, "SavePosition"); }
+function getWidgetLoadOrder(widgetName) { return getIniValue(widgetName, "LoadOrder"); }
 
 module.exports = { showStart, getConfigEditorPath, getIniValue, getActiveWidgets, getLogging, getDarkMode, getWidgetsPath, getDebugging, getFolderStructure, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue,setIniValue };
