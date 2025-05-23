@@ -78,9 +78,9 @@ function getFolderStructure(folderPath = getWidgetsPath()) {
   items.forEach((item) => {
     const itemPath = path.join(folderPath, item);
     const stats = fs.statSync(itemPath);
-    if (widgetNametats.isDirectory()) {
+    if (stats.isDirectory()) {
       result[item] = getFolderStructure(itemPath);
-    } else if (widgetNametats.isFile() && item.endsWith(".ini")) {
+    } else if (stats.isFile() && item.endsWith(".ini")) {
       result[item] = null;
     }
   });
