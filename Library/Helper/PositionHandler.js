@@ -1,6 +1,6 @@
 const { sendToBottom } = require("bottom-window");
 const { startDesktopDetector } = require("desktop-detector");
-const rw = require("restore-window");
+let isDesktop = false;
 
 function throttle(fn, wait) {
   let last = 0;
@@ -11,6 +11,22 @@ function throttle(fn, wait) {
       fn.apply(this, args);
     }
   };
+}
+
+function handleDesktopEvents(win, message) {
+  if (message.includes("(show desktop)") && !isDesktop) {
+    console.log("[desktop-detector]: Desktop is shown. Restoring window...");
+    if (!win.isDestroyed()) {
+      win.setAlwaysOnTop(false);
+      win.setAlwaysOnTop(true);
+    }
+    isDesktop = true;
+  } else if (message.includes("(apps shown)") && isDesktop) {
+    if (!win.isDestroyed()) {
+      win.setAlwaysOnTop(false);
+    }
+    isDesktop = false;
+  }
 }
 
 /**
@@ -24,16 +40,16 @@ function throttle(fn, wait) {
 function attachPositionHandlers(win, widgetName, position, throttleMs = 200) {
   if (position !== -1) return;
 
- /* const sendThrottled = throttle(() => {
+  /*const sendThrottled = throttle(() => {
     sendToBottom(widgetName, (err, output) => {
       if (err) console.error("sendToBottom error:", err.message);
       else console.log("sent to bottom (throttled):", output);
     });
   }, throttleMs);
 
-  win.on("move", sendThrottled);
+  win.on("move", sendThrottled);*/
 
-  win.on("focus", () => {
+ /* win.on("focus", () => {
     setTimeout(() => {
       sendToBottom(widgetName, (err, output) => {
         if (err) console.error("sendToBottom error:", err.message);
@@ -42,28 +58,13 @@ function attachPositionHandlers(win, widgetName, position, throttleMs = 200) {
     }, 100);
   });*/
 
-  // Start desktop detector
   const detector = startDesktopDetector({ quiet: false });
 
   detector.stdout.on("data", (data) => {
     const message = data.toString().trim().toLowerCase();
-    if (message.includes("(show desktop)")) {
-      console.log("[desktop-detector]: Desktop is shown. Restoring window...");
-      (async () => {
-        try {
-          const minimizeMsg = await rw.minimize(widgetName);
-          console.log("[minimize-window]:", minimizeMsg);
-
-          const restoreMsg = await rw.restore(widgetName);
-          console.log("[restore-window]:", restoreMsg);
-        } catch (err) {
-          console.error("[restore-window-error]:", err.message);
-        }
-      })();
-    }
+    handleDesktopEvents(win, message);
   });
 
-  // Kill detector when window is closed
   win.on("closed", () => {
     if (!detector.killed) {
       detector.kill();
