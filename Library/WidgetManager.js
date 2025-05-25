@@ -166,8 +166,6 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
     frame: false,
     transparent: true,
     minimizable:true,
-    //alwaysOnTop: true,
-    //focusable:false,
     skipTaskbar:true,
     resizable: false,
     useContentSize: true,

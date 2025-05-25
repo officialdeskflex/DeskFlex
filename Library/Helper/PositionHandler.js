@@ -40,23 +40,27 @@ function handleDesktopEvents(win, message) {
 function attachPositionHandlers(win, widgetName, position, throttleMs = 200) {
   if (position !== -1) return;
 
-  /*const sendThrottled = throttle(() => {
-    sendToBottom(widgetName, (err, output) => {
+  const sendThrottled = throttle(() => {
+    if(isDesktop){
+      sendToBottom(widgetName, (err, output) => {
       if (err) console.error("sendToBottom error:", err.message);
       else console.log("sent to bottom (throttled):", output);
     });
+
+    }
+
   }, throttleMs);
 
-  win.on("move", sendThrottled);*/
+  win.on("move", sendThrottled);
 
- /* win.on("focus", () => {
+  win.on("focus", () => {
     setTimeout(() => {
       sendToBottom(widgetName, (err, output) => {
         if (err) console.error("sendToBottom error:", err.message);
         else console.log("sent to bottom on focus:", output);
       });
     }, 100);
-  });*/
+  });
 
   const detector = startDesktopDetector({ quiet: false });
 
