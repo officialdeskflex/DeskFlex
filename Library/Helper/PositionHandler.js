@@ -24,7 +24,7 @@ function throttle(fn, wait) {
 function attachPositionHandlers(win, widgetName, position, throttleMs = 200) {
   if (position !== -1) return;
 
-  const sendThrottled = throttle(() => {
+ /* const sendThrottled = throttle(() => {
     sendToBottom(widgetName, (err, output) => {
       if (err) console.error("sendToBottom error:", err.message);
       else console.log("sent to bottom (throttled):", output);
@@ -40,14 +40,14 @@ function attachPositionHandlers(win, widgetName, position, throttleMs = 200) {
         else console.log("sent to bottom on focus:", output);
       });
     }, 100);
-  });
+  });*/
 
   // Start desktop detector
   const detector = startDesktopDetector({ quiet: false });
 
   detector.stdout.on("data", (data) => {
     const message = data.toString().trim().toLowerCase();
-    if (message.includes("(shown)")) {
+    if (message.includes("(show desktop)")) {
       console.log("[desktop-detector]: Desktop is shown. Restoring window...");
       (async () => {
         try {
