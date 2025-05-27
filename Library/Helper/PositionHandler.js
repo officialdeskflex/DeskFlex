@@ -1,51 +1,52 @@
-const { sendToBottom } = require("bottom-window");
-const {
-  addWindow,
-  removeWindow,
-  isDesktopShown,
-} = require("./DesktopWatcher");
+const { startDesktopDetector } = require("desktop-detector");
 
-function throttle(fn, wait) {
-  let last = 0;
-  return function throttled(...args) {
-    const now = Date.now();
-    if (now - last >= wait) {
-      last = now;
-      fn.apply(this, args);
+function forceSetNotAlwaysOnTop(win) {
+  win.setAlwaysOnTop(false);
+  const wasVisible = win.isVisible();
+  win.minimize();
+
+  setTimeout(() => {
+    if (wasVisible) {
+      win.restore();
     }
-  };
+    console.log(`[fix] Forced removal of AlwaysOnTop`);
+  }, 200); 
 }
 
-function attachPositionHandlers(win, widgetName, position, throttleMs = 200) {
-  if (position !== -1) return;
+function handleWindowPosition(position, widgetName, win) {
+  if (position !== 0) return;
 
-  const sendThrottled = throttle(() => {
-    if (isDesktopShown()) {
-      sendToBottom(widgetName, (err, output) => {
-        if (err) console.error("sendToBottom error:", err.message);
-        else console.log("sent to bottom (throttled):", output);
-      });
-    }
-  }, throttleMs);
+  let isDesktopVisible = false;
 
-  win.on("move", sendThrottled);
+  const proc = startDesktopDetector();
 
-  win.on("focus", () => {
-    if (isDesktopShown()) {
-      setTimeout(() => {
-        sendToBottom(widgetName, (err, output) => {
-          if (err) console.error("sendToBottom error:", err.message);
-          else console.log("sent to bottom on focus:", output);
-        });
-      }, 100);
+  proc.stdout.on("data", (data) => {
+    const message = data.toString().trim().toLowerCase();
+
+    if ((message.includes("(show desktop)") || message.includes("shown")) && !isDesktopVisible) {
+      isDesktopVisible = true;
+      win.setAlwaysOnTop(false); // Reset first
+      win.setAlwaysOnTop(true); // Force on top
+      console.log(`[${widgetName}] Desktop shown → setAlwaysOnTop(true)`);
+    } else if ((message.includes("(apps restored via desktopmode)") || message.includes("apps shown")) && isDesktopVisible) {
+      isDesktopVisible = false;
+
+      forceSetNotAlwaysOnTop(win); 
+      console.log(`[${widgetName}] Apps shown → setAlwaysOnTop(false)`);
     }
   });
 
-  addWindow(win);
+  proc.stderr.on("data", (data) => {
+    console.error(`[desktop-detector-error]: ${data.toString().trim()}`);
+  });
+
+  proc.on("exit", (code) => {
+    console.log(`[desktop-detector]: exited with code ${code}`);
+  });
 
   win.on("closed", () => {
-    removeWindow(win);
+    proc.kill();
   });
 }
 
-module.exports = { attachPositionHandlers };
+module.exports = { handleWindowPosition };

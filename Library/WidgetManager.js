@@ -9,7 +9,7 @@ const getImageSize = require("./Helper/ImageSize");
 const { getWidgetClickthrough, getWidgetWindowX, getWidgetWindowY, getWidgetDraggable, getWidgetSnapEdges, getWidgetTransparency, getWidgetOnHover, getWidgetsPath, getWidgetKeepOnScreen, setActiveValue,getWidgetPosition } = require("./ConfigFile");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
-const { attachPositionHandlers } = require('./Helper/PositionHandler');
+const { handleWindowPosition } = require("./Helper/PositionHandler");
 const widgetWindows = new Map();
 const windowSizes = new Map();
 
@@ -255,7 +255,7 @@ function createWidgetsWindow(name, widgetName, secs, vars, baseDir,width, height
   win.on("close", e => {
     if (!app.isWidgetQuiting) { e.preventDefault(); win.hide(); }
   });
-  attachPositionHandlers(win, name, position);
+  handleWindowPosition(position, name, win);
   return win;
 }
 
