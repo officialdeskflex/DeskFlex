@@ -14,7 +14,10 @@ function forceSetNotAlwaysOnTop(win) {
 }
 
 function handleWindowPosition(position, widgetName, win) {
-  if (position !== 0) return;
+  if (position == 1){
+    win.setAlwaysOnTop(true);
+    return;
+  }
 
   let isDesktopVisible = false;
 
