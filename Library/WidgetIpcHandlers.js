@@ -35,25 +35,7 @@ const registerIpcHandlers = (
   unloadWidgetRef = unloadWidget;
   mainWindowRef = mainWindow;
 
-  ipcMain.on("widget-set-ignore-mouse", (event, ignore) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) {
-      win.setIgnoreMouseEvents(ignore, {
-        forward: true,
-      });
-      mainWindowRef?.webContents?.send("widget-clickthrough-changed", {
-        id: win.widgetId,
-        value: Boolean(ignore),
-      });
-    }
-  });
-
-  ipcMain.handle("get-cursor-pos", () => {
-    return screen.getCursorScreenPoint();
-  });
-
   ipcMain.on("widget-move-window", (_e, initialX, initialY, id) => {
-
     const key = resolveKey(widgetWindowsRef, id);
     if (!key) return false;
 
@@ -99,84 +81,6 @@ const registerIpcHandlers = (
     });
 
     return true;
-  });
-
-  ipcMain.on("widget-move-window-drag", (_e, x, y, id) => {
-    const key = resolveKey(widgetWindowsRef, id);
-    if (!key) return false;
-
-    const win = widgetWindowsRef.get(key);
-    const size = windowSizesRef.get(key);
-    if (!win || !size || !win.isWidgetDraggable) return false;
-
-    if (win.keepOnScreen) {
-      const disp = screen.getDisplayMatching({
-        x,
-        y,
-        width: size.width,
-        height: size.height,
-      });
-      const wa = disp.workArea;
-      x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
-      y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
-    }
-
-    win.setBounds({
-      x: Math.round(x),
-      y: Math.round(y),
-      width: size.width,
-      height: size.height,
-    });
-
-    mainWindowRef?.webContents?.send("widget-position-changed", { id, x, y });
-
-    return true;
-  });
-
-  ipcMain.on("widget-save-window-position", (_e, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
-    const win = key && widgetWindowsRef.get(key);
-    if (!win) return false;
-    const { x, y } = win.getBounds();
-    setIniValue(identifier, "WindowX", `${x}`);
-    setIniValue(identifier, "WindowY", `${y}`);
-    mainWindowRef?.webContents?.send("widget-position-saved", {
-      id: identifier,
-      x,
-      y,
-    });
-    return true;
-  });
-
-  ipcMain.handle("widget-get-position", (_e, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
-    if (!key)
-      return {
-        x: 0,
-        y: 0,
-      };
-    const b = widgetWindowsRef.get(key).getBounds();
-    return {
-      x: b.x,
-      y: b.y,
-    };
-  });
-
-  ipcMain.handle("widget-reset-size", (_e, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
-    const win = key && widgetWindowsRef.get(key);
-    const originalSize = key && windowSizesRef.get(key);
-    if (win && originalSize) {
-      const { x, y } = win.getBounds();
-      win.setBounds({
-        x,
-        y,
-        width: originalSize.width,
-        height: originalSize.height,
-      });
-      return true;
-    }
-    return false;
   });
 
   /**
@@ -325,6 +229,10 @@ const registerIpcHandlers = (
     });
   });
 
+  /**
+   *  Loads a widget by name and notifies the main window.
+   */
+
   ipcMain.handle("widget-load-widget", (_e, widgetName) => {
     const win = loadWidgetRef(widgetName);
     win &&
@@ -332,17 +240,31 @@ const registerIpcHandlers = (
     return !!win;
   });
 
+  /**
+   * Unloads a widget by name and notifies the main window.
+   */
+
   ipcMain.handle("widget-unload-widget", (_e, widgetName) => {
     unloadWidgetRef(widgetName);
     mainWindowRef?.webContents?.send("widget-unloaded", { name: widgetName });
     return true;
   });
 
+  /**
+   * Checks whether a widget is currently loaded.
+   */
+
   ipcMain.handle("widget-is-widget-loaded", (_e, widgetName) => {
     const key = resolveKey(widgetWindowsRef, widgetName);
     return Boolean(key);
   });
 
+  /**
+   * Toggles the loaded state of a widget.
+   * Loads it if it's not loaded, unloads it if it is.
+   * Notifies the main window of the new state.
+   *
+   */
   ipcMain.handle("widget-toggle-widget", (_e, widgetName) => {
     const iniPath = resolveIniPath(path.join(getWidgetsPath(), widgetName));
     const key = resolveKey(widgetWindowsRef, widgetName);
@@ -361,6 +283,139 @@ const registerIpcHandlers = (
       value: newState,
     });
     return newState;
+  });
+
+  //====================================================================================//
+  //        IPC MAINLY USED IN HOVERHELPER.JS FOR DRAGGING WIDGET FUNCTIONALITY         //
+  //====================================================================================//
+
+  /**
+   * Sets whether the widget window should ignore mouse events.
+   * This allows the window to become "click-through" when transparent.
+   */
+
+  ipcMain.on("widget-set-ignore-mouse", (event, ignore) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      win.setIgnoreMouseEvents(ignore, {
+        forward: true,
+      });
+      mainWindowRef?.webContents?.send("widget-clickthrough-changed", {
+        id: win.widgetId,
+        value: Boolean(ignore),
+      });
+    }
+  });
+
+  /**
+   * Returns the current cursor position on screen.
+   * Used by widgets to determine whether the cursor is hovering over them.
+   */
+
+  ipcMain.handle("get-cursor-pos", () => {
+    return screen.getCursorScreenPoint();
+  });
+
+  //====================================================================================//
+  //        IPC MAINLY USED IN WIDGETDRAG.JS FOR DRAGGING WIDGET FUNCTIONALITY         //
+  //====================================================================================//
+
+  /**
+   * Returns the current position (x, y) of the widget window.
+   * Used to store the original position before dragging starts.
+   */
+
+  ipcMain.handle("widget-get-position", (_e, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    if (!widgetKey)
+      return {
+        x: 0,
+        y: 0,
+      };
+    const b = widgetWindowsRef.get(widgetKey).getBounds();
+    return {
+      x: b.x,
+      y: b.y,
+    };
+  });
+
+  /**
+   * Resets the widget window to its original size based on saved dimensions.
+   * Avoids size drift due to user resizing or system behavior.
+   */
+
+  ipcMain.handle("widget-reset-size", (_e, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
+    const originalSize = widgetKey && windowSizesRef.get(widgetKey);
+    if (win && originalSize) {
+      const { x, y } = win.getBounds();
+      win.setBounds({
+        x,
+        y,
+        width: originalSize.width,
+        height: originalSize.height,
+      });
+      return true;
+    }
+    return false;
+  });
+
+  /**
+   * Moves the widget window to the new (x, y) coordinates while dragging.
+   * Applies screen bounds constraints if 'keepOnScreen' is enabled.
+   */
+
+  ipcMain.on("widget-move-window-drag", (_e, x, y, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    if (!widgetKey) return false;
+
+    const win = widgetWindowsRef.get(widgetKey);
+    const size = windowSizesRef.get(widgetKey);
+    if (!win || !size || !win.isWidgetDraggable) return false;
+
+    if (win.keepOnScreen) {
+      const disp = screen.getDisplayMatching({
+        x,
+        y,
+        width: size.width,
+        height: size.height,
+      });
+      const wa = disp.workArea;
+      x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
+      y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
+    }
+
+    win.setBounds({
+      x: Math.round(x),
+      y: Math.round(y),
+      width: size.width,
+      height: size.height,
+    });
+
+    mainWindowRef?.webContents?.send("widget-position-changed", { widgetKey, x, y });
+
+    return true;
+  });
+
+  /**
+   * Saves the final position of the widget window after dragging ends.
+   * Persists (x, y) into DeskFlex.ini file for restoration later.
+   */
+
+  ipcMain.on("widget-save-window-position", (_e, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
+    if (!win) return false;
+    const { x, y } = win.getBounds();
+    setIniValue(widgetName, "WindowX", `${x}`);
+    setIniValue(widgetName, "WindowY", `${y}`);
+    mainWindowRef?.webContents?.send("widget-position-saved", {
+      id: widgetName,
+      x,
+      y,
+    });
+    return true;
   });
 };
 

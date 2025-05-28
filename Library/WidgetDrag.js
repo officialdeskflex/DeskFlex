@@ -62,7 +62,6 @@ const { ipcRenderer } = require("electron");
     const dx = e.screenX - start.x;
     const dy = e.screenY - start.y;
     ipcRenderer.send("widget-move-window-drag", orig.x + dx, orig.y + dy, widgetName);
-    // Removed enforceSize here to reduce CPU usage
   });
 
   const endDrag = async e => {
