@@ -35,12 +35,17 @@ const registerIpcHandlers = (
   unloadWidgetRef = unloadWidget;
   mainWindowRef = mainWindow;
 
-  ipcMain.on("widget-move-window", (_e, initialX, initialY, id) => {
-    const key = resolveKey(widgetWindowsRef, id);
-    if (!key) return false;
+  /**
+   * Moves the widget window to the new (x, y) coordinates while dragging.
+   * Applies screen bounds constraints if 'keepOnScreen' is enabled.
+   */
 
-    const win = widgetWindowsRef.get(key);
-    const size = windowSizesRef.get(key);
+  ipcMain.on("widget-move-window", (_e, initialX, initialY, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    if (!widgetKey) return false;
+
+    const win = widgetWindowsRef.get(widgetKey);
+    const size = windowSizesRef.get(widgetKey);
     if (!win || !size || !win.isWidgetDraggable) return false;
 
     let adjustedX = initialX;
@@ -71,11 +76,11 @@ const registerIpcHandlers = (
       height: size.height,
     });
 
-    setIniValue(id, "WindowX", `${adjustedX}`);
-    setIniValue(id, "WindowY", `${adjustedY}`);
+    setIniValue(widgetName, "WindowX", `${adjustedX}`);
+    setIniValue(widgetName, "WindowY", `${adjustedY}`);
 
     mainWindowRef?.webContents?.send("widget-position-changed", {
-      id,
+      widgetName,
       x: adjustedX,
       y: adjustedY,
     });
@@ -94,8 +99,8 @@ const registerIpcHandlers = (
    */
 
   ipcMain.on("widget-set-hoverType", (_e, intValue, widgetName) => {
-    const key = resolveKey(widgetWindowsRef, widgetName);
-    const win = key && widgetWindowsRef.get(key);
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
     if (!win) return;
     const newType = Number(intValue);
     // persist in INI
@@ -149,8 +154,8 @@ const registerIpcHandlers = (
    */
 
   ipcMain.on("widget-set-draggable", (_e, intValue, widgetName) => {
-    const key = resolveKey(widgetWindowsRef, widgetName);
-    const win = key && widgetWindowsRef.get(key);
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
     if (!win) return;
     const draggable = Boolean(Number(intValue));
     win.isWidgetDraggable = draggable;
@@ -169,8 +174,8 @@ const registerIpcHandlers = (
    */
 
   ipcMain.on("widget-set-keep-on-screen", (_e, intValue, widgetName) => {
-    const key = resolveKey(widgetWindowsRef, widgetName);
-    const win = key && widgetWindowsRef.get(key);
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
     if (!win) return;
     const keepOnScreen = Boolean(Number(intValue));
     win.keepOnScreen = keepOnScreen;
@@ -189,8 +194,9 @@ const registerIpcHandlers = (
    */
 
   ipcMain.on("widget-set-transparency", (_e, paercentValue, widgetName) => {
-    const key = resolveKey(widgetWindowsRef, widgetName);
-    const win = key && widgetWindowsRef.get(key);
+    console.log(`Setting new transparency:${paercentValue}`)
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
     if (!win) return;
     const pct = parseFloat(paercentValue);
     if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
@@ -255,8 +261,8 @@ const registerIpcHandlers = (
    */
 
   ipcMain.handle("widget-is-widget-loaded", (_e, widgetName) => {
-    const key = resolveKey(widgetWindowsRef, widgetName);
-    return Boolean(key);
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    return Boolean(widgetKey);
   });
 
   /**
@@ -393,7 +399,11 @@ const registerIpcHandlers = (
       height: size.height,
     });
 
-    mainWindowRef?.webContents?.send("widget-position-changed", { widgetKey, x, y });
+    mainWindowRef?.webContents?.send("widget-position-changed", {
+      widgetKey,
+      x,
+      y,
+    });
 
     return true;
   });
