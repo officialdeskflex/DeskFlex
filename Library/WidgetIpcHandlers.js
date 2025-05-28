@@ -205,7 +205,8 @@ const registerIpcHandlers = (
     }
     win.setOpacity(pct / 100);
     setIniValue(widgetName, "Transparency", paercentValue);
-
+    
+    win.webContents.send("widget-transparency-changed", pct);
     mainWindowRef?.webContents?.send("widget-transparency-changed", {
       id: widgetName,
       value: pct,
