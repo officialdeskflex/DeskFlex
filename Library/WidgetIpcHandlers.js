@@ -25,7 +25,6 @@ const registerIpcHandlers = (
   if (handlersRegistered) return;
 
   if (!mainWindow) {
-    //console.warn("Skipping handler registration: mainWindow is undefined");
     return;
   }
 
@@ -35,17 +34,6 @@ const registerIpcHandlers = (
   loadWidgetRef = loadWidget;
   unloadWidgetRef = unloadWidget;
   mainWindowRef = mainWindow;
-
-  ipcMain.on("widget-set-opacity", (event, opacity) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) {
-      win.setOpacity(opacity);
-      mainWindowRef?.webContents?.send("widget-opacity-changed", {
-        id: win.widgetId,
-        value: opacity,
-      });
-    }
-  });
 
   ipcMain.on("widget-set-ignore-mouse", (event, ignore) => {
     const win = BrowserWindow.fromWebContents(event.sender);
@@ -65,7 +53,6 @@ const registerIpcHandlers = (
   });
 
   ipcMain.on("widget-move-window", (_e, initialX, initialY, id) => {
-    //console.log(`Moved Window Called - Initial: X=${initialX}, Y=${initialY}, ID=${id}`);
 
     const key = resolveKey(widgetWindowsRef, id);
     if (!key) return false;
@@ -110,8 +97,6 @@ const registerIpcHandlers = (
       x: adjustedX,
       y: adjustedY,
     });
-
-    ///console.log(`Moved Window - Adjusted: X=${adjustedX}, Y=${adjustedY}, ID=${id}`);
 
     return true;
   });
@@ -205,7 +190,6 @@ const registerIpcHandlers = (
    */
 
   ipcMain.on("widget-set-hoverType", (_e, intValue, widgetName) => {
-    console.log(`Called ${intValue} ${widgetId}`);
     const key = resolveKey(widgetWindowsRef, widgetName);
     const win = key && widgetWindowsRef.get(key);
     if (!win) return;
@@ -220,6 +204,23 @@ const registerIpcHandlers = (
       id: widgetName,
       value: newType,
     });
+  });
+
+  /**
+   * IPC helper for the OnHover action.
+   * When the mouse hovers over the widget, this sets its opacity (transparency).
+   * The opacity value ranges from 0 (fully transparent) to 1 (fully opaque).
+   */
+
+  ipcMain.on("widget-set-opacity", (event, opacityValue) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      win.setOpacity(opacityValue);
+      mainWindowRef?.webContents?.send("widget-opacity-changed", {
+        id: win.widgetId,
+        value: opacityValue,
+      });
+    }
   });
 
   /**
