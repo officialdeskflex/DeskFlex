@@ -14,10 +14,8 @@
     "electron": "^35.2.0"
   },
   "dependencies": {
-    "bottom-window": "^1.0.0",
-    "desktop-detector": "^1.3.0",
     "ini": "^5.0.0",
-    "restore-window": "^1.1.0",
+    "isdesktop-visible": "^1.0.0",
     "win-geometry": "^1.1.0",
     "winreg": "^1.2.5"
   }

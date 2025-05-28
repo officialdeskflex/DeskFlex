@@ -1,36 +1,25 @@
-const { startDesktopDetector } = require("desktop-detector");
+const { monitorDesktop } = require("isdesktop-visible"); 
 const { EventEmitter } = require("events");
 
 const desktopEvents = new EventEmitter();
-let desktopDetectorProcess = null;
+let desktopMonitorProcess = null;
 let isDesktopVisible = false;
 
-const widgetList = []; // Track all widgets
+const widgetList = [];
 
-function startDetectorOnce() {
-  if (desktopDetectorProcess) return;
+function startMonitorOnce() {
+  if (desktopMonitorProcess) return;
 
-  desktopDetectorProcess = startDesktopDetector();
+  desktopMonitorProcess = monitorDesktop((state, rawLine) => {
+    const message = rawLine.trim();
 
-  desktopDetectorProcess.stdout.on("data", (data) => {
-    const message = data.toString().trim().toLowerCase();
-
-    if ((message.includes("(show desktop)") || message.includes("shown")) && !isDesktopVisible) {
+    if (state === "visible" && !isDesktopVisible) {
       isDesktopVisible = true;
       desktopEvents.emit("desktop-shown");
-    } else if ((message.includes("(apps restored via desktopmode)") || message.includes("apps shown")) && isDesktopVisible) {
+    } else if (state === "hidden" && isDesktopVisible) {
       isDesktopVisible = false;
       desktopEvents.emit("apps-shown");
     }
-  });
-
-  desktopDetectorProcess.stderr.on("data", (data) => {
-    console.error(`[desktop-detector-error]: ${data.toString().trim()}`);
-  });
-
-  desktopDetectorProcess.on("exit", (code) => {
-    console.log(`[desktop-detector]: exited with code ${code}`);
-    desktopDetectorProcess = null;
   });
 }
 
@@ -57,30 +46,28 @@ function handleWindowPosition(position, widgetName, win) {
     return;
   }
 
-  startDetectorOnce(); // Ensure only one detector
+  startMonitorOnce();
 
-  widgetList.push(win); // Add to list to maintain order
+  if (!widgetList.includes(win)) {
+    widgetList.push(win);
+  }
 
-  // Show Desktop → Reorder widgets
   const onDesktopShown = () => {
-    // Reset z-order based on load order
     widgetList.forEach((w) => {
       if (w && !w.isDestroyed()) {
-        w.setAlwaysOnTop(false); // Reset
+        w.setAlwaysOnTop(false);
       }
     });
 
-    // Reapply alwaysOnTop in order — last one ends up on top
     widgetList.forEach((w) => {
       if (w && !w.isDestroyed()) {
         w.setAlwaysOnTop(true);
       }
     });
 
-    console.log(`[${widgetName}] Desktop shown → z-order reset (latest widget on top)`);
+    console.log(`[${widgetName}] Desktop shown → z-order reset`);
   };
 
-  // Apps restored → remove all always-on-top
   const onAppsShown = () => {
     if (!win.isDestroyed()) {
       forceSetNotAlwaysOnTop(win);
@@ -91,12 +78,10 @@ function handleWindowPosition(position, widgetName, win) {
   desktopEvents.on("desktop-shown", onDesktopShown);
   desktopEvents.on("apps-shown", onAppsShown);
 
-  // Clean up on window close
   win.on("closed", () => {
     desktopEvents.off("desktop-shown", onDesktopShown);
     desktopEvents.off("apps-shown", onAppsShown);
 
-    // Remove from list
     const index = widgetList.indexOf(win);
     if (index !== -1) widgetList.splice(index, 1);
   });
