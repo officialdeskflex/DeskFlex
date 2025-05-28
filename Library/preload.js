@@ -1,7 +1,7 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
-const { getDarkMode, getFolderStructure, getActiveWidgets, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickthrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue, setIniValue } = require('./ConfigFile');
+const { getDarkMode, getFolderStructure, getActiveWidgets, getWidgetsPath, getWidgetStatus, getWidgetWindowX, getWidgetWindowY, getWidgetPosition, getWidgetClickThrough, getWidgetDraggable, getWidgetSnapEdges, getWidgetKeepOnScreen, getWidgetOnHover, getWidgetTransparency, getWidgetFavorite, getWidgetSavePosition, getWidgetLoadOrder, setActiveValue, setIniValue } = require('./ConfigFile');
 const { getWidgetInfo, hasWidgetInfoSection } = require('./ReadInfoSection');
 
 contextBridge.exposeInMainWorld('deskflex', {
@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   getWidgetWindowX: name => getWidgetWindowX(name),
   getWidgetWindowY: name => getWidgetWindowY(name),
   getWidgetPosition: name => getWidgetPosition(name),
-  getWidgetClickthrough: name => getWidgetClickthrough(name),
+  getWidgetClickThrough: (widgetName) => getWidgetClickThrough(widgetName),
   getWidgetDraggable: name => getWidgetDraggable(name),
   getWidgetSnapEdges: name => getWidgetSnapEdges(name),
   getWidgetKeepOnScreen: name => getWidgetKeepOnScreen(name),
@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   setOpacity: (opacity, widgetId) => ipcRenderer.send("widget-set-opacity", opacity, widgetId),
   setDraggable: (enabled, widgetId) => ipcRenderer.send("widget-set-draggable", enabled ? 1 : 0, widgetId),
   setKeepOnScreen: (enabled, widgetId) => ipcRenderer.send("widget-set-keep-on-screen", enabled ? 1 : 0, widgetId),
-  setClickthrough: (enabled, widgetId) => ipcRenderer.send("widget-set-clickthrough", enabled ? 1 : 0, widgetId),
+  setClickThrough: (enabled, widgetId) => ipcRenderer.send("widget-set-clickthrough", enabled ? 1 : 0, widgetId),
   setFavorite: (enabled, widgetName) => ipcRenderer.send("widget-set-favourite", enabled ? 1 : 0 , widgetName),
 
   setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),

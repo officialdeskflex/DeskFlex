@@ -2,7 +2,11 @@
 const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey, resolveIniPath } = require("./Utils");
-const {getWidgetsPath,getWidgetStatus,setIniValue} = require("./ConfigFile");
+const {
+  getWidgetsPath,
+  getWidgetStatus,
+  setIniValue,
+} = require("./ConfigFile");
 
 let widgetWindowsRef;
 let windowSizesRef;
@@ -144,25 +148,6 @@ const registerIpcHandlers = (
     return true;
   });
 
-  ipcMain.on("widget-set-hoverType", (_e, rawVal, widgetId) => {
-    console.log(`Called ${rawVal} ${widgetId}`);
-    const key = resolveKey(widgetWindowsRef, widgetId);
-    const win = key && widgetWindowsRef.get(key);
-    if (!win) return;
-    const newType = Number(rawVal);
-    // persist in INI
-    setIniValue(widgetId, "OnHover", rawVal);
-    // update our internal flag
-    win.onHoverBehavior = newType;
-    // push to the renderer
-    win.webContents.send("widget-set-hoverType", newType);
-    // notify the main UI
-    mainWindowRef?.webContents?.send("widget-hoverType-changed", {
-      id: widgetId,
-      value: newType,
-    });
-  });
-
   ipcMain.on("widget-save-window-position", (_e, identifier) => {
     const key = resolveKey(widgetWindowsRef, identifier);
     const win = key && widgetWindowsRef.get(key);
@@ -209,6 +194,40 @@ const registerIpcHandlers = (
     return false;
   });
 
+  /**
+   * Set the Behaviour of widget on Hover.
+   * intValue may only 0,1,2 or 3.
+   * 0 (Do Nothing - default) : No action is taken.
+   * 1 (Hide) : Skin will fade between the value in TransparencyPercent and hidden.If no TransparencyPercent is defined, it will simply fade between fully visible and hidden.
+   * 2 (Fade in) : Skin will fade between the value in TransparencyPercent and fully visible.
+   * 3 (Fade out) : Skin will fade between the value in TransparencyPercent and hidden.
+   *  widgetName e.g:Test\Test.ini.
+   */
+
+  ipcMain.on("widget-set-hoverType", (_e, intValue, widgetName) => {
+    console.log(`Called ${intValue} ${widgetId}`);
+    const key = resolveKey(widgetWindowsRef, widgetName);
+    const win = key && widgetWindowsRef.get(key);
+    if (!win) return;
+    const newType = Number(intValue);
+    // persist in INI
+    setIniValue(widgetName, "OnHover", intValue);
+    // update our internal flag
+    win.onHoverBehavior = newType;
+
+    win.webContents.send("widget-set-hoverType", newType);
+    mainWindowRef?.webContents?.send("widget-hoverType-changed", {
+      id: widgetName,
+      value: newType,
+    });
+  });
+
+  /**
+   * Set or Unset the widget from favourite list.
+   * intValue may only 0 or 1.
+   * widgetName e.g:Test\Test.ini.
+   */
+
   ipcMain.on("widget-set-favourite", (_e, value, widgetName) => {
     setIniValue(widgetName, "Favorite", value);
     const favValue = Boolean(Number(value));
@@ -218,64 +237,89 @@ const registerIpcHandlers = (
     });
   });
 
-  ipcMain.on("widget-set-draggable", (_e, rawVal, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
+  /**
+   * Enable or Disable the widget from being drag via mouse.
+   * intValue may only 0 or 1.
+   * widgetName e.g:Test\Test.ini.
+   */
+
+  ipcMain.on("widget-set-draggable", (_e, intValue, widgetName) => {
+    const key = resolveKey(widgetWindowsRef, widgetName);
     const win = key && widgetWindowsRef.get(key);
     if (!win) return;
-    const draggable = Boolean(Number(rawVal));
+    const draggable = Boolean(Number(intValue));
     win.isWidgetDraggable = draggable;
-    setIniValue(identifier, "Draggable", rawVal);
+    setIniValue(widgetName, "Draggable", intValue);
     win.webContents.send("widget-draggable-changed", draggable);
     mainWindowRef?.webContents?.send("widget-draggable-changed", {
-      id: identifier,
+      id: widgetName,
       value: draggable,
     });
   });
 
-  ipcMain.on("widget-set-keep-on-screen", (_e, rawVal, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
+  /**
+   * Keep the widget on the screen rather than overflow the screen.
+   * intValue may only 0 or 1.
+   * widgetName e.g:Test\Test.ini.
+   */
+
+  ipcMain.on("widget-set-keep-on-screen", (_e, intValue, widgetName) => {
+    const key = resolveKey(widgetWindowsRef, widgetName);
     const win = key && widgetWindowsRef.get(key);
     if (!win) return;
-    const keepOnScreen = Boolean(Number(rawVal));
+    const keepOnScreen = Boolean(Number(intValue));
     win.keepOnScreen = keepOnScreen;
-    setIniValue(identifier, "KeepOnScreen", rawVal);
+    setIniValue(widgetName, "KeepOnScreen", intValue);
     mainWindowRef?.webContents?.send("widget-keep-on-screen-changed", {
-      id: identifier,
+      id: widgetName,
       value: keepOnScreen,
     });
   });
 
-  ipcMain.on("widget-set-transparency", (_e, rawPercent, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
+  /**
+   * Change the Transparency Value of widget.
+   * percentValue in the format e.g:50%.Range from 0% to 100%.
+   * widgetName e.g:Test\Test.ini.
+   * Note:Tranparency 0% means that the widget is hidden and 100% means the widget is fully visible.
+   */
+
+  ipcMain.on("widget-set-transparency", (_e, paercentValue, widgetName) => {
+    const key = resolveKey(widgetWindowsRef, widgetName);
     const win = key && widgetWindowsRef.get(key);
     if (!win) return;
-    const pct = parseFloat(rawPercent);
+    const pct = parseFloat(paercentValue);
     if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
-      console.warn("Invalid transparency value:", rawPercent);
+      console.warn("Invalid transparency value:", paercentValue);
       return;
     }
     win.setOpacity(pct / 100);
-    setIniValue(identifier, "Transparency", rawPercent);
+    setIniValue(widgetName, "Transparency", paercentValue);
 
     mainWindowRef?.webContents?.send("widget-transparency-changed", {
-      id: identifier,
+      id: widgetName,
       value: pct,
     });
   });
 
-  ipcMain.on("widget-set-clickthrough", (_e, rawVal, identifier) => {
-    const key = resolveKey(widgetWindowsRef, identifier);
-    const win = key && widgetWindowsRef.get(key);
+  /**
+   *  Change the Clickthrough of the widget.
+   *  intValue may only 0 or 1.
+   *  widgetName e.g:Test\Test.ini.
+   */
+
+  ipcMain.on("widget-set-clickthrough", (_e, intValue, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    const win = widgetKey && widgetWindowsRef.get(widgetKey);
     if (!win) return;
-    const clickThrough = Boolean(Number(rawVal));
+    const clickThrough = Boolean(Number(intValue));
     win.setIgnoreMouseEvents(clickThrough, {
       forward: true,
     });
     win.clickThrough = clickThrough;
-    setIniValue(identifier, "ClickThrough", rawVal);
+    setIniValue(widgetName, "ClickThrough", intValue);
 
     mainWindowRef?.webContents?.send("widget-clickthrough-changed", {
-      id: identifier,
+      id: widgetName,
       value: clickThrough,
     });
   });
@@ -319,4 +363,4 @@ const registerIpcHandlers = (
   });
 };
 
-module.exports = {registerIpcHandlers,};
+module.exports = { registerIpcHandlers };

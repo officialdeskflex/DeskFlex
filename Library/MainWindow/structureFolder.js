@@ -15,7 +15,7 @@ const posMap = {
 };
 
 const iniOptionMap = {
-  "Click Through": { iniKey: "ClickThrough", getter: window.deskflex.getWidgetClickthrough },
+  "Click Through": { iniKey: "ClickThrough", getter: window.deskflex.getWidgetClickThrough },
   "Draggable":       { iniKey: "Draggable",   getter: window.deskflex.getWidgetDraggable    },
   "Snap Edges":      { iniKey: "SnapEdges",     getter: window.deskflex.getWidgetSnapEdges      },
   "Keep On Screen":  { iniKey: "KeepOnScreen", getter: window.deskflex.getWidgetKeepOnScreen  },
