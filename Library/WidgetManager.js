@@ -276,12 +276,12 @@ function createWidgetsWindow(
     }
   }
 
-  const dragPath = path.join(__dirname, "WidgetDrag.js").replace(/\\/g, "/");
+  const dragPath = path.join(__dirname, "WidgetProcess/WidgetDrag.js").replace(/\\/g, "/");
   const actionsPath = path
-    .join(__dirname, "WidgetActions.js")
+    .join(__dirname, "WidgetProcess/WidgetActions.js")
     .replace(/\\/g, "/");
   const hoverHelperPath = path
-    .join(__dirname, "Helper/HoverHelper.js")
+    .join(__dirname, "WidgetProcess/HoverHelper.js")
     .replace(/\\/g, "/");
   const widgetPath = name.replace(/\\/g, "\\\\");
 
