@@ -1,12 +1,18 @@
 // event-handlers.js
 // Centralized event handling
 
-import stateManager from './state-manager.js';
-import { iniOptionMap, iniSetterMap, posReverseMap, hoverMap } from './constants.js';
-import { createReverseMap } from './utils.js';
-import { setDropdown, populateDropdown } from './dropdown-manager.js';
-import { updateOptionUI } from './settings-manager.js';
-import { handleActiveWidgetSelection, onLoadUnload } from './widget-handler.js';
+import stateManager from "./state-manager.js";
+import {
+  iniOptionMap,
+  iniSetterMap,
+  posReverseMap,
+  hoverMap,
+  posMap
+} from "./constants.js";
+import { createReverseMap } from "./utils.js";
+import { setDropdown, populateDropdown } from "./dropdown-manager.js";
+import { updateOptionUI } from "./settings-manager.js";
+import { handleActiveWidgetSelection, onLoadUnload } from "./widget-handler.js";
 
 export function setupPositionInputHandlers() {
   const xInput = document.querySelector(".coords-input-x");
@@ -17,7 +23,11 @@ export function setupPositionInputHandlers() {
       if (e.key === "Enter") {
         const x = parseInt(xInput.value, 10) || 0;
         const y = parseInt(yInput.value, 10) || 0;
-        window.deskflex.moveWidgetWindow(x, y, stateManager.currentWidgetSection);
+        window.deskflex.moveWidgetWindow(
+          x,
+          y,
+          stateManager.currentWidgetSection
+        );
       }
     });
   });
@@ -29,7 +39,10 @@ export function setupTransparencyMenuHandlers() {
       e.preventDefault();
       const text = option.textContent.trim();
       const percent = parseInt(text.replace("%", ""), 10);
-      window.deskflex.setTransparency(percent, stateManager.currentWidgetSection);
+      window.deskflex.setTransparency(
+        percent,
+        stateManager.currentWidgetSection
+      );
       setDropdown("transparency", text);
     });
   });
@@ -59,7 +72,7 @@ export function setupHoverMenuHandlers() {
       const label = option.textContent.trim();
       const code = reverseHoverMap[label];
       if (code === undefined) return;
-      
+
       window.deskflex.setHoverType(code, stateManager.currentWidgetSection);
       console.log("Called the IPC");
       setDropdown("hover", label);
@@ -69,18 +82,18 @@ export function setupHoverMenuHandlers() {
 
 export function setupCheckboxHandlers() {
   const { checkboxContainer } = stateManager.uiElements;
-  
+
   checkboxContainer.addEventListener("click", async (e) => {
     const option = e.target.closest(".option");
     if (!option || option.classList.contains("disabled")) return;
-    
+
     const label = option.querySelector("label").textContent.trim();
     const mapping = iniOptionMap[label];
     const setter = iniSetterMap[label];
     const sec = stateManager.currentWidgetSection;
-    
+
     if (!mapping || !sec || typeof setter !== "function") return;
-    
+
     const oldVal = Number(mapping.getter(sec));
     const newVal = oldVal === 1 ? 0 : 1;
     option.classList.toggle("checked", newVal === 1);
@@ -120,18 +133,19 @@ export function setupDeskflexEventListeners() {
   });
 
   window.deskflex.onZposChange((data) => {
+    console.log(`Zpos changed for ${data.widget}: ${data.value}`);
     if (data.widget === stateManager.currentWidgetSection) {
-      const text = data.value === "topmost" ? "Stay topmost" : "Normal";
-      setDropdown("zpos", text);
+      const text = posMap[data.value];
+      setDropdown("position", text);
     }
   });
 }
 
 export function setupMainButtonHandlers() {
   const { loadButton, editButton } = stateManager.uiElements;
-  
+
   loadButton.addEventListener("click", onLoadUnload);
-  
+
   editButton.addEventListener("click", () => {
     if (stateManager.currentFlexFilePath) {
       window.deskflex.openConfigSettings(stateManager.currentFlexFilePath);

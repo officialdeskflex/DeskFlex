@@ -47,6 +47,12 @@ const registerIpcHandlers = (
     if (!win) return;
 
     updateWindowPosition(Number(newPos), widgetName, win);
+
+    mainWindowRef?.webContents?.send("widget-zpos-changed", {
+      widget: widgetName,
+      value: newPos,
+    });
+
     setIniValue(widgetName, "Position", `${newPos}`);
   });
 

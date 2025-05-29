@@ -83,6 +83,21 @@ const widgetUtils = {
       );
     }
   },
+  zpos: ([val, widgetName], currentWidgetName) => {
+    if (!["0", "1"].includes(String(val))) {
+      log(
+        `Invalid zpos value: ${val}. Expected "0" or "1".`,
+        "error",
+        widgetName || currentWidgetName
+      );
+    } else {
+      ipcRenderer.send(
+        "widget-set-zpos",
+        val,
+        widgetName || currentWidgetName
+      );
+    }
+  },
   toggledraggable: async ([widgetName], currentWidgetName) => {
     const sec =
       widgetName && widgetName.trim() ? widgetName : currentWidgetName;
