@@ -150,7 +150,9 @@
     <!-- Common controls -->
     <div class="div-line"></div>
     <div class="button-Left-row">
-      <button id="Refresh All" onclick="resetPlaceholders()">Refresh All</button>
+      <button id="Refresh All" onclick="resetPlaceholders()">
+        Refresh All
+      </button>
       <button id="open-settings">Edit Settings</button>
       <button onclick="createLogsWindow()">Open Log</button>
     </div>
@@ -184,6 +186,16 @@
     </script>
 
     <script src="script.js"></script>
-    <script src="structureFolder.js"></script>
+    <script type="module" src="constants.js"></script>
+    <script type="module" src="utils.js"></script>
+    <script type="module" src="state-manager.js"></script>
+    <script type="module" src="ui-controller.js"></script>
+    <script type="module" src="dropdown-manager.js"></script>
+    <script type="module" src="settings-manager.js"></script>
+    <script type="module" src="tree-renderer.js"></script>
+    <script type="module" src="selection-handler.js"></script>
+    <script type="module" src="widget-handler.js"></script>
+    <script type="module" src="event-handlers.js"></script>
+    <script type="module" src="main.js"></script>
   </body>
 </html>

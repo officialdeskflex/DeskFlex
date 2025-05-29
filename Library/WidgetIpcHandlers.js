@@ -96,8 +96,8 @@ const registerIpcHandlers = (
 
     mainWindowRef?.webContents?.send("widget-position-changed", {
       id: widgetName,
-      x,
-      y,
+      x: adjustedX,
+      y: adjustedY,
     });
 
     return true;
