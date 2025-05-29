@@ -6,15 +6,15 @@ let windowSettings, checkboxContainer, addWidgetLink;
 
 const originalSettings = {};
 
-  const posMap = {
-    1: "Stay Topmost",
-    0: "Normal",
-  };
+const posMap = {
+  1: "Stay Topmost",
+  0: "Normal",
+};
 
-  const posReverseMap = {
-    "Stay Topmost": 1,
-    "Normal": 0,
-  };
+const posReverseMap = {
+  "Stay Topmost": 1,
+  Normal: 0,
+};
 
 const iniOptionMap = {
   "Click Through": {
@@ -102,10 +102,8 @@ window.addEventListener("DOMContentLoaded", () => {
     [xInput, yInput].forEach((input) => {
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-          // parse both coords (fallback to zero)
           const x = parseInt(xInput.value, 10) || 0;
           const y = parseInt(yInput.value, 10) || 0;
-          // send the IPC call
           window.deskflex.moveWidgetWindow(x, y, window.currentWidgetSection);
         }
       });
@@ -122,7 +120,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-    document.querySelectorAll("#positionMenu a").forEach((option) => {
+  document.querySelectorAll("#positionMenu a").forEach((option) => {
     option.addEventListener("click", (e) => {
       e.preventDefault();
       const label = option.textContent.trim();
@@ -134,7 +132,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-
 
   const reverseHoverMap = Object.fromEntries(
     Object.entries(hoverMap).map(([k, v]) => [v, parseInt(k, 10)])
@@ -167,6 +164,37 @@ window.addEventListener("DOMContentLoaded", () => {
     option.classList.toggle("checked", newVal === 1);
     setter(newVal, sec);
     console.log(`Sent ${label}=${newVal} for widget ${sec}`);
+  });
+
+  /**
+   * Check for changes in the options settings
+   */
+
+  window.deskflex.onDraggableChange(({ id, value }) => {
+    console.log(`ID and Value:${id}||${value}`);
+    updateOptionUI("Draggable", id, value);
+  });
+  window.deskflex.onKeepOnScreenChange(({ id, value }) => {
+    updateOptionUI("Keep On Screen", id, value);
+  });
+  window.deskflex.onClickthroughChange(({ id, value }) => {
+    updateOptionUI("Click Through", id, value);
+  });
+
+  window.deskflex.onPositionChanged(({ id, x, y }) => {
+    console.log(`Position changed for ${id}: x=${x}, y=${y}`);
+    if (id !== window.currentWidgetSection) return;
+    const xInput = document.querySelector(".coords-input-x");
+    const yInput = document.querySelector(".coords-input-y");
+    xInput.value = x;
+    yInput.value = y;
+  });
+
+  window.deskflex.onZposChange((data) => {
+    if (data.widget === window.currentWidgetSection) {
+      const text = data.value === "topmost" ? "Stay topmost" : "Normal";
+      setDropdown("zpos", text);
+    }
   });
 });
 
@@ -657,29 +685,3 @@ function isOptionChecked(val) {
 function buildPath(...segments) {
   return segments.join("\\").replace(/\\\\+/g, "\\");
 }
-
-window.deskflex.onDraggableChange(({ id, value }) => {
-  console.log(`ID and Value:${id}||${value}`);
-  updateOptionUI("Draggable", id, value);
-});
-window.deskflex.onKeepOnScreenChange(({ id, value }) => {
-  updateOptionUI("Keep On Screen", id, value);
-});
-window.deskflex.onClickthroughChange(({ id, value }) => {
-  updateOptionUI("Click Through", id, value);
-});
-
-window.deskflex.onPositionChanged(({ id, x, y }) => {
-  if (id !== window.currentWidgetSection) return;
-  const xInput = document.querySelector(".coords-input-x");
-  const yInput = document.querySelector(".coords-input-y");
-  xInput.value = x;
-  yInput.value = y;
-});
-
-window.deskflex.onZposChange((data) => {
-  if (data.widget === window.currentWidgetSection) {
-    const text = data.value === "topmost" ? "Stay topmost" : "Normal";
-    setDropdown("zpos", text);
-  }
-});

@@ -95,9 +95,9 @@ const registerIpcHandlers = (
     setIniValue(widgetName, "WindowY", `${adjustedY}`);
 
     mainWindowRef?.webContents?.send("widget-position-changed", {
-      widgetName,
-      x: adjustedX,
-      y: adjustedY,
+      id: widgetName,
+      x,
+      y,
     });
 
     return true;
@@ -416,7 +416,7 @@ const registerIpcHandlers = (
     });
 
     mainWindowRef?.webContents?.send("widget-position-changed", {
-      widgetKey,
+      id: widgetName,
       x,
       y,
     });
