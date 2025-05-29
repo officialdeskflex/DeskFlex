@@ -2,6 +2,7 @@
 const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey, resolveIniPath } = require("./Utils");
+const { updateWindowPosition } = require("./Helper/PositionHandler");
 const {
   getWidgetsPath,
   getWidgetStatus,
@@ -34,6 +35,20 @@ const registerIpcHandlers = (
   loadWidgetRef = loadWidget;
   unloadWidgetRef = unloadWidget;
   mainWindowRef = mainWindow;
+
+  /**
+   * Sets the z-order position of a widget window.
+   */
+
+  ipcMain.on("widget-set-zpos", (_e, newPos, widgetName) => {
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    console.log(`Received IPC ${newPos},${widgetName}`);
+    const win = widgetWindowsRef.get(widgetKey);
+    if (!win) return;
+
+    updateWindowPosition(Number(newPos), widgetName, win);
+    setIniValue(widgetName, "Position", `${newPos}`);
+  });
 
   /**
    * Moves the widget window to the new (x, y) coordinates while dragging.
@@ -193,19 +208,19 @@ const registerIpcHandlers = (
    * Note:Tranparency 0% means that the widget is hidden and 100% means the widget is fully visible.
    */
 
-  ipcMain.on("widget-set-transparency", (_e, paercentValue, widgetName) => {
-    console.log(`Setting new transparency:${paercentValue}`)
+  ipcMain.on("widget-set-transparency", (_e, percentValue, widgetName) => {
+    console.log(`Setting new transparency:${percentValue}`);
     const widgetKey = resolveKey(widgetWindowsRef, widgetName);
     const win = widgetKey && widgetWindowsRef.get(widgetKey);
     if (!win) return;
-    const pct = parseFloat(paercentValue);
+    const pct = parseFloat(percentValue);
     if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
-      console.warn("Invalid transparency value:", paercentValue);
+      console.warn("Invalid transparency value:", percentValue);
       return;
     }
     win.setOpacity(pct / 100);
-    setIniValue(widgetName, "Transparency", paercentValue);
-    
+    setIniValue(widgetName, "Transparency", percentValue);
+
     win.webContents.send("widget-transparency-changed", pct);
     mainWindowRef?.webContents?.send("widget-transparency-changed", {
       id: widgetName,

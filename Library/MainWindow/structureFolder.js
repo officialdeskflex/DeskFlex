@@ -6,30 +6,47 @@ let windowSettings, checkboxContainer, addWidgetLink;
 
 const originalSettings = {};
 
-const posMap = {
-  2: "Stay topmost",
-  1: "Topmost",
-  0: "Normal",
-  "-1": "Bottom",
-  "-2": "On Desktop",
-};
+  const posMap = {
+    1: "Stay Topmost",
+    0: "Normal",
+  };
+
+  const posReverseMap = {
+    "Stay Topmost": 1,
+    "Normal": 0,
+  };
 
 const iniOptionMap = {
-  "Click Through": { iniKey: "ClickThrough", getter: window.deskflex.getWidgetClickThrough },
-  "Draggable":       { iniKey: "Draggable",   getter: window.deskflex.getWidgetDraggable    },
-  "Snap Edges":      { iniKey: "SnapEdges",     getter: window.deskflex.getWidgetSnapEdges      },
-  "Keep On Screen":  { iniKey: "KeepOnScreen", getter: window.deskflex.getWidgetKeepOnScreen  },
-  "Save Position":   { iniKey: "SavePosition", getter: window.deskflex.getWidgetSavePosition  },
-  "Favorite":        { iniKey: "Favorite",    getter: window.deskflex.getWidgetFavorite      },
+  "Click Through": {
+    iniKey: "ClickThrough",
+    getter: window.deskflex.getWidgetClickThrough,
+  },
+  Draggable: {
+    iniKey: "Draggable",
+    getter: window.deskflex.getWidgetDraggable,
+  },
+  "Snap Edges": {
+    iniKey: "SnapEdges",
+    getter: window.deskflex.getWidgetSnapEdges,
+  },
+  "Keep On Screen": {
+    iniKey: "KeepOnScreen",
+    getter: window.deskflex.getWidgetKeepOnScreen,
+  },
+  "Save Position": {
+    iniKey: "SavePosition",
+    getter: window.deskflex.getWidgetSavePosition,
+  },
+  Favorite: { iniKey: "Favorite", getter: window.deskflex.getWidgetFavorite },
 };
 
 const iniSetterMap = {
-  "Click Through":   window.deskflex.setClickThrough,
-  "Draggable":       window.deskflex.setDraggable,
-  "Snap Edges":      window.deskflex.setSnapEdges,
-  "Keep On Screen":  window.deskflex.setKeepOnScreen,
-  "Save Position":   window.deskflex.setSavePosition,
-  "Favorite":        window.deskflex.setFavorite,
+  "Click Through": window.deskflex.setClickThrough,
+  Draggable: window.deskflex.setDraggable,
+  "Snap Edges": window.deskflex.setSnapEdges,
+  "Keep On Screen": window.deskflex.setKeepOnScreen,
+  "Save Position": window.deskflex.setSavePosition,
+  Favorite: window.deskflex.setFavorite,
 };
 
 const hoverMap = { 0: "Do Nothing", 1: "Hide", 2: "Fade in", 3: "Fade out" };
@@ -105,6 +122,20 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+    document.querySelectorAll("#positionMenu a").forEach((option) => {
+    option.addEventListener("click", (e) => {
+      e.preventDefault();
+      const label = option.textContent.trim();
+      const value = posReverseMap[label]; // Get 0 or 1
+
+      if (value !== undefined) {
+        window.deskflex.setZpos(value, window.currentWidgetSection);
+        setDropdown("position", label);
+      }
+    });
+  });
+
+
   const reverseHoverMap = Object.fromEntries(
     Object.entries(hoverMap).map(([k, v]) => [v, parseInt(k, 10)])
   );
@@ -141,14 +172,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function updateOptionUI(label, widgetId, newVal) {
   if (widgetId !== window.currentWidgetSection) return;
-  const option = Array.from(checkboxContainer.querySelectorAll(".option"))
-    .find(o => o.querySelector("label").textContent.trim() === label);
+  const option = Array.from(checkboxContainer.querySelectorAll(".option")).find(
+    (o) => o.querySelector("label").textContent.trim() === label
+  );
   if (!option || option.classList.contains("disabled")) return;
   option.classList.toggle("checked", Boolean(newVal));
 }
 
 function captureSettings(sec) {
-const opts = {};
+  const opts = {};
   for (const [label, mapping] of Object.entries(iniOptionMap)) {
     opts[label] = mapping.getter(sec);
   }
@@ -202,41 +234,41 @@ function onLoadUnload() {
   const isLoadMode = loadButton.textContent.trim().toLowerCase() === "load";
   const action = isLoadMode ? "loadWidget" : "unloadWidget";
   window.deskflex[action](sec)
-      .then((result) => {
-        if (!result.success) {
-          console.error(
-            `Failed to ${isLoadMode ? "load" : "unload"} widget:`,
-            result.message
-          );
-          return;
-        }
-
-        if (isLoadMode) {
-          originalSettings[sec] = captureSettings(sec);
-
-          loadButton.textContent = "Unload";
-          refreshButton.disabled = false;
-          refreshButton.classList.remove("disabled");
-          windowSettings.style.opacity = "1";
-          checkboxContainer.style.opacity = "1";
-          resetOptions();
-          updateSettingsPanel(sec);
-        } else {
-          enableLoadEdit();
-          windowSettings.style.opacity = "0.5";
-          checkboxContainer.style.opacity = "0.5";
-          if (originalSettings[sec]) {
-            applySettings(originalSettings[sec]);
-          }
-          resetPlaceholders();
-        }
-      })
-      .catch((err) =>
+    .then((result) => {
+      if (!result.success) {
         console.error(
-          `IPC error on ${isLoadMode ? "load" : "unload"} widget:`,
-          err
-        )
-      );
+          `Failed to ${isLoadMode ? "load" : "unload"} widget:`,
+          result.message
+        );
+        return;
+      }
+
+      if (isLoadMode) {
+        originalSettings[sec] = captureSettings(sec);
+
+        loadButton.textContent = "Unload";
+        refreshButton.disabled = false;
+        refreshButton.classList.remove("disabled");
+        windowSettings.style.opacity = "1";
+        checkboxContainer.style.opacity = "1";
+        resetOptions();
+        updateSettingsPanel(sec);
+      } else {
+        enableLoadEdit();
+        windowSettings.style.opacity = "0.5";
+        checkboxContainer.style.opacity = "0.5";
+        if (originalSettings[sec]) {
+          applySettings(originalSettings[sec]);
+        }
+        resetPlaceholders();
+      }
+    })
+    .catch((err) =>
+      console.error(
+        `IPC error on ${isLoadMode ? "load" : "unload"} widget:`,
+        err
+      )
+    );
 }
 
 function handleActiveWidgetSelection(sec) {
@@ -336,7 +368,7 @@ function renderTree(container, obj, path = "") {
     item.append(header);
 
     if (subtree && typeof subtree === "object") {
-      icon.textContent = "\ue643"; 
+      icon.textContent = "\ue643";
       icon.classList.add("folder-icon");
       header.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -444,33 +476,33 @@ function getFullPath(item) {
       .closest(".children")
       ?.parentElement.querySelector(":scope > .tree-node");
   }
-  const base = (window.deskflex.widgetPath  || "").replace(/[\/\\]+$/, "");
+  const base = (window.deskflex.widgetPath || "").replace(/[\/\\]+$/, "");
   return buildPath(base, ...segs);
 }
 
 function populateDropdown() {
-  const dropdown = document.getElementById('myDropdown');
-  dropdown.innerHTML = '';
+  const dropdown = document.getElementById("myDropdown");
+  dropdown.innerHTML = "";
 
   const widgets = window.deskflex.activeWidget() || [];
 
   if (widgets.length) {
-    widgets.forEach(sec => {
-      const option = document.createElement('a');
-      option.href = '#';
+    widgets.forEach((sec) => {
+      const option = document.createElement("a");
+      option.href = "#";
       option.textContent = sec;
-      option.addEventListener('click', e => {
+      option.addEventListener("click", (e) => {
         e.preventDefault();
         handleActiveWidgetSelection(sec);
       });
       dropdown.appendChild(option);
     });
   } else {
-    const noItem = document.createElement('a');
-    noItem.href = '#';
-    noItem.textContent = 'No Active Widget';
-    noItem.style.pointerEvents = 'none';
-    noItem.style.opacity = '0.6';
+    const noItem = document.createElement("a");
+    noItem.href = "#";
+    noItem.textContent = "No Active Widget";
+    noItem.style.pointerEvents = "none";
+    noItem.style.opacity = "0.6";
     dropdown.appendChild(noItem);
   }
 }
@@ -532,10 +564,7 @@ function updateSettingsPanel(sec) {
       parseInt(window.deskflex.getWidgetTransparency(sec), 10)
     )
   );
-  setDropdown(
-    "hover",
-    hoverMap[String(window.deskflex.getWidgetOnHover(sec))]
-  );
+  setDropdown("hover", hoverMap[String(window.deskflex.getWidgetOnHover(sec))]);
 }
 
 function setDropdown(type, label) {
@@ -589,10 +618,10 @@ function resetPlaceholders() {
 
 function attachDropdownBehavior(triggerSelector, menuId) {
   const trigger = document.querySelector(triggerSelector);
-  const menu   = document.getElementById(menuId);
+  const menu = document.getElementById(menuId);
   if (!trigger || !menu) return;
 
-  trigger.addEventListener("click", e => {
+  trigger.addEventListener("click", (e) => {
     e.stopPropagation();
     const isOpen = menu.classList.toggle("show");
     trigger.classList.toggle("open", isOpen);
@@ -606,7 +635,7 @@ function attachDropdownBehavior(triggerSelector, menuId) {
     }
   });
 
-  document.addEventListener("click", e => {
+  document.addEventListener("click", (e) => {
     if (!trigger.contains(e.target) && menu.classList.contains("show")) {
       menu.classList.remove("show");
       trigger.classList.remove("open");
@@ -630,20 +659,27 @@ function buildPath(...segments) {
 }
 
 window.deskflex.onDraggableChange(({ id, value }) => {
-  console.log(`ID and Value:${id}||${value}`)
-  updateOptionUI("Draggable",       id, value);
+  console.log(`ID and Value:${id}||${value}`);
+  updateOptionUI("Draggable", id, value);
 });
 window.deskflex.onKeepOnScreenChange(({ id, value }) => {
-  updateOptionUI("Keep On Screen",  id, value);
+  updateOptionUI("Keep On Screen", id, value);
 });
 window.deskflex.onClickthroughChange(({ id, value }) => {
-  updateOptionUI("Click Through",   id, value);
+  updateOptionUI("Click Through", id, value);
 });
 
 window.deskflex.onPositionChanged(({ id, x, y }) => {
   if (id !== window.currentWidgetSection) return;
-  const xInput = document.querySelector('.coords-input-x');
-  const yInput = document.querySelector('.coords-input-y');
+  const xInput = document.querySelector(".coords-input-x");
+  const yInput = document.querySelector(".coords-input-y");
   xInput.value = x;
   yInput.value = y;
+});
+
+window.deskflex.onZposChange((data) => {
+  if (data.widget === window.currentWidgetSection) {
+    const text = data.value === "topmost" ? "Stay topmost" : "Normal";
+    setDropdown("zpos", text);
+  }
 });

@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),
   setHoverType: (value, widgetId) => ipcRenderer.send("widget-set-hoverType", value, widgetId),
   moveWidgetWindow: (x, y, id) => ipcRenderer.send('widget-move-window', x, y, id),
+  setZpos: (value, widgetName) => ipcRenderer.send("widget-set-zpos", value, widgetName),
 
   onDraggableChange: cb => ipcRenderer.on('widget-draggable-changed', (_e, data) => cb(data)),
   onKeepOnScreenChange: cb => ipcRenderer.on('widget-keep-on-screen-changed', (_e, data) => cb(data)),
@@ -52,6 +53,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
   onHoverTypeChanged: cb => ipcRenderer.on('widget-hoverType-changed', (_e, data) => cb(data)),
   onTransparencyChange: cb => ipcRenderer.on('widget-transparency-changed', (_e, data) => cb(data)),
+  onZposChange: cb => ipcRenderer.on('widget-zpos-changed', (_e, data) => cb(data)),
 
   loadWidget: name => ipcRenderer.invoke('load-widget', name),
   unloadWidget: name => ipcRenderer.invoke('unload-widget', name),
