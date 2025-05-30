@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   setKeepOnScreen: (enabled, widgetId) => ipcRenderer.send("widget-set-keep-on-screen", enabled ? 1 : 0, widgetId),
   setClickThrough: (enabled, widgetId) => ipcRenderer.send("widget-set-clickthrough", enabled ? 1 : 0, widgetId),
   setFavorite: (enabled, widgetName) => ipcRenderer.send("widget-set-favourite", enabled ? 1 : 0 , widgetName),
+  setSnapEdges: (enabled, widgetId) => ipcRenderer.send("widget-set-snapedges", enabled ? 1 : 0, widgetId),
 
   setTransparency: (percent, widgetId) => ipcRenderer.send("widget-set-transparency", percent, widgetId),
   setHoverType: (value, widgetId) => ipcRenderer.send("widget-set-hoverType", value, widgetId),
@@ -49,6 +50,7 @@ contextBridge.exposeInMainWorld('deskflex', {
   onKeepOnScreenChange: cb => ipcRenderer.on('widget-keep-on-screen-changed', (_e, data) => cb(data)),
   onClickthroughChange: cb => ipcRenderer.on('widget-clickthrough-changed', (_e, data) => cb(data)),
   onFavoriteChange: cb => ipcRenderer.on('widget-favorite-changed', (_e, data) => cb(data)),
+  onSnapEdgesChange: cb => ipcRenderer.on('widget-snapedges-changed', (_e, data) => cb(data)),
 
   onPositionChanged: cb => ipcRenderer.on('widget-position-changed', (_e, data) => cb(data)),
   onHoverTypeChanged: cb => ipcRenderer.on('widget-hoverType-changed', (_e, data) => cb(data)),

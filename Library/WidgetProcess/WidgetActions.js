@@ -91,11 +91,18 @@ const widgetUtils = {
         widgetName || currentWidgetName
       );
     } else {
-      ipcRenderer.send(
-        "widget-set-zpos",
-        val,
+      ipcRenderer.send("widget-set-zpos", val, widgetName || currentWidgetName);
+    }
+  },
+  snapedges: ([val, widgetName], currentWidgetName) => {
+    if (!["0", "1"].includes(String(val))) {
+      log(
+        `Invalid snapedge value: ${val}. Expected "0" or "1".`,
+        "error",
         widgetName || currentWidgetName
       );
+    } else {
+      ipcRenderer.send("widget-set-snapedges", val, widgetName || currentWidgetName);
     }
   },
   toggledraggable: async ([widgetName], currentWidgetName) => {

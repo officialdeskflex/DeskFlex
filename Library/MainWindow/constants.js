@@ -1,5 +1,4 @@
 // constants.js
-// All constant mappings and configurations
 
 export const posMap = {
   1: "Stay Topmost",
@@ -44,9 +43,9 @@ export const iniSetterMap = {
   Favorite: window.deskflex.setFavorite,
 };
 
-export const hoverMap = { 
-  0: "Do Nothing", 
-  1: "Hide", 
-  2: "Fade in", 
-  3: "Fade out" 
+export const hoverMap = {
+  0: "Do Nothing",
+  1: "Hide",
+  2: "Fade in",
+  3: "Fade out",
 };

@@ -38,6 +38,30 @@ const registerIpcHandlers = (
   mainWindowRef = mainWindow;
 
   /**
+   * Set the snap-edge of a widget
+   */
+
+  ipcMain.on("widget-set-snapedges", (_e, value, widgetName) => {
+    console.log(`Setting snapEdges for ${widgetName} to ${value}`);
+    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+    if (!widgetKey) return;
+
+    const win = widgetWindowsRef.get(widgetKey);
+    if (!win) return;
+
+    const snapValue = Number(value);
+    win.snapEdges = snapValue;
+
+    setIniValue(widgetName, "SnapEdges", `${snapValue}`);
+    
+    // Send from mainWindow to renderer
+    mainWindowRef?.webContents?.send("widget-snapedges-changed", {
+      widgetName: widgetName,
+      value: snapValue,
+    });
+  });
+
+  /**
    * Sets the z-order position of a widget window.
    */
 
@@ -50,7 +74,7 @@ const registerIpcHandlers = (
     updateWindowPosition(Number(newPos), widgetName, win);
 
     mainWindowRef?.webContents?.send("widget-zpos-changed", {
-      widget: widgetName,
+      widgetName: widgetName,
       value: newPos,
     });
 
@@ -102,7 +126,7 @@ const registerIpcHandlers = (
     setIniValue(widgetName, "WindowY", `${adjustedY}`);
 
     mainWindowRef?.webContents?.send("widget-position-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       x: adjustedX,
       y: adjustedY,
     });
@@ -132,7 +156,7 @@ const registerIpcHandlers = (
 
     win.webContents.send("widget-set-hoverType", newType);
     mainWindowRef?.webContents?.send("widget-hoverType-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       value: newType,
     });
   });
@@ -164,7 +188,7 @@ const registerIpcHandlers = (
     setIniValue(widgetName, "Favorite", value);
     const favValue = Boolean(Number(value));
     mainWindowRef?.webContents?.send("widget-draggable-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       value: favValue,
     });
   });
@@ -184,7 +208,7 @@ const registerIpcHandlers = (
     setIniValue(widgetName, "Draggable", intValue);
     win.webContents.send("widget-draggable-changed", draggable);
     mainWindowRef?.webContents?.send("widget-draggable-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       value: draggable,
     });
   });
@@ -203,7 +227,7 @@ const registerIpcHandlers = (
     win.keepOnScreen = keepOnScreen;
     setIniValue(widgetName, "KeepOnScreen", intValue);
     mainWindowRef?.webContents?.send("widget-keep-on-screen-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       value: keepOnScreen,
     });
   });
@@ -230,7 +254,7 @@ const registerIpcHandlers = (
 
     win.webContents.send("widget-transparency-changed", pct);
     mainWindowRef?.webContents?.send("widget-transparency-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       value: pct,
     });
   });
@@ -253,7 +277,7 @@ const registerIpcHandlers = (
     setIniValue(widgetName, "ClickThrough", intValue);
 
     mainWindowRef?.webContents?.send("widget-clickthrough-changed", {
-      id: widgetName,
+      widgetName: widgetName,
       value: clickThrough,
     });
   });
@@ -395,55 +419,58 @@ const registerIpcHandlers = (
    * Applies screen bounds constraints if 'keepOnScreen' is enabled.
    */
 
-  ipcMain.on("widget-move-window-drag", (_e, x, y, widgetName,isCtrlPressed=false) => {
-    const widgetKey = resolveKey(widgetWindowsRef, widgetName);
-    if (!widgetKey) return false;
+  ipcMain.on(
+    "widget-move-window-drag",
+    (_e, x, y, widgetName, isCtrlPressed = false) => {
+      const widgetKey = resolveKey(widgetWindowsRef, widgetName);
+      if (!widgetKey) return false;
 
-    const win = widgetWindowsRef.get(widgetKey);
-    const size = windowSizesRef.get(widgetKey);
-    if (!win || !size || !win.isWidgetDraggable) return false;
+      const win = widgetWindowsRef.get(widgetKey);
+      const size = windowSizesRef.get(widgetKey);
+      if (!win || !size || !win.isWidgetDraggable) return false;
 
-    if (win.keepOnScreen) {
-      const disp = screen.getDisplayMatching({
+      if (win.keepOnScreen) {
+        const disp = screen.getDisplayMatching({
+          x,
+          y,
+          width: size.width,
+          height: size.height,
+        });
+        const wa = disp.workArea;
+        x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
+        y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
+      }
+
+      const snapThresh = win.snapEdges;
+      const snapped = snapPosition(
         x,
         y,
+        size.width,
+        size.height,
+        snapThresh,
+        widgetWindowsRef,
+        widgetKey,
+        isCtrlPressed
+      );
+      x = snapped.x;
+      y = snapped.y;
+
+      win.setBounds({
+        x: Math.round(x),
+        y: Math.round(y),
         width: size.width,
         height: size.height,
       });
-      const wa = disp.workArea;
-      x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
-      y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
+
+      mainWindowRef?.webContents?.send("widget-position-changed", {
+        widgetName: widgetName,
+        x,
+        y,
+      });
+
+      return true;
     }
-
-    const snapThresh = win.snapEdges;
-    const snapped = snapPosition(
-      x,
-      y,
-      size.width,
-      size.height,
-      snapThresh,
-      widgetWindowsRef,
-      widgetKey,
-      isCtrlPressed
-    );
-    x = snapped.x;
-    y = snapped.y;
-
-    win.setBounds({
-      x: Math.round(x),
-      y: Math.round(y),
-      width: size.width,
-      height: size.height,
-    });
-
-    mainWindowRef?.webContents?.send("widget-position-changed", {
-      id: widgetName,
-      x,
-      y,
-    });
-
-    return true;
-  });
+  );
 
   /**
    * Saves the final position of the widget window after dragging ends.
@@ -458,7 +485,7 @@ const registerIpcHandlers = (
     setIniValue(widgetName, "WindowX", `${x}`);
     setIniValue(widgetName, "WindowY", `${y}`);
     mainWindowRef?.webContents?.send("widget-position-saved", {
-      id: widgetName,
+      widgetName: widgetName,
       x,
       y,
     });

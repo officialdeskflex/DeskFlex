@@ -7,7 +7,7 @@ import {
   iniSetterMap,
   posReverseMap,
   hoverMap,
-  posMap
+  posMap,
 } from "./constants.js";
 import { createReverseMap } from "./utils.js";
 import { setDropdown, populateDropdown } from "./dropdown-manager.js";
@@ -110,22 +110,26 @@ export function setupDeskflexEventListeners() {
     }
   });
 
-  window.deskflex.onDraggableChange(({ id, value }) => {
-    console.log(`ID and Value:${id}||${value}`);
-    updateOptionUI("Draggable", id, value);
+  window.deskflex.onDraggableChange(({ widgetName, value }) => {
+    console.log(`ID and Value:${widgetName}||${value}`);
+    updateOptionUI("Draggable", widgetName, value);
   });
 
-  window.deskflex.onKeepOnScreenChange(({ id, value }) => {
-    updateOptionUI("Keep On Screen", id, value);
+  window.deskflex.onKeepOnScreenChange(({ widgetName, value }) => {
+    updateOptionUI("Keep On Screen", widgetName, value);
   });
 
-  window.deskflex.onClickthroughChange(({ id, value }) => {
-    updateOptionUI("Click Through", id, value);
+  window.deskflex.onClickthroughChange(({ widgetName, value }) => {
+    updateOptionUI("Click Through", widgetName, value);
   });
 
-  window.deskflex.onPositionChanged(({ id, x, y }) => {
-    console.log(`Position changed for ${id}: x=${x}, y=${y}`);
-    if (id !== stateManager.currentWidgetSection) return;
+  window.deskflex.onSnapEdgesChange(({ widgetName, value }) => {
+    updateOptionUI("Snap Edges", widgetName, value);
+  });
+
+  window.deskflex.onPositionChanged(({ widgetName, x, y }) => {
+    console.log(`Position changed for ${widgetName}: x=${x}, y=${y}`);
+    if (widgetName !== stateManager.currentWidgetSection) return;
     const xInput = document.querySelector(".coords-input-x");
     const yInput = document.querySelector(".coords-input-y");
     xInput.value = x;
@@ -133,8 +137,8 @@ export function setupDeskflexEventListeners() {
   });
 
   window.deskflex.onZposChange((data) => {
-    console.log(`Zpos changed for ${data.widget}: ${data.value}`);
-    if (data.widget === stateManager.currentWidgetSection) {
+    console.log(`Zpos changed for ${data.widgetName}: ${data.value}`);
+    if (data.widgetName === stateManager.currentWidgetSection) {
       const text = posMap[data.value];
       setDropdown("position", text);
     }
