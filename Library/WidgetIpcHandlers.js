@@ -3,6 +3,7 @@ const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey, resolveIniPath } = require("./Utils");
 const { updateWindowPosition } = require("./Helper/PositionHandler");
+const { snapPosition } = require("./Helper/SnapEdge");
 const {
   getWidgetsPath,
   getWidgetStatus,
@@ -413,6 +414,19 @@ const registerIpcHandlers = (
       x = Math.max(wa.x, Math.min(x, wa.x + wa.width - size.width));
       y = Math.max(wa.y, Math.min(y, wa.y + wa.height - size.height));
     }
+
+    const snapThresh = win.snapEdges;
+    const snapped = snapPosition(
+      x,
+      y,
+      size.width,
+      size.height,
+      snapThresh,
+      widgetWindowsRef,
+      widgetKey
+    );
+    x = snapped.x;
+    y = snapped.y;
 
     win.setBounds({
       x: Math.round(x),

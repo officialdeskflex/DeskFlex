@@ -142,7 +142,7 @@ function loadWidget(filePath) {
   win.setMovable(false);
 
   win.setOpacity(transparencyPercent / 100);
-  win.snapEdges = snapEdges;
+  win.snapEdges = snapEdges; // 0 or 1 for enable or disable
   win.onHoverBehavior = onHover;
   win.isWidgetDraggable = draggable;
   win.keepOnScreen = keepOnScreenVal;
@@ -225,6 +225,7 @@ function createWidgetsWindow(
     resizable: false,
     useContentSize: true,
     hasShadow: false,
+    backgroundColor: "#000000",
     show: false,
     webPreferences: {
       nodeIntegration: true,
