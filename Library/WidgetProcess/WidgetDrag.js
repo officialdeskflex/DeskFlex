@@ -1,6 +1,16 @@
 //WidgetDrag.js
 const { ipcRenderer } = require("electron");
 
+let isCtrlPressed = false;
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Control") isCtrlPressed = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.key === "Control") isCtrlPressed = false;
+});
+
 (() => {
   const widgetName = document.body.dataset.widgetName;
   let dragging = false;
@@ -11,17 +21,17 @@ const { ipcRenderer } = require("electron");
 
   const enforceSize = () => {
     const { width, height } = document.body.dataset;
-    [document.documentElement.style, document.body.style].forEach(s => {
+    [document.documentElement.style, document.body.style].forEach((s) => {
       Object.assign(s, {
         width: `${width}px`,
         height: `${height}px`,
         maxWidth: `${width}px`,
-        maxHeight: `${height}px`
+        maxHeight: `${height}px`,
       });
     });
     const c = document.getElementById("container");
-    if (c) Object.assign(c.style, { width: `${width}px`, height: `${height}px` });
-    // Only reset size when not dragging to avoid IPC thrashing
+    if (c)
+      Object.assign(c.style, { width: `${width}px`, height: `${height}px` });
     if (!dragging) {
       ipcRenderer.invoke("widget-reset-size", widgetName);
     }
@@ -29,31 +39,27 @@ const { ipcRenderer } = require("electron");
 
   const isDraggable = () => document.body.dataset.draggable === "1";
 
-  // Initial size enforcement
   enforceSize();
-  // Periodic size enforcement at low frequency
   setInterval(() => {
     if (!dragging) enforceSize();
   }, 15000);
 
-  // Update draggable state from main process
   ipcRenderer.on("widget-draggable-changed", (_e, val) => {
     document.body.dataset.draggable = val ? "1" : "0";
   });
 
-  document.addEventListener("mousedown", async e => {
+  document.addEventListener("mousedown", async (e) => {
     if (e.button !== 0 || !isDraggable()) return;
     e.preventDefault();
     dragging = true;
     start = { x: e.screenX, y: e.screenY };
     const pos = await ipcRenderer.invoke("widget-get-position", widgetName);
     orig = { x: pos.x, y: pos.y };
-    // Visual feedback during drag
     document.body.style.cursor = "grabbing";
     enforceSize();
   });
 
-  document.addEventListener("mousemove", e => {
+  document.addEventListener("mousemove", (e) => {
     if (!dragging) return;
     const now = Date.now();
     if (now - lastMoveTime < THROTTLE_MS) return;
@@ -61,10 +67,16 @@ const { ipcRenderer } = require("electron");
     e.preventDefault();
     const dx = e.screenX - start.x;
     const dy = e.screenY - start.y;
-    ipcRenderer.send("widget-move-window-drag", orig.x + dx, orig.y + dy, widgetName);
+    ipcRenderer.send(
+      "widget-move-window-drag",
+      orig.x + dx,
+      orig.y + dy,
+      widgetName,
+      isCtrlPressed
+    );
   });
 
-  const endDrag = async e => {
+  const endDrag = async (e) => {
     if (!dragging) return;
     if (e.type === "keydown" && e.key !== "Escape") return;
     dragging = false;
@@ -73,7 +85,6 @@ const { ipcRenderer } = require("electron");
     ipcRenderer.send("widget-save-window-position", widgetName);
   };
 
-  // Listen globally to finalize drag
   window.addEventListener("mouseup", endDrag);
   window.addEventListener("mouseleave", endDrag);
   window.addEventListener("keydown", endDrag);

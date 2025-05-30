@@ -7,10 +7,11 @@ function snapPosition(
   height,
   snapFlag,
   widgetWindows,
-  currentKey
+  currentKey,
+  isCtrlPressed
 ) {
-  const snapThreshold = Number(snapFlag) === 1 ? 10 : 0;
-  if (!snapThreshold) return { x, y };
+  const snapThreshold = Number(snapFlag) === 1 ? 100 : 0;
+  if (!snapThreshold || isCtrlPressed) return { x, y };
 
   let bestX = x;
   let bestY = y;

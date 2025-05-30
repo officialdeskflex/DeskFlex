@@ -395,7 +395,7 @@ const registerIpcHandlers = (
    * Applies screen bounds constraints if 'keepOnScreen' is enabled.
    */
 
-  ipcMain.on("widget-move-window-drag", (_e, x, y, widgetName) => {
+  ipcMain.on("widget-move-window-drag", (_e, x, y, widgetName,isCtrlPressed=false) => {
     const widgetKey = resolveKey(widgetWindowsRef, widgetName);
     if (!widgetKey) return false;
 
@@ -423,7 +423,8 @@ const registerIpcHandlers = (
       size.height,
       snapThresh,
       widgetWindowsRef,
-      widgetKey
+      widgetKey,
+      isCtrlPressed
     );
     x = snapped.x;
     y = snapped.y;
