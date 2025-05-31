@@ -1,4 +1,4 @@
-// TypeSections/ShapeType.js
+// Shape/Shape.js
 const { safeInt } = require("../Utils");
 
 function renderShapeWidget(cfg) {

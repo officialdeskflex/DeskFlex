@@ -1,10 +1,10 @@
 // WidgetManager.js
 const { BrowserWindow, app } = require("electron");
 const path = require("path");
-const { parseIni } = require("./IniLoader");
-const { renderTextWidget } = require("./TypeSections/TextType");
-const { renderImageWidget } = require("./TypeSections/ImageType");
-const { renderShapeWidget } = require("./TypeSections/ShapeType");
+const { parseIni } = require("./ConfigParser");
+const { renderTextWidget } = require("./Elements/Text");
+const { renderImageWidget } = require("./Elements/Image");
+const { renderShapeWidget } = require("./Elements/Shape");
 const getImageSize = require("./Helper/ImageSize");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
@@ -93,7 +93,7 @@ function loadWidget(filePath) {
   }
 
   for (const cfg of Object.values(widgetNames)) {
-    if ((cfg.Type || "").trim().toLowerCase() === "shape") {
+    if ((cfg.element || "").trim().toLowerCase() === "shape") {
       const shapeDef = (cfg.Shape || "").trim();
       if (!shapeDef) {
         console.warn(`Empty Shape definition for a Shape-type meter.`);
@@ -176,7 +176,7 @@ function loadWidget(filePath) {
 
   const baseDir = path.dirname(iniPath);
   for (const cfg of Object.values(widgetNames)) {
-    if ((cfg.Type || "").trim().toLowerCase() === "image") {
+    if ((cfg.element || "").trim().toLowerCase() === "image") {
       let img = (cfg.ImageName || "").replace(/"/g, "");
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
       const hasW = cfg.W || cfg.Width,
@@ -351,7 +351,7 @@ function createWidgetsWindow(
     for (const [k, v] of Object.entries(raw)) {
       cfg[k] = typeof v === "string" ? substituteVariables(v, vars) : v;
     }
-    switch ((cfg.Type || "").trim()) {
+    switch ((cfg.element || "").trim()) {
       case "Text":
         html += renderTextWidget(cfg);
         break;
@@ -362,7 +362,7 @@ function createWidgetsWindow(
         html += renderShapeWidget(cfg);
         break;
       default:
-        console.warn(`Skipping unknown Type="${cfg.Type}"`);
+        console.warn(`Skipping unknown Type="${cfg.element}"`);
     }
   }
 
