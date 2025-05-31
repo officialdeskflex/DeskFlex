@@ -4,6 +4,7 @@ const path = require("path");
 const { parseIni } = require("./IniLoader");
 const { renderTextWidget } = require("./TypeSections/TextType");
 const { renderImageWidget } = require("./TypeSections/ImageType");
+const { renderShapeWidget } = require("./TypeSections/ShapeType");
 const getImageSize = require("./Helper/ImageSize");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
@@ -74,6 +75,7 @@ function loadWidget(filePath) {
   delete widgetNames.Variables;
 
   const usedStyles = new Set();
+
   for (const cfg of Object.values(widgetNames)) {
     if (cfg.Style) {
       usedStyles.add(cfg.Style);
@@ -89,6 +91,87 @@ function loadWidget(filePath) {
       }
     }
   }
+
+  for (const cfg of Object.values(widgetNames)) {
+    if ((cfg.Type || "").trim().toLowerCase() === "shape") {
+      const shapeDef = (cfg.Shape || "").trim();
+      if (!shapeDef) {
+        console.warn(`Empty Shape definition for a Shape-type meter.`);
+        continue;
+      }
+
+      const shapeParts = shapeDef.split("|").map((p) => p.trim());
+      const mainPart = shapeParts[0]; // e.g. "Rectangle 4,4,110,110,55"
+
+      const [shapeTypeRaw, coordStr] = mainPart.split(/\s+(.+)/);
+      const shapeType = (shapeTypeRaw || "").toLowerCase();
+      if (shapeType !== "rectangle" || !coordStr) {
+        console.warn(
+          `Unsupported Shape type or malformed params: "${shapeDef}"`
+        );
+        continue;
+      }
+
+      const coords = coordStr.split(",").map((n) => parseInt(n, 10).valueOf());
+      const [sx = 0, sy = 0, sw = 0, sh = 0, sr = 0] = coords;
+      cfg.X = sx;
+      cfg.Y = sy;
+      cfg.W = sw;
+      cfg.H = sh;
+      cfg.Radius = sr;
+
+      cfg.FillColor = "#FFFFFF";
+      cfg.StrokeColor = "#000000";
+      cfg.StrokeWidth = 1;
+
+      for (let i = 1; i < shapeParts.length; i++) {
+        const token = shapeParts[i];
+
+        const m = token.match(/^(.+?)\s+([\d,]+)$/);
+        if (!m) {
+          console.warn(`Malformed Shape style token: "${token}"`);
+          continue;
+        }
+        const keyRaw = m[1].trim().toLowerCase();
+        const valueRaw = m[2].trim();
+
+        function rgbToHex(rgbString) {
+          const nums = rgbString
+            .split(",")
+            .map((n) => parseInt(n, 10).valueOf());
+          if (nums.length !== 3 || nums.some((x) => isNaN(x))) return null;
+          const [r, g, b] = nums;
+          const toHex = (x) => {
+            const h = x.toString(16);
+            return h.length === 1 ? "0" + h : h;
+          };
+          return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        if (
+          keyRaw === "fill" ||
+          keyRaw === "fillcolor" ||
+          keyRaw === "fill color"
+        ) {
+          const hex = rgbToHex(valueRaw);
+          if (hex) cfg.FillColor = hex;
+        } else if (
+          keyRaw === "stroke" ||
+          keyRaw === "strokecolor" ||
+          keyRaw === "stroke color"
+        ) {
+          const hex = rgbToHex(valueRaw);
+          if (hex) cfg.StrokeColor = hex;
+        } else if (keyRaw === "strokewidth") {
+          const swv = parseInt(valueRaw, 10);
+          if (!isNaN(swv)) cfg.StrokeWidth = swv;
+        } else {
+          console.warn(`Unknown Shape style token: "${token}"`);
+        }
+      }
+    }
+  }
+
   usedStyles.forEach((s) => delete widgetNames[s]);
 
   const baseDir = path.dirname(iniPath);
@@ -142,7 +225,7 @@ function loadWidget(filePath) {
   win.setMovable(false);
 
   win.setOpacity(transparencyPercent / 100);
-  win.snapEdges = snapEdges; // 0 or 1 for enable or disable
+  win.snapEdges = snapEdges;
   win.onHoverBehavior = onHover;
   win.isWidgetDraggable = draggable;
   win.keepOnScreen = keepOnScreenVal;
@@ -186,6 +269,7 @@ function unloadWidget(widgetName) {
 
   logs(`Unloaded widget: ${widgetName}`, "info", "DeskFlex");
 }
+
 function calculateWindowSize(secs) {
   let maxR = 0,
     maxB = 0;
@@ -197,7 +281,7 @@ function calculateWindowSize(secs) {
     maxR = Math.max(maxR, x + w);
     maxB = Math.max(maxB, y + h);
   }
-  return { width: maxR + 10, height: maxB + 10 };
+  return { width: maxR, height: maxB };
 }
 
 function createWidgetsWindow(
@@ -225,7 +309,8 @@ function createWidgetsWindow(
     resizable: false,
     useContentSize: true,
     hasShadow: false,
-    backgroundColor: "#000000",
+    roundedCorners: false,
+    // backgroundColor: "#000000",
     show: false,
     webPreferences: {
       nodeIntegration: true,
@@ -233,6 +318,7 @@ function createWidgetsWindow(
       webSecurity: true,
     },
   });
+  console.log(`Creating widget window: ${name} with size ${width}x${height}`);
 
   win.setTitle(name);
 
@@ -272,12 +358,17 @@ function createWidgetsWindow(
       case "Image":
         html += renderImageWidget(cfg, baseDir);
         break;
+      case "Shape":
+        html += renderShapeWidget(cfg);
+        break;
       default:
         console.warn(`Skipping unknown Type="${cfg.Type}"`);
     }
   }
 
-  const dragPath = path.join(__dirname, "WidgetProcess/WidgetDrag.js").replace(/\\/g, "/");
+  const dragPath = path
+    .join(__dirname, "WidgetProcess/WidgetDrag.js")
+    .replace(/\\/g, "/");
   const actionsPath = path
     .join(__dirname, "WidgetProcess/WidgetActions.js")
     .replace(/\\/g, "/");
