@@ -10,7 +10,7 @@ function snapPosition(
   currentKey,
   isCtrlPressed
 ) {
-  const snapThreshold = Number(snapFlag) === 1 ? 100 : 0;
+  const snapThreshold = Number(snapFlag) === 1 ? 10 : 0;
   if (!snapThreshold || isCtrlPressed) return { x, y };
 
   let bestX = x;

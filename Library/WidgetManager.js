@@ -96,7 +96,7 @@ function loadWidget(filePath) {
     if ((cfg.element || "").trim().toLowerCase() === "shape") {
       const shapeDef = (cfg.Shape || "").trim();
       if (!shapeDef) {
-        console.warn(`Empty Shape definition for a Shape-type meter.`);
+        console.warn(`Empty Shape definition for a Shape-Element.`);
         continue;
       }
 
@@ -318,7 +318,6 @@ function createWidgetsWindow(
       webSecurity: true,
     },
   });
-  console.log(`Creating widget window: ${name} with size ${width}x${height}`);
 
   win.setTitle(name);
 
@@ -362,7 +361,7 @@ function createWidgetsWindow(
         html += renderShapeWidget(cfg);
         break;
       default:
-        console.warn(`Skipping unknown Type="${cfg.element}"`);
+        console.warn(`Skipping unknown element="${cfg.element}"`);
     }
   }
 
