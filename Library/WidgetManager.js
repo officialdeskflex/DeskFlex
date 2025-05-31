@@ -14,6 +14,7 @@ const {
   safeInt,
   resolveIniPath,
   getRelativeWidgetPath,
+  rgbToHex,
 } = require("./Utils");
 const {
   getWidgetClickThrough,
@@ -134,19 +135,6 @@ function loadWidget(filePath) {
         }
         const keyRaw = m[1].trim().toLowerCase();
         const valueRaw = m[2].trim();
-
-        function rgbToHex(rgbString) {
-          const nums = rgbString
-            .split(",")
-            .map((n) => parseInt(n, 10).valueOf());
-          if (nums.length !== 3 || nums.some((x) => isNaN(x))) return null;
-          const [r, g, b] = nums;
-          const toHex = (x) => {
-            const h = x.toString(16);
-            return h.length === 1 ? "0" + h : h;
-          };
-          return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-        }
 
         if (
           keyRaw === "fill" ||

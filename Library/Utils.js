@@ -8,28 +8,30 @@ function safeInt(v, fallback) {
 }
 
 function stripQuotes(s) {
-  if (typeof s !== 'string') return '';
-  return s.replace(/^['"](.+)['"]$/, '$1');
+  if (typeof s !== "string") return "";
+  return s.replace(/^['"](.+)['"]$/, "$1");
 }
 
 function escapeHtml(text) {
-  if (typeof text !== 'string') return '';
-  return text.replace(/[&<>"']/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+  if (typeof text !== "string") return "";
+  return text.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[
+        c
+      ])
   );
 }
 
 function substituteVariables(str, vars) {
-  if (typeof str !== 'string') return str;
+  if (typeof str !== "string") return str;
   return str.replace(/#(\w+)#/g, (_, name) =>
-    Object.prototype.hasOwnProperty.call(vars, name)
-      ? vars[name]
-      : ''
+    Object.prototype.hasOwnProperty.call(vars, name) ? vars[name] : ""
   );
 }
 
 function parseActionList(s) {
-  if (typeof s !== 'string') return [];
+  if (typeof s !== "string") return [];
   const actions = [];
   const bracketed = /\[!\s*(\w+)\s+((?:"[^"]*"|'[^']*'|[^\[\]]+?))\s*\]/g;
   let match;
@@ -43,7 +45,7 @@ function parseActionList(s) {
     const m2 = s.match(single);
     if (m2) {
       const type = m2[1].toLowerCase();
-      const param = m2[3] != null ? m2[3] : (m2[4] || '').trim();
+      const param = m2[3] != null ? m2[3] : (m2[4] || "").trim();
       actions.push({ type, param });
     }
   }
@@ -51,7 +53,7 @@ function parseActionList(s) {
     try {
       const arr = JSON.parse(s);
       if (Array.isArray(arr)) {
-        arr.forEach(cmd => actions.push({ type: 'execute', param: cmd }));
+        arr.forEach((cmd) => actions.push({ type: "execute", param: cmd }));
       }
     } catch {}
   }
@@ -59,9 +61,9 @@ function parseActionList(s) {
 }
 
 function buildActionAttributes(cfg) {
-  let attrs = '';
+  let attrs = "";
   for (const [k, v] of Object.entries(cfg)) {
-    if (/action$/i.test(k) && typeof v === 'string' && v.trim()) {
+    if (/action$/i.test(k) && typeof v === "string" && v.trim()) {
       const acts = parseActionList(v);
       if (acts.length) {
         attrs += ` data-${k.toLowerCase()}='${JSON.stringify(acts)}'`;
@@ -73,16 +75,13 @@ function buildActionAttributes(cfg) {
 
 function resolveIniPath(filePath) {
   const baseDir = getWidgetsPath();
-  let abs = path.isAbsolute(filePath)
-    ? filePath
-    : path.join(baseDir, filePath);
+  let abs = path.isAbsolute(filePath) ? filePath : path.join(baseDir, filePath);
   if (!path.extname(abs)) abs += ".ini";
   return path.normalize(path.resolve(abs));
 }
 
 function resolveKey(widgetWindowsMap, identifier) {
-  const isBare =
-    !identifier.includes(path.sep) && !path.extname(identifier);
+  const isBare = !identifier.includes(path.sep) && !path.extname(identifier);
   if (isBare) {
     const lower = identifier.toLowerCase();
     for (const key of widgetWindowsMap.keys()) {
@@ -99,6 +98,29 @@ function getRelativeWidgetPath(fullPath) {
   const base = path.resolve(getWidgetsPath());
   const target = path.resolve(fullPath);
   if (!target.startsWith(base)) return fullPath;
-  return target.slice(base.length + 1); 
+  return target.slice(base.length + 1);
 }
-module.exports = { safeInt, stripQuotes, escapeHtml, substituteVariables, parseActionList, buildActionAttributes, resolveIniPath, resolveKey,getRelativeWidgetPath };
+
+function rgbToHex(rgbString) {
+  const nums = rgbString.split(",").map((n) => parseInt(n, 10).valueOf());
+  if (nums.length !== 3 || nums.some((x) => isNaN(x))) return null;
+  const [r, g, b] = nums;
+  const toHex = (x) => {
+    const h = x.toString(16);
+    return h.length === 1 ? "0" + h : h;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+module.exports = {
+  safeInt,
+  stripQuotes,
+  escapeHtml,
+  substituteVariables,
+  parseActionList,
+  buildActionAttributes,
+  resolveIniPath,
+  resolveKey,
+  getRelativeWidgetPath,
+  rgbToHex,
+};
