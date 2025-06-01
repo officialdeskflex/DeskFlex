@@ -58,6 +58,67 @@ function parseIni(filePath, visited = new Set()) {
 }
 
 /**
+ * Normalize all property names and values for consistent access
+ * @param {object} widgetConfig - Raw widget configuration
+ * @returns {object} Normalized configuration
+ */
+function normalizeConfiguration(widgetConfig) {
+  const normalized = {};
+  
+  for (const [sectionName, section] of Object.entries(widgetConfig)) {
+    normalized[sectionName] = {};
+    
+    for (const [key, value] of Object.entries(section)) {
+      const normalizedKey = key.toLowerCase();
+      
+      // Handle special cases for common property names
+      const keyMappings = {
+        'x': 'x',
+        'y': 'y', 
+        'w': 'w',
+        'width': 'w',
+        'h': 'h',
+        'height': 'h',
+        'style': 'style',
+        'element': 'element',
+        'imagename': 'imagename',
+        'text': 'text',
+        'fontcolor': 'fontcolor',
+        'fontface': 'fontface',
+        'fontweight': 'fontweight',
+        'fontsize': 'fontsize',
+        'stringalign': 'stringalign',
+        'antialias': 'antialias',
+        'shape': 'shape',
+        'fillcolor': 'fillcolor',
+        'strokecolor': 'strokecolor',
+        'strokewidth': 'strokewidth',
+        'radius': 'radius',
+        'preserveaspectratio': 'preserveaspectratio',
+        'grayscale': 'grayscale',
+        'imagealpha': 'imagealpha',
+        'imageflip': 'imageflip',
+        'imagerotate': 'imagerotate',
+        'imagetint': 'imagetint'
+      };
+      
+      // Use mapped key or original normalized key
+      const finalKey = keyMappings[normalizedKey] || normalizedKey;
+      
+      // Store both original and normalized for backward compatibility
+      normalized[sectionName][finalKey] = value;
+      
+      // Also store original case for actions and other special properties
+      if (key.toLowerCase().includes('action')) {
+        normalized[sectionName][key.toLowerCase()] = value;
+      }
+    }
+  }
+  
+  return normalized;
+}
+
+/**
  * Parse and process widget configuration file
  * @param {string} iniPath - Path to the INI file
  * @returns {object} Processed widget configuration
@@ -70,8 +131,12 @@ function parseWidgetConfig(iniPath) {
     throw new Error(`Failed to parse ${path.basename(iniPath)}: ${err.message}`);
   }
 
-  // Normalize property names (convert lowercase to uppercase)
+  // Normalize all configuration keys and values
+  widgetConfig = normalizeConfiguration(widgetConfig);
+
+  // Additional legacy normalization for backward compatibility
   for (const cfg of Object.values(widgetConfig)) {
+    // Handle uppercase variants that might still be needed
     ["x", "y", "w", "h", "style"].forEach((k) => {
       const low = k.toLowerCase(),
         up = k.toUpperCase();
@@ -95,17 +160,25 @@ function applyStyles(widgetConfig) {
 
   // Apply styles to configurations
   for (const cfg of Object.values(processedConfig)) {
-    if (cfg.Style) {
-      usedStyles.add(cfg.Style);
-      const base = processedConfig[cfg.Style];
+    const styleRef = cfg.style || cfg.Style;
+    if (styleRef) {
+      usedStyles.add(styleRef);
+      const base = processedConfig[styleRef];
       if (base) {
-        ["X", "Y", "W", "H", "Width", "Height"].forEach((k) => {
-          if (base[k] !== undefined && cfg[k] === undefined) {
-            cfg[k] = base[k];
+        // Apply style properties with case-insensitive matching
+        ["x", "y", "w", "h", "width", "height"].forEach((k) => {
+          const lowerK = k.toLowerCase();
+          const upperK = k.toUpperCase();
+          const baseValue = base[lowerK] || base[upperK] || base[k];
+          const currentValue = cfg[lowerK] || cfg[upperK] || cfg[k];
+          
+          if (baseValue !== undefined && currentValue === undefined) {
+            cfg[lowerK] = baseValue;
+            if (upperK !== lowerK) cfg[upperK] = baseValue;
           }
         });
       } else {
-        console.warn(`Style "${cfg.Style}" not found.`);
+        console.warn(`Style "${styleRef}" not found.`);
       }
     }
   }
@@ -125,8 +198,9 @@ function processShapes(widgetConfig) {
   const processedConfig = { ...widgetConfig };
 
   for (const cfg of Object.values(processedConfig)) {
-    if ((cfg.element || "").trim().toLowerCase() === "shape") {
-      const shapeDef = (cfg.Shape || "").trim();
+    const elementType = (cfg.element || "").trim().toLowerCase();
+    if (elementType === "shape") {
+      const shapeDef = (cfg.shape || cfg.Shape || "").trim();
       if (!shapeDef) {
         console.warn(`Empty Shape definition for a Shape-Element.`);
         continue;
@@ -146,6 +220,15 @@ function processShapes(widgetConfig) {
 
       const coords = coordStr.split(",").map((n) => parseInt(n, 10).valueOf());
       const [sx = 0, sy = 0, sw = 0, sh = 0, sr = 0] = coords;
+      
+      // Set normalized properties
+      cfg.x = sx;
+      cfg.y = sy;
+      cfg.w = sw;
+      cfg.h = sh;
+      cfg.radius = sr;
+      
+      // Also set uppercase for backward compatibility
       cfg.X = sx;
       cfg.Y = sy;
       cfg.W = sw;
@@ -153,6 +236,11 @@ function processShapes(widgetConfig) {
       cfg.Radius = sr;
 
       // Set default shape properties
+      cfg.fillcolor = "#FFFFFF";
+      cfg.strokecolor = "#000000";
+      cfg.strokewidth = 1;
+      
+      // Uppercase variants
       cfg.FillColor = "#FFFFFF";
       cfg.StrokeColor = "#000000";
       cfg.StrokeWidth = 1;
@@ -175,17 +263,26 @@ function processShapes(widgetConfig) {
           keyRaw === "fill color"
         ) {
           const hex = rgbToHex(valueRaw);
-          if (hex) cfg.FillColor = hex;
+          if (hex) {
+            cfg.fillcolor = hex;
+            cfg.FillColor = hex;
+          }
         } else if (
           keyRaw === "stroke" ||
           keyRaw === "strokecolor" ||
           keyRaw === "stroke color"
         ) {
           const hex = rgbToHex(valueRaw);
-          if (hex) cfg.StrokeColor = hex;
+          if (hex) {
+            cfg.strokecolor = hex;
+            cfg.StrokeColor = hex;
+          }
         } else if (keyRaw === "strokewidth") {
           const swv = parseInt(valueRaw, 10);
-          if (!isNaN(swv)) cfg.StrokeWidth = swv;
+          if (!isNaN(swv)) {
+            cfg.strokewidth = swv;
+            cfg.StrokeWidth = swv;
+          }
         } else {
           console.warn(`Unknown Shape style token: "${token}"`);
         }
@@ -206,17 +303,25 @@ function processImages(widgetConfig, baseDir) {
   const processedConfig = { ...widgetConfig };
 
   for (const cfg of Object.values(processedConfig)) {
-    if ((cfg.element || "").trim().toLowerCase() === "image") {
-      let img = (cfg.ImageName || "").replace(/"/g, "");
+    const elementType = (cfg.element || "").trim().toLowerCase();
+    if (elementType === "image") {
+      let img = (cfg.imagename || cfg.ImageName || "").replace(/"/g, "");
       if (!path.isAbsolute(img)) img = path.join(baseDir, img);
       
-      const hasW = cfg.W || cfg.Width,
-        hasH = cfg.H || cfg.Height;
+      const hasW = cfg.w || cfg.W || cfg.width || cfg.Width;
+      const hasH = cfg.h || cfg.H || cfg.height || cfg.Height;
+      
       if (!hasW || !hasH) {
         try {
           const sz = getImageSize(img);
-          cfg.W = cfg.W || sz.width;
-          cfg.H = cfg.H || sz.height;
+          if (!hasW) {
+            cfg.w = sz.width;
+            cfg.W = sz.width;
+          }
+          if (!hasH) {
+            cfg.h = sz.height;
+            cfg.H = sz.height;
+          }
         } catch (e) {
           console.warn(`Could not size ${img}:`, e);
         }
@@ -235,10 +340,10 @@ function processImages(widgetConfig, baseDir) {
 function calculateWindowSize(widgetConfig) {
   let maxR = 0, maxB = 0;
   for (const cfg of Object.values(widgetConfig)) {
-    const x = safeInt(cfg.X, 0),
-      y = safeInt(cfg.Y, 0);
-    const w = safeInt(cfg.Width ?? cfg.W, 0),
-      h = safeInt(cfg.Height ?? cfg.H, 0);
+    const x = safeInt(cfg.x || cfg.X, 0);
+    const y = safeInt(cfg.y || cfg.Y, 0);
+    const w = safeInt(cfg.w || cfg.W || cfg.width || cfg.Width, 0);
+    const h = safeInt(cfg.h || cfg.H || cfg.height || cfg.Height, 0);
     maxR = Math.max(maxR, x + w);
     maxB = Math.max(maxB, y + h);
   }
@@ -272,9 +377,11 @@ function substituteConfigVariables(widgetConfig, variables) {
  * @returns {object} {config: configWithoutVariables, variables: extractedVariables}
  */
 function extractVariables(widgetConfig) {
-  const variables = widgetConfig.Variables || {};
+  // Try both cases for Variables section
+  const variables = widgetConfig.Variables || widgetConfig.variables || {};
   const configWithoutVariables = { ...widgetConfig };
   delete configWithoutVariables.Variables;
+  delete configWithoutVariables.variables;
   
   return { config: configWithoutVariables, variables };
 }
@@ -318,6 +425,7 @@ function processWidgetConfig(iniPath) {
 module.exports = { 
   parseIni, 
   parseWidgetConfig,
+  normalizeConfiguration,
   applyStyles,
   processShapes,
   processImages,

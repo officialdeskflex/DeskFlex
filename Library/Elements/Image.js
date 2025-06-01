@@ -1,29 +1,26 @@
+//Elements/Image.js
 const path = require('path');
 const { safeInt, stripQuotes, buildActionAttributes } = require('../Utils');
 
 function renderImageWidget(cfg, baseDir) {
-  const c = {};
-  Object.keys(cfg).forEach(key => {
-    c[key.toLowerCase()] = cfg[key];
-  });
+  // Configuration is already normalized in ConfigParser.js
+  const x      = safeInt(cfg.x, 0);
+  const y      = safeInt(cfg.y, 0);
+  const width  = safeInt(cfg.w, 100);
+  const height = safeInt(cfg.h, 100);
 
-  const x      = safeInt(c.x, 0);
-  const y      = safeInt(c.y, 0);
-  const width  = safeInt(c.w, 100);
-  const height = safeInt(c.h, 100);
-
-  const mode      = safeInt(c.preserveaspectratio, 0);
+  const mode      = safeInt(cfg.preserveaspectratio, 0);
   const objectFit = { 0: 'fill', 1: 'contain', 2: 'cover' }[mode] || 'fill';
   const maskSize  = mode === 0 ? '100% 100%' : mode === 1 ? 'contain' : 'cover';
 
-  const grayFilter = c.grayscale == '1' ? 'grayscale(100%)' : '';
+  const grayFilter = cfg.grayscale == '1' ? 'grayscale(100%)' : '';
 
-  let alphaInt = parseInt(c.imagealpha, 10);
+  let alphaInt = parseInt(cfg.imagealpha, 10);
   if (isNaN(alphaInt)) alphaInt = 255;
   alphaInt = Math.min(255, Math.max(0, alphaInt));
   const alpha = (alphaInt / 255).toFixed(3);
 
-  const flipMode = (c.imageflip || 'None').toLowerCase();
+  const flipMode = (cfg.imageflip || 'None').toLowerCase();
   let flipTransform = '';
   switch (flipMode) {
     case 'horizontal': flipTransform = 'scaleX(-1)'; break;
@@ -31,18 +28,18 @@ function renderImageWidget(cfg, baseDir) {
     case 'both':       flipTransform = 'scaleX(-1) scaleY(-1)'; break;
   }
 
-  const rotateAngle     = parseFloat(c.imagerotate) || 0;
+  const rotateAngle     = parseFloat(cfg.imagerotate) || 0;
   const rotateTransform = `rotate(${rotateAngle}deg)`;
 
   const transform = [flipTransform, rotateTransform].filter(t => t).join(' ');
   const transformStyle = transform ? `transform: ${transform}; transform-origin: center center;` : '';
 
-  let imgName = stripQuotes(c.imagename || '');
+  let imgName = stripQuotes(cfg.imagename || '');
   if (!path.isAbsolute(imgName)) imgName = path.join(baseDir, imgName);
   const srcPath = imgName.replace(/\\/g, '/');
   const attrStr = buildActionAttributes(cfg);
 
-  const tintVal = c.imagetint;
+  const tintVal = cfg.imagetint;
   const hasTint = typeof tintVal !== 'undefined' && tintVal !== null && tintVal !== '';
   let tintDiv = '';
   if (hasTint) {

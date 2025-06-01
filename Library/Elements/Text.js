@@ -1,33 +1,30 @@
+// Elements/Text.js
 const { safeInt, escapeHtml, buildActionAttributes } = require('../Utils');
 
 function renderTextWidget(cfg) {
-  // Normalize keys to lowercase for case-insensitive access
-  const c = {};
-  Object.keys(cfg).forEach(key => {
-    c[key.toLowerCase()] = cfg[key];
-  });
-
+  // Configuration is already normalized in ConfigParser.js
+  
   // Position and size
-  const x      = safeInt(c.x, 0);
-  const y      = safeInt(c.y, 0);
-  const width  = safeInt(c.w, 200);
-  const height = safeInt(c.h, 50);
+  const x      = safeInt(cfg.x, 0);
+  const y      = safeInt(cfg.y, 0);
+  const width  = safeInt(cfg.w, 200);
+  const height = safeInt(cfg.h, 50);
 
   // Text alignment mapping
   const justify = {
     'centercenter': 'center',
     'rightcenter':  'flex-end'
-  }[c.stringalign] || 'flex-start';
+  }[cfg.stringalign] || 'flex-start';
 
   // Font properties
-  const fontColor  = c.fontcolor   || '0,0,0';
-  const fontFace   = c.fontface    || 'sans-serif';
-  const fontWeight = c.fontweight  || 'normal';
-  const fontSize   = safeInt(c.fontsize, 14);
-  const smoothing  = c.antialias === '1' ? 'antialiased' : 'none';
+  const fontColor  = cfg.fontcolor   || '0,0,0';
+  const fontFace   = cfg.fontface    || 'sans-serif';
+  const fontWeight = cfg.fontweight  || 'normal';
+  const fontSize   = safeInt(cfg.fontsize, 14);
+  const smoothing  = cfg.antialias === '1' ? 'antialiased' : 'none';
 
   // Text content
-  const text = escapeHtml(c.text || '');
+  const text = escapeHtml(cfg.text || '');
 
   // Build interactive attributes (use original cfg for actions)
   const attrStr = buildActionAttributes(cfg);
