@@ -1,9 +1,7 @@
 // Elements/Text.js
 const { safeInt, escapeHtml, buildActionAttributes } = require('../Utils');
 
-function renderTextWidget(cfg) {
-  // Configuration is already normalized in ConfigParser.js
-  
+function renderTextWidget(cfg) {  
   // Position and size
   const x      = safeInt(cfg.x, 0);
   const y      = safeInt(cfg.y, 0);
@@ -23,10 +21,8 @@ function renderTextWidget(cfg) {
   const fontSize   = safeInt(cfg.fontsize, 14);
   const smoothing  = cfg.antialias === '1' ? 'antialiased' : 'none';
 
-  // Text content
   const text = escapeHtml(cfg.text || '');
 
-  // Build interactive attributes (use original cfg for actions)
   const attrStr = buildActionAttributes(cfg);
 
   return `

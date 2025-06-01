@@ -3,7 +3,6 @@ const path = require('path');
 const { safeInt, stripQuotes, buildActionAttributes } = require('../Utils');
 
 function renderImageWidget(cfg, baseDir) {
-  // Configuration is already normalized in ConfigParser.js
   const x      = safeInt(cfg.x, 0);
   const y      = safeInt(cfg.y, 0);
   const width  = safeInt(cfg.w, 100);

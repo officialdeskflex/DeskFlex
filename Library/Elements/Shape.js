@@ -1,8 +1,7 @@
 // Elements/Shape.js
-const { safeInt } = require("../Utils");
+const { safeInt, buildActionAttributes } = require("../Utils");
 
 function renderShapeWidget(cfg) {
-  // Configuration is already normalized in ConfigParser.js
   const x = safeInt(cfg.x, 0);
   const y = safeInt(cfg.y, 0);
   const width = safeInt(cfg.w, 0);
@@ -12,8 +11,10 @@ function renderShapeWidget(cfg) {
   const strokeWidth = safeInt(cfg.strokewidth, 1);
   const radius = safeInt(cfg.radius, 0);
 
+  const attrStr = buildActionAttributes(cfg);
+
   return `
-    <div class="widget no-drag" style="
+    <div class="widget no-drag"${attrStr} style="
       position: absolute;
       left: ${x}px;
       top: ${y}px;
