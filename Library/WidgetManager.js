@@ -1,21 +1,14 @@
 // WidgetManager.js
 const { BrowserWindow, app } = require("electron");
 const path = require("path");
-const { parseIni } = require("./ConfigParser");
+const { processWidgetConfig } = require("./ConfigParser");
 const { renderTextWidget } = require("./Elements/Text");
 const { renderImageWidget } = require("./Elements/Image");
 const { renderShapeWidget } = require("./Elements/Shape");
-const getImageSize = require("./Helper/ImageSize");
 const { registerIpcHandlers } = require("./WidgetIpcHandlers");
 const { logs } = require("./Logs");
 const { handleWindowPosition } = require("./Helper/PositionHandler");
-const {
-  substituteVariables,
-  safeInt,
-  resolveIniPath,
-  getRelativeWidgetPath,
-  rgbToHex,
-} = require("./Utils");
+const { safeInt, resolveIniPath, getRelativeWidgetPath } = require("./Utils");
 const {
   getWidgetClickThrough,
   getWidgetWindowX,
@@ -42,6 +35,7 @@ function loadWidget(filePath) {
   const widgetsBase = getWidgetsPath();
   const widgetName = path.relative(widgetsBase, iniPath).replace(/\[/g, "\\");
 
+  // Get widget settings from configuration
   const clickVal = Number(getWidgetClickThrough(widgetName)) === 1 ? 1 : 0;
   const winX = safeInt(getWidgetWindowX(widgetName), null);
   const winY = safeInt(getWidgetWindowY(widgetName), null);
@@ -54,142 +48,29 @@ function loadWidget(filePath) {
 
   console.log(`The loaded Widget Clickthrough ${clickVal}`);
 
-  let widgetNames;
+  // Process widget configuration using ConfigParser
+  let processedWidget;
   try {
-    widgetNames = parseIni(iniPath);
+    processedWidget = processWidgetConfig(iniPath);
   } catch (err) {
-    console.error(`Failed to parse ${path.basename(iniPath)}:`, err);
+    console.error(`Failed to process widget configuration:`, err);
     return;
   }
 
-  for (const cfg of Object.values(widgetNames)) {
-    ["x", "y", "w", "h", "style"].forEach((k) => {
-      const low = k.toLowerCase(),
-        up = k.toUpperCase();
-      if (cfg[low] !== undefined && cfg[up] === undefined) {
-        cfg[up] = cfg[low];
-      }
-    });
-  }
-
-  const vars = widgetNames.Variables || {};
-  delete widgetNames.Variables;
-
-  const usedStyles = new Set();
-
-  for (const cfg of Object.values(widgetNames)) {
-    if (cfg.Style) {
-      usedStyles.add(cfg.Style);
-      const base = widgetNames[cfg.Style];
-      if (base) {
-        ["X", "Y", "W", "H", "Width", "Height"].forEach((k) => {
-          if (base[k] !== undefined && cfg[k] === undefined) {
-            cfg[k] = base[k];
-          }
-        });
-      } else {
-        console.warn(`Style "${cfg.Style}" not found.`);
-      }
-    }
-  }
-
-  for (const cfg of Object.values(widgetNames)) {
-    if ((cfg.element || "").trim().toLowerCase() === "shape") {
-      const shapeDef = (cfg.Shape || "").trim();
-      if (!shapeDef) {
-        console.warn(`Empty Shape definition for a Shape-Element.`);
-        continue;
-      }
-
-      const shapeParts = shapeDef.split("|").map((p) => p.trim());
-      const mainPart = shapeParts[0]; // e.g. "Rectangle 4,4,110,110,55"
-
-      const [shapeTypeRaw, coordStr] = mainPart.split(/\s+(.+)/);
-      const shapeType = (shapeTypeRaw || "").toLowerCase();
-      if (shapeType !== "rectangle" || !coordStr) {
-        console.warn(
-          `Unsupported Shape type or malformed params: "${shapeDef}"`
-        );
-        continue;
-      }
-
-      const coords = coordStr.split(",").map((n) => parseInt(n, 10).valueOf());
-      const [sx = 0, sy = 0, sw = 0, sh = 0, sr = 0] = coords;
-      cfg.X = sx;
-      cfg.Y = sy;
-      cfg.W = sw;
-      cfg.H = sh;
-      cfg.Radius = sr;
-
-      cfg.FillColor = "#FFFFFF";
-      cfg.StrokeColor = "#000000";
-      cfg.StrokeWidth = 1;
-
-      for (let i = 1; i < shapeParts.length; i++) {
-        const token = shapeParts[i];
-
-        const m = token.match(/^(.+?)\s+([\d,]+)$/);
-        if (!m) {
-          console.warn(`Malformed Shape style token: "${token}"`);
-          continue;
-        }
-        const keyRaw = m[1].trim().toLowerCase();
-        const valueRaw = m[2].trim();
-
-        if (
-          keyRaw === "fill" ||
-          keyRaw === "fillcolor" ||
-          keyRaw === "fill color"
-        ) {
-          const hex = rgbToHex(valueRaw);
-          if (hex) cfg.FillColor = hex;
-        } else if (
-          keyRaw === "stroke" ||
-          keyRaw === "strokecolor" ||
-          keyRaw === "stroke color"
-        ) {
-          const hex = rgbToHex(valueRaw);
-          if (hex) cfg.StrokeColor = hex;
-        } else if (keyRaw === "strokewidth") {
-          const swv = parseInt(valueRaw, 10);
-          if (!isNaN(swv)) cfg.StrokeWidth = swv;
-        } else {
-          console.warn(`Unknown Shape style token: "${token}"`);
-        }
-      }
-    }
-  }
-
-  usedStyles.forEach((s) => delete widgetNames[s]);
-
-  const baseDir = path.dirname(iniPath);
-  for (const cfg of Object.values(widgetNames)) {
-    if ((cfg.element || "").trim().toLowerCase() === "image") {
-      let img = (cfg.ImageName || "").replace(/"/g, "");
-      if (!path.isAbsolute(img)) img = path.join(baseDir, img);
-      const hasW = cfg.W || cfg.Width,
-        hasH = cfg.H || cfg.Height;
-      if (!hasW || !hasH) {
-        try {
-          const sz = getImageSize(img);
-          cfg.W = cfg.W || sz.width;
-          cfg.H = cfg.H || sz.height;
-        } catch (e) {
-          console.warn(`Could not size ${img}:`, e);
-        }
-      }
-    }
-  }
-
-  const { width: winW, height: winH } = calculateWindowSize(widgetNames);
-  const finalWidth = Math.round(winW);
-  const finalHeight = Math.round(winH);
+  const {
+    config: widgetConfig,
+    variables,
+    baseDir,
+    windowSize,
+  } = processedWidget;
+  const finalWidth = Math.round(windowSize.width);
+  const finalHeight = Math.round(windowSize.height);
 
   const win = createWidgetsWindow(
     iniPath,
     widgetName,
-    widgetNames,
-    vars,
+    widgetConfig,
+    variables,
     baseDir,
     finalWidth,
     finalHeight,
@@ -204,19 +85,18 @@ function loadWidget(filePath) {
   widgetWindows.set(iniPath, win);
   windowSizes.set(iniPath, { width: finalWidth, height: finalHeight });
 
-  win.setBounds({ width: finalWidth, height: finalHeight });
-  win.setMinimumSize(finalWidth, finalHeight);
-  win.setMaximumSize(finalWidth, finalHeight);
-  if (winX !== null && winY !== null) {
-    win.setBounds({ x: winX, y: winY, width: finalWidth, height: finalHeight });
-  }
-  win.setMovable(false);
-
-  win.setOpacity(transparencyPercent / 100);
-  win.snapEdges = snapEdges;
-  win.onHoverBehavior = onHover;
-  win.isWidgetDraggable = draggable;
-  win.keepOnScreen = keepOnScreenVal;
+  configureWindow(
+    win,
+    finalWidth,
+    finalHeight,
+    winX,
+    winY,
+    transparencyPercent,
+    snapEdges,
+    onHover,
+    draggable,
+    keepOnScreenVal
+  );
 
   setActiveValue(getRelativeWidgetPath(filePath), "1");
   logs(`Loaded widget: ${getRelativeWidgetPath(filePath)}`, "info", "DeskFlex");
@@ -226,10 +106,44 @@ function loadWidget(filePath) {
 }
 
 /**
- *  UNLOAD WIDGET
+ * Configure window properties and behavior
+ */
+function configureWindow(
+  win,
+  width,
+  height,
+  winX,
+  winY,
+  transparencyPercent,
+  snapEdges,
+  onHover,
+  draggable,
+  keepOnScreen
+) {
+  win.setBounds({ width, height });
+  win.setMinimumSize(width, height);
+  win.setMaximumSize(width, height);
+
+  if (winX !== null && winY !== null) {
+    win.setBounds({ x: winX, y: winY, width, height });
+  }
+
+  win.setMovable(false);
+  win.setOpacity(transparencyPercent / 100);
+
+  // Set custom properties
+  win.snapEdges = snapEdges;
+  win.onHoverBehavior = onHover;
+  win.isWidgetDraggable = draggable;
+  win.keepOnScreen = keepOnScreen;
+}
+
+/**
+ * UNLOAD WIDGET
  */
 function unloadWidget(widgetName) {
   console.log(`Unloading widget: ${widgetName}`);
+
   // Find the full iniPath key whose relative path matches widgetName
   let matchedKey = null;
   for (const iniPath of widgetWindows.keys()) {
@@ -258,25 +172,14 @@ function unloadWidget(widgetName) {
   logs(`Unloaded widget: ${widgetName}`, "info", "DeskFlex");
 }
 
-function calculateWindowSize(secs) {
-  let maxR = 0,
-    maxB = 0;
-  for (const cfg of Object.values(secs)) {
-    const x = safeInt(cfg.X, 0),
-      y = safeInt(cfg.Y, 0);
-    const w = safeInt(cfg.Width ?? cfg.W, 0),
-      h = safeInt(cfg.Height ?? cfg.H, 0);
-    maxR = Math.max(maxR, x + w);
-    maxB = Math.max(maxB, y + h);
-  }
-  return { width: maxR, height: maxB };
-}
-
+/**
+ * Create the widget window with HTML content
+ */
 function createWidgetsWindow(
   name,
   widgetName,
-  secs,
-  vars,
+  widgetConfig,
+  variables,
   baseDir,
   width,
   height,
@@ -298,7 +201,6 @@ function createWidgetsWindow(
     useContentSize: true,
     hasShadow: false,
     roundedCorners: false,
-    // backgroundColor: "#000000",
     show: false,
     webPreferences: {
       nodeIntegration: true,
@@ -309,6 +211,46 @@ function createWidgetsWindow(
 
   win.setTitle(name);
 
+  const html = generateWidgetHTML(
+    widgetName,
+    widgetConfig,
+    baseDir,
+    width,
+    height,
+    draggable,
+    keepOnScreen,
+    clickVal,
+    onHover,
+    transparencyPercent,
+    name
+  );
+
+  win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html), {
+    baseURLForDataURL: "file://" + baseDir.replace(/\\/g, "/") + "/",
+  });
+
+  setupWindowEventHandlers(win, name, width, height, clickVal);
+  handleWindowPosition(position, name, win);
+
+  return win;
+}
+
+/**
+ * Generate HTML content for the widget
+ */
+function generateWidgetHTML(
+  widgetName,
+  widgetConfig,
+  baseDir,
+  width,
+  height,
+  draggable,
+  keepOnScreen,
+  clickVal,
+  onHover,
+  transparencyPercent,
+  name
+) {
   let html = `
 <!DOCTYPE html>
 <html>
@@ -333,26 +275,38 @@ function createWidgetsWindow(
     <div id="container">
 `;
 
-  for (const raw of Object.values(secs)) {
-    const cfg = {};
-    for (const [k, v] of Object.entries(raw)) {
-      cfg[k] = typeof v === "string" ? substituteVariables(v, vars) : v;
-    }
-    switch ((cfg.element || "").trim()) {
-      case "Text":
-        html += renderTextWidget(cfg);
-        break;
-      case "Image":
-        html += renderImageWidget(cfg, baseDir);
-        break;
-      case "Shape":
-        html += renderShapeWidget(cfg);
-        break;
-      default:
-        console.warn(`Skipping unknown element="${cfg.element}"`);
-    }
+  // Render widget elements
+  for (const cfg of Object.values(widgetConfig)) {
+    html += renderWidgetElement(cfg, baseDir);
   }
 
+  html += generateWidgetScripts(onHover, transparencyPercent, name);
+  html += `  </body>\n</html>`;
+
+  return html;
+}
+
+/**
+ * Render individual widget elements
+ */
+function renderWidgetElement(cfg, baseDir) {
+  switch ((cfg.element || "").trim()) {
+    case "Text":
+      return renderTextWidget(cfg);
+    case "Image":
+      return renderImageWidget(cfg, baseDir);
+    case "Shape":
+      return renderShapeWidget(cfg);
+    default:
+      console.warn(`Skipping unknown element="${cfg.element}"`);
+      return "";
+  }
+}
+
+/**
+ * Generate script tags for widget functionality
+ */
+function generateWidgetScripts(onHover, transparencyPercent, name) {
   const dragPath = path
     .join(__dirname, "WidgetProcess/WidgetDrag.js")
     .replace(/\\/g, "/");
@@ -364,7 +318,7 @@ function createWidgetsWindow(
     .replace(/\\/g, "/");
   const widgetPath = name.replace(/\\/g, "\\\\");
 
-  html += `</div>
+  return `</div>
 <script>
   const container = document.getElementById("container");
   const hoverType = ${onHover};
@@ -374,15 +328,13 @@ function createWidgetsWindow(
   initializeHoverBehavior(container, hoverType, transparencyPercent, widgetPath);
 </script>
 <script>require("${dragPath}")</script>
-<script>require("${actionsPath}")</script>
-  </body>
-</html>
-`;
+<script>require("${actionsPath}")</script>`;
+}
 
-  win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html), {
-    baseURLForDataURL: "file://" + baseDir.replace(/\\/g, "/") + "/",
-  });
-
+/**
+ * Setup window event handlers
+ */
+function setupWindowEventHandlers(win, name, width, height, clickVal) {
   win.once("ready-to-show", () => {
     win.setBounds({ width, height });
     win.show();
@@ -396,15 +348,15 @@ function createWidgetsWindow(
     const s = windowSizes.get(name);
     if (s) win.setBounds({ width: s.width, height: s.height });
   };
+
   ["resize", "blur", "show"].forEach((evt) => win.on(evt, lockSize));
+
   win.on("close", (e) => {
     if (!app.isWidgetQuiting) {
       e.preventDefault();
       win.hide();
     }
   });
-  handleWindowPosition(position, name, win);
-  return win;
 }
 
 registerIpcHandlers(widgetWindows, windowSizes, loadWidget, unloadWidget);

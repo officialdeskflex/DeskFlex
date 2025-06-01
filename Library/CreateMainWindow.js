@@ -1,5 +1,5 @@
-const { BrowserWindow, app } = require('electron');
-const path = require('path');
+const { BrowserWindow, app } = require("electron");
+const path = require("path");
 
 function createMainWindow(config) {
   const win = new BrowserWindow({
@@ -7,24 +7,24 @@ function createMainWindow(config) {
     height: 650,
     resizable: false,
     show: false,
-    icon: path.join(__dirname, '..', 'assets', 'DeskFlex.png'),
+    icon: path.join(__dirname, "..", "assets", "DeskFlex.png"),
     webPreferences: {
       nodeIntegration: true,
-    //  enableRemoteModule: false,
-    //  devTools: false, // only in production
-      preload: path.join(__dirname, 'preload.js')
-    }
+      //  enableRemoteModule: false,
+      //  devTools: false, // only in production
+      preload: path.join(__dirname, "preload.js"),
+    },
   });
 
-  win.loadFile(path.join(__dirname, 'MainWindow', 'index.html'));
+  win.loadFile(path.join(__dirname, "MainWindow", "index.html"));
 
-  win.once('ready-to-show', () => {
+  win.once("ready-to-show", () => {
     if (config.showStart === 1) {
       win.show();
     }
   });
 
-  win.on('close', (e) => {
+  win.on("close", (e) => {
     if (!app.isQuiting) {
       e.preventDefault();
       win.hide();
