@@ -1,7 +1,7 @@
 // WidgetManager.js
 const { BrowserWindow, app } = require("electron");
 const path = require("path");
-const { processWidgetConfig } = require("./ConfigParser");
+const { processWidgetConfig } = require("./ConfigParser/ConfigParser");
 const { renderTextWidget } = require("./Elements/Text");
 const { renderImageWidget } = require("./Elements/Image");
 const { renderShapeWidget } = require("./Elements/Shape");
