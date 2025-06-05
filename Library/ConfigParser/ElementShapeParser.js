@@ -7,7 +7,10 @@ const { rgbToHex } = require("../Utils");
  * @returns {Array} Array of parsed numbers
  */
 function parseTransformParams(valueRaw) {
-  return valueRaw.split(",").map((n) => parseFloat(n.trim())).filter(n => !isNaN(n));
+  return valueRaw
+    .split(",")
+    .map((n) => parseFloat(n.trim()))
+    .filter((n) => !isNaN(n));
 }
 
 /**
@@ -21,53 +24,54 @@ function resolveExtendReferences(shapeDef, cfg) {
     return shapeDef;
   }
 
-  // Split the shape definition by pipes
-  const shapeParts = shapeDef.split("|").map(p => p.trim());
+  const shapeParts = shapeDef.split("|").map((p) => p.trim());
   const resolvedParts = [];
-  
+
   for (const part of shapeParts) {
-    // Check if this part is an Extend directive
     const extendMatch = part.match(/^Extend\s+(.+)$/i);
     if (extendMatch) {
-      // Parse the extend references (comma-separated)
-      const extendRefs = extendMatch[1].split(",").map(ref => ref.trim());
-      
-      // Replace each extend reference with its definition
+      const extendRefs = extendMatch[1].split(",").map((ref) => ref.trim());
+
       for (const extendRef of extendRefs) {
         // Try case-insensitive lookup
         let extendDef = cfg[extendRef];
-        
-        // If not found, try lowercase version (due to normalization)
+
         if (!extendDef) {
           const lowerRef = extendRef.toLowerCase();
           extendDef = cfg[lowerRef];
         }
-        
-        // If still not found, try to find any key that matches case-insensitively
+
         if (!extendDef) {
-          const matchingKey = Object.keys(cfg).find(key => 
-            key.toLowerCase() === extendRef.toLowerCase()
+          const matchingKey = Object.keys(cfg).find(
+            (key) => key.toLowerCase() === extendRef.toLowerCase()
           );
           if (matchingKey) {
             extendDef = cfg[matchingKey];
           }
         }
-        
+
         if (extendDef && typeof extendDef === "string") {
           // Split the extend definition and add each part
-          const extendParts = extendDef.split("|").map(p => p.trim()).filter(p => p);
+          const extendParts = extendDef
+            .split("|")
+            .map((p) => p.trim())
+            .filter((p) => p);
           resolvedParts.push(...extendParts);
-          console.log(`Resolved Extend "${extendRef}" to: ${extendParts.join(" | ")}`);
+          console.log(
+            `Resolved Extend "${extendRef}" to: ${extendParts.join(" | ")}`
+          );
         } else {
-          console.warn(`Extend reference "${extendRef}" not found or invalid. Available keys:`, Object.keys(cfg));
+          console.warn(
+            `Extend reference "${extendRef}" not found or invalid. Available keys:`,
+            Object.keys(cfg)
+          );
         }
       }
     } else {
-      // Regular shape part, keep as-is
       resolvedParts.push(part);
     }
   }
-  
+
   const result = resolvedParts.join(" | ");
   console.log(`Final resolved shape definition: ${result}`);
   return result;
@@ -84,16 +88,17 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
     return null;
   }
 
-  // First, resolve any Extend references
   const resolvedShapeDef = resolveExtendReferences(shapeDef, cfg);
 
   const shapeParts = resolvedShapeDef.split("|").map((p) => p.trim());
-  const mainPart = shapeParts[0]; // e.g. "Rectangle 4,4,110,110,55"
+  const mainPart = shapeParts[0];
 
   const [shapeTypeRaw, coordStr] = mainPart.split(/\s+(.+)/);
   const shapeType = (shapeTypeRaw || "").toLowerCase();
   if (shapeType !== "rectangle" || !coordStr) {
-    console.warn(`Unsupported Shape type or malformed params: "${resolvedShapeDef}"`);
+    console.warn(
+      `Unsupported Shape type or malformed params: "${resolvedShapeDef}"`
+    );
     return null;
   }
 
@@ -109,17 +114,15 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
     fillcolor: "#FFFFFF",
     strokecolor: "#000000",
     strokewidth: 1,
-    // Transform properties with defaults
     transforms: {
       rotate: { angle: 0, anchorX: null, anchorY: null },
       scale: { x: 1.0, y: 1.0, anchorX: null, anchorY: null },
       skew: { x: 0.0, y: 0.0, anchorX: null, anchorY: null },
       offset: { x: 0, y: 0 },
-      transformOrder: ['rotate', 'scale', 'skew', 'offset']
-    }
+      transformOrder: ["rotate", "scale", "skew", "offset"],
+    },
   };
 
-  // Process shape styling and transforms (skip first part which is the main definition)
   for (let i = 1; i < shapeParts.length; i++) {
     const token = shapeParts[i];
     console.log(`Processing shape token: "${token}"`);
@@ -175,7 +178,8 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
       const params = parseTransformParams(valueRaw);
       if (params.length >= 1) {
         shapeObj.transforms.scale.x = params[0];
-        shapeObj.transforms.scale.y = params.length >= 2 ? params[1] : params[0];
+        shapeObj.transforms.scale.y =
+          params.length >= 2 ? params[1] : params[0];
         if (params.length >= 4) {
           shapeObj.transforms.scale.anchorX = params[2];
           shapeObj.transforms.scale.anchorY = params[3];
@@ -200,12 +204,14 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
         shapeObj.transforms.offset.y = params[1];
       }
     } else if (keyRaw === "transformorder") {
-      // Parse transform order - expect comma-separated transform names
-      const orderStr = valueRaw.toLowerCase().replace(/[\d\s]/g, ''); // Remove numbers and spaces
-      const specified = orderStr.split(',').map(s => s.trim()).filter(s => s);
-      const valid = ['rotate', 'scale', 'skew', 'offset'];
-      const validSpecified = specified.filter(s => valid.includes(s));
-      const remaining = valid.filter(s => !validSpecified.includes(s));
+      const orderStr = valueRaw.toLowerCase().replace(/[\d\s]/g, "");
+      const specified = orderStr
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s);
+      const valid = ["rotate", "scale", "skew", "offset"];
+      const validSpecified = specified.filter((s) => valid.includes(s));
+      const remaining = valid.filter((s) => !validSpecified.includes(s));
       shapeObj.transforms.transformOrder = [...validSpecified, ...remaining];
     } else {
       console.warn(`Unknown Shape style token: "${token}"`);
@@ -222,25 +228,23 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
  */
 function collectExtendReferences(cfg) {
   const extendRefs = new Set();
-  
-  // Look through all shape definitions for Extend keywords
+
   const shapeKeys = Object.keys(cfg).filter((key) =>
     key.toLowerCase().match(/^shape\d*$/)
   );
-  
+
   for (const shapeKey of shapeKeys) {
     const shapeDef = cfg[shapeKey];
     if (typeof shapeDef === "string") {
-      const shapeParts = shapeDef.split("|").map(p => p.trim());
-      
+      const shapeParts = shapeDef.split("|").map((p) => p.trim());
+
       for (const part of shapeParts) {
         const extendMatch = part.match(/^Extend\s+(.+)$/i);
         if (extendMatch) {
-          const refs = extendMatch[1].split(",").map(ref => ref.trim());
+          const refs = extendMatch[1].split(",").map((ref) => ref.trim());
           for (const ref of refs) {
-            // Find the actual key in the configuration (case-insensitive)
-            const actualKey = Object.keys(cfg).find(key => 
-              key.toLowerCase() === ref.toLowerCase()
+            const actualKey = Object.keys(cfg).find(
+              (key) => key.toLowerCase() === ref.toLowerCase()
             );
             if (actualKey) {
               extendRefs.add(actualKey);
@@ -250,7 +254,7 @@ function collectExtendReferences(cfg) {
       }
     }
   }
-  
+
   return extendRefs;
 }
 
@@ -265,16 +269,13 @@ function processShapes(widgetConfig) {
   for (const cfg of Object.values(processedConfig)) {
     const elementType = (cfg.element || "").trim().toLowerCase();
     if (elementType === "shape") {
-      // Collect all extend references used in this configuration
       const extendRefs = collectExtendReferences(cfg);
-      
-      // Collect all shape definitions (Shape, Shape2, Shape3, etc.)
+
       const shapeDefinitions = [];
       const shapeKeys = Object.keys(cfg).filter((key) =>
         key.toLowerCase().match(/^shape\d*$/)
       );
 
-      // Sort shape keys to maintain order (Shape, Shape2, Shape3, etc.)
       shapeKeys.sort((a, b) => {
         const aNum = a.toLowerCase().replace("shape", "") || "0";
         const bNum = b.toLowerCase().replace("shape", "") || "0";
@@ -283,7 +284,6 @@ function processShapes(widgetConfig) {
 
       for (const shapeKey of shapeKeys) {
         const shapeDef = cfg[shapeKey];
-        // Pass the full configuration to parseShapeDefinition for extend resolution
         const parsedShape = parseShapeDefinition(shapeDef, cfg);
         if (parsedShape) {
           shapeDefinitions.push(parsedShape);
@@ -295,13 +295,10 @@ function processShapes(widgetConfig) {
         continue;
       }
 
-      // Store the parsed shapes array
       cfg.shapes = shapeDefinitions;
 
-      // For backward compatibility, set properties from the first shape
       const firstShape = shapeDefinitions[0];
       if (firstShape) {
-        // Set normalized properties
         cfg.x = firstShape.x;
         cfg.y = firstShape.y;
         cfg.w = firstShape.w;
@@ -311,7 +308,6 @@ function processShapes(widgetConfig) {
         cfg.strokecolor = firstShape.strokecolor;
         cfg.strokewidth = firstShape.strokewidth;
 
-        // Also set uppercase for backward compatibility
         cfg.X = firstShape.x;
         cfg.Y = firstShape.y;
         cfg.W = firstShape.w;
@@ -322,7 +318,6 @@ function processShapes(widgetConfig) {
         cfg.StrokeWidth = firstShape.strokewidth;
       }
 
-      // Calculate overall bounding box for multiple shapes
       if (shapeDefinitions.length > 1) {
         let minX = Infinity,
           minY = Infinity;
@@ -336,7 +331,6 @@ function processShapes(widgetConfig) {
           maxY = Math.max(maxY, shape.y + shape.h);
         }
 
-        // Update overall dimensions
         cfg.x = minX;
         cfg.y = minY;
         cfg.w = maxX - minX;
@@ -347,9 +341,7 @@ function processShapes(widgetConfig) {
         cfg.H = maxY - minY;
       }
 
-      // Clean up extend reference definitions from the configuration
-      // These are no longer needed after processing and shouldn't be part of the final config
-      extendRefs.forEach(ref => {
+      extendRefs.forEach((ref) => {
         if (cfg.hasOwnProperty(ref)) {
           delete cfg[ref];
         }
