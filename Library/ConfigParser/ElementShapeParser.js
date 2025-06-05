@@ -2,6 +2,15 @@
 const { rgbToHex } = require("../Utils");
 
 /**
+ * Parse transform parameters from a string
+ * @param {string} valueRaw - Parameter string (e.g., "45,10,20" or "1.5,2.0")
+ * @returns {Array} Array of parsed numbers
+ */
+function parseTransformParams(valueRaw) {
+  return valueRaw.split(",").map((n) => parseFloat(n.trim())).filter(n => !isNaN(n));
+}
+
+/**
  * Parse a single shape definition string
  * @param {string} shapeDef - Shape definition string
  * @returns {object|null} Parsed shape object or null if invalid
@@ -33,13 +42,21 @@ function parseShapeDefinition(shapeDef) {
     fillcolor: "#FFFFFF",
     strokecolor: "#000000",
     strokewidth: 1,
+    // Transform properties with defaults
+    transforms: {
+      rotate: { angle: 0, anchorX: null, anchorY: null },
+      scale: { x: 1.0, y: 1.0, anchorX: null, anchorY: null },
+      skew: { x: 0.0, y: 0.0, anchorX: null, anchorY: null },
+      offset: { x: 0, y: 0 },
+      transformOrder: ['rotate', 'scale', 'skew', 'offset']
+    }
   };
 
-  // Process shape styling
+  // Process shape styling and transforms
   for (let i = 1; i < shapeParts.length; i++) {
     const token = shapeParts[i];
 
-    const m = token.match(/^(.+?)\s+([\d,]+)$/);
+    const m = token.match(/^(.+?)\s+([\d,.-]+)$/);
     if (!m) {
       console.warn(`Malformed Shape style token: "${token}"`);
       continue;
@@ -70,6 +87,51 @@ function parseShapeDefinition(shapeDef) {
       if (!isNaN(swv)) {
         shapeObj.strokewidth = swv;
       }
+    } else if (keyRaw === "rotate") {
+      const params = parseTransformParams(valueRaw);
+      if (params.length >= 1) {
+        shapeObj.transforms.rotate.angle = params[0];
+        if (params.length >= 3) {
+          shapeObj.transforms.rotate.anchorX = params[1];
+          shapeObj.transforms.rotate.anchorY = params[2];
+        }
+      }
+    } else if (keyRaw === "scale") {
+      const params = parseTransformParams(valueRaw);
+      if (params.length >= 1) {
+        shapeObj.transforms.scale.x = params[0];
+        shapeObj.transforms.scale.y = params.length >= 2 ? params[1] : params[0];
+        if (params.length >= 4) {
+          shapeObj.transforms.scale.anchorX = params[2];
+          shapeObj.transforms.scale.anchorY = params[3];
+        }
+      }
+    } else if (keyRaw === "skew") {
+      const params = parseTransformParams(valueRaw);
+      if (params.length >= 1) {
+        shapeObj.transforms.skew.x = params[0];
+        if (params.length >= 2) {
+          shapeObj.transforms.skew.y = params[1];
+        }
+        if (params.length >= 4) {
+          shapeObj.transforms.skew.anchorX = params[2];
+          shapeObj.transforms.skew.anchorY = params[3];
+        }
+      }
+    } else if (keyRaw === "offset") {
+      const params = parseTransformParams(valueRaw);
+      if (params.length >= 2) {
+        shapeObj.transforms.offset.x = params[0];
+        shapeObj.transforms.offset.y = params[1];
+      }
+    } else if (keyRaw === "transformorder") {
+      // Parse transform order - expect comma-separated transform names
+      const orderStr = valueRaw.toLowerCase().replace(/[\d\s]/g, ''); // Remove numbers and spaces
+      const specified = orderStr.split(',').map(s => s.trim()).filter(s => s);
+      const valid = ['rotate', 'scale', 'skew', 'offset'];
+      const validSpecified = specified.filter(s => valid.includes(s));
+      const remaining = valid.filter(s => !validSpecified.includes(s));
+      shapeObj.transforms.transformOrder = [...validSpecified, ...remaining];
     } else {
       console.warn(`Unknown Shape style token: "${token}"`);
     }
@@ -171,6 +233,7 @@ function processShapes(widgetConfig) {
 
   return processedConfig;
 }
+
 module.exports = {
   parseShapeDefinition,
   processShapes,
