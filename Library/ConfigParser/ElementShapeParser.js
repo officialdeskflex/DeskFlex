@@ -1,3 +1,4 @@
+// ElementShapeParser.js
 const { rgbToHex } = require("../Utils");
 
 /**
