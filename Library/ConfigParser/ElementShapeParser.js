@@ -11,22 +11,89 @@ function parseTransformParams(valueRaw) {
 }
 
 /**
+ * Parse and resolve Extend references in a shape definition
+ * @param {string} shapeDef - Shape definition string
+ * @param {object} cfg - Configuration object containing potential extend definitions
+ * @returns {string} Shape definition with extend references resolved
+ */
+function resolveExtendReferences(shapeDef, cfg) {
+  if (!shapeDef || typeof shapeDef !== "string") {
+    return shapeDef;
+  }
+
+  // Split the shape definition by pipes
+  const shapeParts = shapeDef.split("|").map(p => p.trim());
+  const resolvedParts = [];
+  
+  for (const part of shapeParts) {
+    // Check if this part is an Extend directive
+    const extendMatch = part.match(/^Extend\s+(.+)$/i);
+    if (extendMatch) {
+      // Parse the extend references (comma-separated)
+      const extendRefs = extendMatch[1].split(",").map(ref => ref.trim());
+      
+      // Replace each extend reference with its definition
+      for (const extendRef of extendRefs) {
+        // Try case-insensitive lookup
+        let extendDef = cfg[extendRef];
+        
+        // If not found, try lowercase version (due to normalization)
+        if (!extendDef) {
+          const lowerRef = extendRef.toLowerCase();
+          extendDef = cfg[lowerRef];
+        }
+        
+        // If still not found, try to find any key that matches case-insensitively
+        if (!extendDef) {
+          const matchingKey = Object.keys(cfg).find(key => 
+            key.toLowerCase() === extendRef.toLowerCase()
+          );
+          if (matchingKey) {
+            extendDef = cfg[matchingKey];
+          }
+        }
+        
+        if (extendDef && typeof extendDef === "string") {
+          // Split the extend definition and add each part
+          const extendParts = extendDef.split("|").map(p => p.trim()).filter(p => p);
+          resolvedParts.push(...extendParts);
+          console.log(`Resolved Extend "${extendRef}" to: ${extendParts.join(" | ")}`);
+        } else {
+          console.warn(`Extend reference "${extendRef}" not found or invalid. Available keys:`, Object.keys(cfg));
+        }
+      }
+    } else {
+      // Regular shape part, keep as-is
+      resolvedParts.push(part);
+    }
+  }
+  
+  const result = resolvedParts.join(" | ");
+  console.log(`Final resolved shape definition: ${result}`);
+  return result;
+}
+
+/**
  * Parse a single shape definition string
  * @param {string} shapeDef - Shape definition string
+ * @param {object} cfg - Configuration object for resolving extends
  * @returns {object|null} Parsed shape object or null if invalid
  */
-function parseShapeDefinition(shapeDef) {
+function parseShapeDefinition(shapeDef, cfg = {}) {
   if (!shapeDef || typeof shapeDef !== "string") {
     return null;
   }
 
-  const shapeParts = shapeDef.split("|").map((p) => p.trim());
+  // First, resolve any Extend references
+  const resolvedShapeDef = resolveExtendReferences(shapeDef, cfg);
+
+  const shapeParts = resolvedShapeDef.split("|").map((p) => p.trim());
   const mainPart = shapeParts[0]; // e.g. "Rectangle 4,4,110,110,55"
 
   const [shapeTypeRaw, coordStr] = mainPart.split(/\s+(.+)/);
   const shapeType = (shapeTypeRaw || "").toLowerCase();
   if (shapeType !== "rectangle" || !coordStr) {
-    console.warn(`Unsupported Shape type or malformed params: "${shapeDef}"`);
+    console.warn(`Unsupported Shape type or malformed params: "${resolvedShapeDef}"`);
     return null;
   }
 
@@ -52,9 +119,10 @@ function parseShapeDefinition(shapeDef) {
     }
   };
 
-  // Process shape styling and transforms
+  // Process shape styling and transforms (skip first part which is the main definition)
   for (let i = 1; i < shapeParts.length; i++) {
     const token = shapeParts[i];
+    console.log(`Processing shape token: "${token}"`);
 
     const m = token.match(/^(.+?)\s+([\d,.-]+)$/);
     if (!m) {
@@ -63,6 +131,7 @@ function parseShapeDefinition(shapeDef) {
     }
     const keyRaw = m[1].trim().toLowerCase();
     const valueRaw = m[2].trim();
+    console.log(`Parsed token - Key: "${keyRaw}", Value: "${valueRaw}"`);
 
     if (
       keyRaw === "fill" ||
@@ -72,6 +141,9 @@ function parseShapeDefinition(shapeDef) {
       const hex = rgbToHex(valueRaw);
       if (hex) {
         shapeObj.fillcolor = hex;
+        console.log(`Applied fill color: ${valueRaw} -> ${hex}`);
+      } else {
+        console.warn(`Failed to parse fill color: ${valueRaw}`);
       }
     } else if (
       keyRaw === "stroke" ||
@@ -81,6 +153,9 @@ function parseShapeDefinition(shapeDef) {
       const hex = rgbToHex(valueRaw);
       if (hex) {
         shapeObj.strokecolor = hex;
+        console.log(`Applied stroke color: ${valueRaw} -> ${hex}`);
+      } else {
+        console.warn(`Failed to parse stroke color: ${valueRaw}`);
       }
     } else if (keyRaw === "strokewidth") {
       const swv = parseInt(valueRaw, 10);
@@ -141,7 +216,46 @@ function parseShapeDefinition(shapeDef) {
 }
 
 /**
- * Process shape elements in configuration (now supports multiple shapes)
+ * Identify and collect extend reference names from configuration
+ * @param {object} cfg - Configuration object
+ * @returns {Set} Set of extend reference names (actual keys from config)
+ */
+function collectExtendReferences(cfg) {
+  const extendRefs = new Set();
+  
+  // Look through all shape definitions for Extend keywords
+  const shapeKeys = Object.keys(cfg).filter((key) =>
+    key.toLowerCase().match(/^shape\d*$/)
+  );
+  
+  for (const shapeKey of shapeKeys) {
+    const shapeDef = cfg[shapeKey];
+    if (typeof shapeDef === "string") {
+      const shapeParts = shapeDef.split("|").map(p => p.trim());
+      
+      for (const part of shapeParts) {
+        const extendMatch = part.match(/^Extend\s+(.+)$/i);
+        if (extendMatch) {
+          const refs = extendMatch[1].split(",").map(ref => ref.trim());
+          for (const ref of refs) {
+            // Find the actual key in the configuration (case-insensitive)
+            const actualKey = Object.keys(cfg).find(key => 
+              key.toLowerCase() === ref.toLowerCase()
+            );
+            if (actualKey) {
+              extendRefs.add(actualKey);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return extendRefs;
+}
+
+/**
+ * Process shape elements in configuration (now supports multiple shapes and Extend)
  * @param {object} widgetConfig - Widget configuration object
  * @returns {object} Configuration with processed shapes
  */
@@ -151,6 +265,9 @@ function processShapes(widgetConfig) {
   for (const cfg of Object.values(processedConfig)) {
     const elementType = (cfg.element || "").trim().toLowerCase();
     if (elementType === "shape") {
+      // Collect all extend references used in this configuration
+      const extendRefs = collectExtendReferences(cfg);
+      
       // Collect all shape definitions (Shape, Shape2, Shape3, etc.)
       const shapeDefinitions = [];
       const shapeKeys = Object.keys(cfg).filter((key) =>
@@ -166,7 +283,8 @@ function processShapes(widgetConfig) {
 
       for (const shapeKey of shapeKeys) {
         const shapeDef = cfg[shapeKey];
-        const parsedShape = parseShapeDefinition(shapeDef);
+        // Pass the full configuration to parseShapeDefinition for extend resolution
+        const parsedShape = parseShapeDefinition(shapeDef, cfg);
         if (parsedShape) {
           shapeDefinitions.push(parsedShape);
         }
@@ -228,6 +346,14 @@ function processShapes(widgetConfig) {
         cfg.W = maxX - minX;
         cfg.H = maxY - minY;
       }
+
+      // Clean up extend reference definitions from the configuration
+      // These are no longer needed after processing and shouldn't be part of the final config
+      extendRefs.forEach(ref => {
+        if (cfg.hasOwnProperty(ref)) {
+          delete cfg[ref];
+        }
+      });
     }
   }
 
@@ -237,4 +363,6 @@ function processShapes(widgetConfig) {
 module.exports = {
   parseShapeDefinition,
   processShapes,
+  resolveExtendReferences,
+  collectExtendReferences,
 };

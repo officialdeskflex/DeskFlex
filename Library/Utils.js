@@ -102,13 +102,29 @@ function getRelativeWidgetPath(fullPath) {
 }
 
 function rgbToHex(rgbString) {
-  const nums = rgbString.split(",").map((n) => parseInt(n, 10).valueOf());
-  if (nums.length !== 3 || nums.some((x) => isNaN(x))) return null;
-  const [r, g, b] = nums;
+  if (!rgbString || typeof rgbString !== 'string') return null;
+  
+  const nums = rgbString.split(",")
+    .map((n) => parseInt(n.trim(), 10))
+    .filter(n => !isNaN(n));
+    
+  if (nums.length !== 3 && nums.length !== 4) return null;
+  
+  const [r, g, b, a = 255] = nums; 
+  
+  if ([r, g, b, a].some(val => val < 0 || val > 255)) {
+    return null;
+  }
+  
   const toHex = (x) => {
     const h = x.toString(16);
     return h.length === 1 ? "0" + h : h;
   };
+  
+  if (nums.length === 4 && a !== 255) {
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(a)}`;
+  }
+  
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
