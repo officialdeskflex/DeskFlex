@@ -1,4 +1,3 @@
-// HoverHelper.js
 const { ipcRenderer } = require('electron');
 const { getWindowGeometry } = require('win-geometry');
 

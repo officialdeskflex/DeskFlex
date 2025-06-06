@@ -1,7 +1,4 @@
-// dropdown-manager.js
-// Manages dropdown functionality and behavior
-
-import { handleActiveWidgetSelection } from './widget-handler.js';
+import { handleActiveWidgetSelection } from "./widget-handler.js";
 
 export function populateDropdown() {
   const dropdown = document.getElementById("myDropdown");
@@ -55,14 +52,14 @@ export function setDropdown(type, label) {
       ? "transparencyMenu"
       : "hoverMenu"
   );
-  
+
   for (let node of box.childNodes) {
     if (node.nodeType === Node.TEXT_NODE) {
       node.textContent = label || "Select…";
       break;
     }
   }
-  
+
   Array.from(menu.querySelectorAll("a")).forEach((a) =>
     a.classList.toggle("selected", a.textContent.trim() === label)
   );

@@ -1,4 +1,3 @@
-// Elements/Text.js
 const { safeInt, escapeHtml, buildActionAttributes } = require('../Utils');
 
 function renderTextWidget(cfg) {  

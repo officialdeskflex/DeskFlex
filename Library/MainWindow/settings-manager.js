@@ -1,10 +1,7 @@
-// settings-manager.js
-// Manages widget settings capture and application
-
-import { iniOptionMap, posMap, hoverMap } from './constants.js';
-import { isSupportedOption, isOptionChecked } from './utils.js';
-import { setDropdown } from './dropdown-manager.js';
-import stateManager from './state-manager.js';
+import { iniOptionMap, posMap, hoverMap } from "./constants.js";
+import { isSupportedOption, isOptionChecked } from "./utils.js";
+import { setDropdown } from "./dropdown-manager.js";
+import stateManager from "./state-manager.js";
 
 export function captureSettings(sec) {
   const opts = {};
@@ -56,7 +53,7 @@ export function applySettings(settings) {
 
 export function updateSettingsPanel(sec) {
   const { checkboxContainer, windowSettings } = stateManager.uiElements;
-  
+
   Object.entries(iniOptionMap).forEach(([label, { getter }]) => {
     const val = getter(sec);
     const option = Array.from(
@@ -102,7 +99,7 @@ export function updateSettingsPanel(sec) {
 
 export function updateOptionUI(label, widgetId, newVal) {
   if (widgetId !== stateManager.currentWidgetSection) return;
-  
+
   const { checkboxContainer } = stateManager.uiElements;
   const option = Array.from(checkboxContainer.querySelectorAll(".option")).find(
     (o) => o.querySelector("label").textContent.trim() === label

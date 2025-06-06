@@ -1,18 +1,27 @@
-// selection-handler.js
-// Handles item selection in the tree view
-
-import stateManager from './state-manager.js';
-import { getFullPath, isWidgetActive } from './utils.js';
-import { displayWidgetInfo } from './widget-handler.js';
-import { showDetails, hideDetails, enableLoadEdit, disableAll, resetOptions } from './ui-controller.js';
-import { updateSettingsPanel } from './settings-manager.js';
+import stateManager from "./state-manager.js";
+import { getFullPath, isWidgetActive } from "./utils.js";
+import { displayWidgetInfo } from "./widget-handler.js";
+import {
+  showDetails,
+  hideDetails,
+  enableLoadEdit,
+  disableAll,
+  resetOptions,
+} from "./ui-controller.js";
+import { updateSettingsPanel } from "./settings-manager.js";
 
 export function selectItemHandler(item) {
   stateManager.setSelectedItem(item);
 
   const name = item.querySelector("span:last-child").textContent;
-  const { loadButton, refreshButton, windowSettings, checkboxContainer, addWidgetLink } = stateManager.uiElements;
-  
+  const {
+    loadButton,
+    refreshButton,
+    windowSettings,
+    checkboxContainer,
+    addWidgetLink,
+  } = stateManager.uiElements;
+
   if (name.toLowerCase().endsWith(".ini")) {
     const fullPath = getFullPath(item);
     stateManager.setCurrentWidget(stateManager.currentWidgetSection, fullPath);
@@ -23,7 +32,7 @@ export function selectItemHandler(item) {
 
     const sec = stateManager.currentWidgetSection;
     const isActive = isWidgetActive(window.deskflex.getWidgetStatus(sec));
-    
+
     if (isActive) {
       loadButton.textContent = "Unload";
       refreshButton.disabled = false;

@@ -1,6 +1,3 @@
-// main.js
-// Main application entry point
-
 import stateManager from "./state-manager.js";
 import { renderTree, initTreeClickListener } from "./tree-renderer.js";
 import { hideDetails, disableAll } from "./ui-controller.js";

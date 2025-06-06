@@ -1,4 +1,3 @@
-// ConfigParser.js
 const fs = require('fs');
 const path = require('path');
 const ini = require('ini');
@@ -7,7 +6,6 @@ const {processImages} = require('./ElementImageParser');
 const {
   substituteVariables,
   safeInt,
-  rgbToHex,
 } = require('../Utils');
 
 function parseIni(filePath, visited = new Set()) {

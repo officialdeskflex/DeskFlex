@@ -1,4 +1,3 @@
-// widgetBangs.js
 const { ipcRenderer } = require("electron");
 
 const { log, delay } = (() => {

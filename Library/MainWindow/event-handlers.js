@@ -1,6 +1,3 @@
-// event-handlers.js
-// Centralized event handling
-
 import stateManager from "./state-manager.js";
 import {
   iniOptionMap,

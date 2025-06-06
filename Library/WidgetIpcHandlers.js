@@ -1,4 +1,3 @@
-// WidgetIpcHandlers.js
 const { ipcMain, screen, BrowserWindow } = require("electron");
 const path = require("path");
 const { resolveKey, resolveIniPath } = require("./Utils");

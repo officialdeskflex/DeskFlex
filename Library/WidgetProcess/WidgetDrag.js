@@ -1,4 +1,3 @@
-//WidgetDrag.js
 const { ipcRenderer } = require("electron");
 
 let isCtrlPressed = false;

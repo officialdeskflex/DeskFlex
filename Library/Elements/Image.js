@@ -1,4 +1,3 @@
-//Elements/Image.js
 const path = require('path');
 const { safeInt, stripQuotes, buildActionAttributes } = require('../Utils');
 

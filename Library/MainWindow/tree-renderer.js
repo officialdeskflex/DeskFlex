@@ -1,7 +1,3 @@
-// tree-renderer.js
-// Handles rendering of the folder tree structure
-
-import stateManager from './state-manager.js';
 import { selectItemHandler } from './selection-handler.js';
 
 export function renderTree(container, obj, path = "") {

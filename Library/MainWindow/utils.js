@@ -1,6 +1,3 @@
-// utils.js
-// Utility functions for common operations
-
 export function isWidgetActive(val) {
   return String(val) === "1";
 }

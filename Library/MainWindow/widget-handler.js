@@ -1,11 +1,12 @@
-// widget-handler.js
-// Handles widget operations and selections
-
-import stateManager from './state-manager.js';
-import { buildPath, isWidgetActive } from './utils.js';
-import { showDetails, enableLoadEdit, resetOptions } from './ui-controller.js';
-import { updateSettingsPanel, captureSettings, applySettings } from './settings-manager.js';
-import { resetPlaceholders } from './ui-controller.js';
+import stateManager from "./state-manager.js";
+import { buildPath, isWidgetActive } from "./utils.js";
+import { showDetails, enableLoadEdit, resetOptions } from "./ui-controller.js";
+import {
+  updateSettingsPanel,
+  captureSettings,
+  applySettings,
+} from "./settings-manager.js";
+import { resetPlaceholders } from "./ui-controller.js";
 
 export function displayWidgetInfo(filePath) {
   const widgetinfo = window.deskflex.getWidgetInfo(filePath) || {};
@@ -23,7 +24,7 @@ export function displayWidgetInfo(filePath) {
 
   const widgetSection = widgetArr.concat(fileName).join("\\");
   stateManager.setCurrentWidget(widgetSection, filePath);
-  
+
   document.getElementById("main-ini").textContent = fileName;
   document.getElementById("widget").textContent = widgetArr.join("\\") || "-";
 }
@@ -38,9 +39,15 @@ export function handleActiveWidgetSelection(sec) {
   showDetails();
   enableLoadEdit();
 
-  const { loadButton, refreshButton, windowSettings, checkboxContainer, addWidgetLink } = stateManager.uiElements;
+  const {
+    loadButton,
+    refreshButton,
+    windowSettings,
+    checkboxContainer,
+    addWidgetLink,
+  } = stateManager.uiElements;
   const isActive = isWidgetActive(window.deskflex.getWidgetStatus(sec));
-  
+
   if (isActive) {
     loadButton.textContent = "Unload";
     refreshButton.disabled = false;
@@ -71,10 +78,11 @@ export function onLoadUnload() {
   const filePath = stateManager.currentFlexFilePath;
   if (!sec) return;
 
-  const { loadButton, refreshButton, windowSettings, checkboxContainer } = stateManager.uiElements;
+  const { loadButton, refreshButton, windowSettings, checkboxContainer } =
+    stateManager.uiElements;
   const isLoadMode = loadButton.textContent.trim().toLowerCase() === "load";
   const action = isLoadMode ? "loadWidget" : "unloadWidget";
-  
+
   window.deskflex[action](sec)
     .then((result) => {
       if (!result.success) {

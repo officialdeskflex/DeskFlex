@@ -1,5 +1,3 @@
-// constants.js
-
 export const posMap = {
   1: "Stay Topmost",
   0: "Normal",

@@ -1,6 +1,3 @@
-// state-manager.js
-// Manages global state and UI element references
-
 class StateManager {
   constructor() {
     this.selectedItem = null;
@@ -35,9 +32,14 @@ class StateManager {
     };
 
     const { actionButtons } = this.uiElements;
-    this.uiElements.loadButton = actionButtons.querySelector("button:first-child");
-    this.uiElements.refreshButton = actionButtons.querySelector("button:nth-child(2)");
-    this.uiElements.editButton = actionButtons.querySelector("button:nth-child(3)");
+    this.uiElements.loadButton =
+      actionButtons.querySelector("button:first-child");
+    this.uiElements.refreshButton = actionButtons.querySelector(
+      "button:nth-child(2)"
+    );
+    this.uiElements.editButton = actionButtons.querySelector(
+      "button:nth-child(3)"
+    );
 
     // Initial state setup
     this.uiElements.addWidgetLink.classList.add("hidden");

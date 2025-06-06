@@ -1,4 +1,3 @@
-// WidgetManager.js
 const { BrowserWindow, app } = require("electron");
 const path = require("path");
 const { processWidgetConfig } = require("./ConfigParser/ConfigParser");
@@ -290,6 +289,7 @@ function generateWidgetHTML(
  * Render individual widget elements
  */
 function renderWidgetElement(cfg, baseDir) {
+  console.log('cfg is', cfg);
   switch ((cfg.element || "").trim()) {
     case "Text":
       return renderTextWidget(cfg);

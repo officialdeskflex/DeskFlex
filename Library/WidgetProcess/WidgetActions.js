@@ -1,4 +1,3 @@
-//WidgetActions.js
 const { exec } = require("child_process");
 const { ipcRenderer } = require("electron");
 const { log, delay } = require("./WidgetBangs");

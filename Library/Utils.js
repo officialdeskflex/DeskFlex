@@ -1,4 +1,3 @@
-// Utils.js
 const path = require("path");
 const { getWidgetsPath } = require("./ConfigFile");
 

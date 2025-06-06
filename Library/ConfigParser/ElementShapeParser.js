@@ -1,81 +1,6 @@
 // ElementShapeParser.js
 const { rgbToHex } = require("../Utils");
-
-/**
- * Parse transform parameters from a string
- * @param {string} valueRaw - Parameter string (e.g., "45,10,20" or "1.5,2.0")
- * @returns {Array} Array of parsed numbers
- */
-function parseTransformParams(valueRaw) {
-  return valueRaw
-    .split(",")
-    .map((n) => parseFloat(n.trim()))
-    .filter((n) => !isNaN(n));
-}
-
-/**
- * Parse and resolve Extend references in a shape definition
- * @param {string} shapeDef - Shape definition string
- * @param {object} cfg - Configuration object containing potential extend definitions
- * @returns {string} Shape definition with extend references resolved
- */
-function resolveExtendReferences(shapeDef, cfg) {
-  if (!shapeDef || typeof shapeDef !== "string") {
-    return shapeDef;
-  }
-
-  const shapeParts = shapeDef.split("|").map((p) => p.trim());
-  const resolvedParts = [];
-
-  for (const part of shapeParts) {
-    const extendMatch = part.match(/^Extend\s+(.+)$/i);
-    if (extendMatch) {
-      const extendRefs = extendMatch[1].split(",").map((ref) => ref.trim());
-
-      for (const extendRef of extendRefs) {
-        // Try case-insensitive lookup
-        let extendDef = cfg[extendRef];
-
-        if (!extendDef) {
-          const lowerRef = extendRef.toLowerCase();
-          extendDef = cfg[lowerRef];
-        }
-
-        if (!extendDef) {
-          const matchingKey = Object.keys(cfg).find(
-            (key) => key.toLowerCase() === extendRef.toLowerCase()
-          );
-          if (matchingKey) {
-            extendDef = cfg[matchingKey];
-          }
-        }
-
-        if (extendDef && typeof extendDef === "string") {
-          // Split the extend definition and add each part
-          const extendParts = extendDef
-            .split("|")
-            .map((p) => p.trim())
-            .filter((p) => p);
-          resolvedParts.push(...extendParts);
-          console.log(
-            `Resolved Extend "${extendRef}" to: ${extendParts.join(" | ")}`
-          );
-        } else {
-          console.warn(
-            `Extend reference "${extendRef}" not found or invalid. Available keys:`,
-            Object.keys(cfg)
-          );
-        }
-      }
-    } else {
-      resolvedParts.push(part);
-    }
-  }
-
-  const result = resolvedParts.join(" | ");
-  console.log(`Final resolved shape definition: ${result}`);
-  return result;
-}
+const { parseTransformParams, resolveExtendReferences, collectExtendReferences } = require("./ShapeUtils/ExtendResolver");
 
 /**
  * Parse a single shape definition string
@@ -114,6 +39,14 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
     fillcolor: "#FFFFFF",
     strokecolor: "#000000",
     strokewidth: 1,
+    // New stroke properties
+    strokestartcap: "flat",
+    strokeendcap: "flat",
+    strokedashcap: "flat",
+    strokedashes: null,
+    strokelinejoin: "miter",
+    strokemiterlimit: 10.0,
+    strokedashoffset: 0,
     transforms: {
       rotate: { angle: 0, anchorX: null, anchorY: null },
       scale: { x: 1.0, y: 1.0, anchorX: null, anchorY: null },
@@ -127,7 +60,7 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
     const token = shapeParts[i];
     console.log(`Processing shape token: "${token}"`);
 
-    const m = token.match(/^(.+?)\s+([\d,.-]+)$/);
+    const m = token.match(/^(.+?)\s+([\d,.-]+|[a-zA-Z,.\s]+)$/);
     if (!m) {
       console.warn(`Malformed Shape style token: "${token}"`);
       continue;
@@ -164,6 +97,33 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
       const swv = parseInt(valueRaw, 10);
       if (!isNaN(swv)) {
         shapeObj.strokewidth = swv;
+      }
+    } else if (keyRaw === "strokestartcap") {
+      shapeObj.strokestartcap = valueRaw.toLowerCase();
+    } else if (keyRaw === "strokeendcap") {
+      shapeObj.strokeendcap = valueRaw.toLowerCase();
+    } else if (keyRaw === "strokedashcap") {
+      shapeObj.strokedashcap = valueRaw.toLowerCase();
+    } else if (keyRaw === "strokedashes") {
+      // Parse dash pattern - can be comma-separated numbers
+      const dashValues = valueRaw.split(",").map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+      if (dashValues.length > 0) {
+        shapeObj.strokedashes = dashValues;
+      }
+    } else if (keyRaw === "strokelinejoin") {
+      // Handle both "Miter" and "Miter, 10.0" formats
+      const joinParts = valueRaw.split(",");
+      shapeObj.strokelinejoin = joinParts[0].trim().toLowerCase();
+      if (joinParts.length > 1) {
+        const miterLimit = parseFloat(joinParts[1].trim());
+        if (!isNaN(miterLimit)) {
+          shapeObj.strokemiterlimit = miterLimit;
+        }
+      }
+    } else if (keyRaw === "strokedashoffset") {
+      const offset = parseFloat(valueRaw);
+      if (!isNaN(offset)) {
+        shapeObj.strokedashoffset = offset;
       }
     } else if (keyRaw === "rotate") {
       const params = parseTransformParams(valueRaw);
@@ -222,40 +182,20 @@ function parseShapeDefinition(shapeDef, cfg = {}) {
 }
 
 /**
- * Identify and collect extend reference names from configuration
- * @param {object} cfg - Configuration object
- * @returns {Set} Set of extend reference names (actual keys from config)
+ * Check if a shape requires SVG rendering (has advanced stroke features)
+ * @param {object} shape - Shape object
+ * @returns {boolean} True if SVG rendering is required
  */
-function collectExtendReferences(cfg) {
-  const extendRefs = new Set();
-
-  const shapeKeys = Object.keys(cfg).filter((key) =>
-    key.toLowerCase().match(/^shape\d*$/)
+function requiresSvgRendering(shape) {
+  return (
+    shape.strokestartcap !== "flat" ||
+    shape.strokeendcap !== "flat" ||
+    shape.strokedashcap !== "flat" ||
+    shape.strokedashes !== null ||
+    shape.strokelinejoin !== "miter" ||
+    shape.strokemiterlimit !== 10.0 ||
+    shape.strokedashoffset !== 0
   );
-
-  for (const shapeKey of shapeKeys) {
-    const shapeDef = cfg[shapeKey];
-    if (typeof shapeDef === "string") {
-      const shapeParts = shapeDef.split("|").map((p) => p.trim());
-
-      for (const part of shapeParts) {
-        const extendMatch = part.match(/^Extend\s+(.+)$/i);
-        if (extendMatch) {
-          const refs = extendMatch[1].split(",").map((ref) => ref.trim());
-          for (const ref of refs) {
-            const actualKey = Object.keys(cfg).find(
-              (key) => key.toLowerCase() === ref.toLowerCase()
-            );
-            if (actualKey) {
-              extendRefs.add(actualKey);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return extendRefs;
 }
 
 /**
@@ -297,6 +237,9 @@ function processShapes(widgetConfig) {
 
       cfg.shapes = shapeDefinitions;
 
+      // Check if any shape requires SVG rendering
+      cfg.requiresSvg = shapeDefinitions.some(shape => requiresSvgRendering(shape));
+
       const firstShape = shapeDefinitions[0];
       if (firstShape) {
         cfg.x = firstShape.x;
@@ -307,6 +250,15 @@ function processShapes(widgetConfig) {
         cfg.fillcolor = firstShape.fillcolor;
         cfg.strokecolor = firstShape.strokecolor;
         cfg.strokewidth = firstShape.strokewidth;
+
+        // Copy new stroke properties
+        cfg.strokestartcap = firstShape.strokestartcap;
+        cfg.strokeendcap = firstShape.strokeendcap;
+        cfg.strokedashcap = firstShape.strokedashcap;
+        cfg.strokedashes = firstShape.strokedashes;
+        cfg.strokelinejoin = firstShape.strokelinejoin;
+        cfg.strokemiterlimit = firstShape.strokemiterlimit;
+        cfg.strokedashoffset = firstShape.strokedashoffset;
 
         cfg.X = firstShape.x;
         cfg.Y = firstShape.y;
@@ -355,6 +307,5 @@ function processShapes(widgetConfig) {
 module.exports = {
   parseShapeDefinition,
   processShapes,
-  resolveExtendReferences,
-  collectExtendReferences,
+  requiresSvgRendering,
 };
